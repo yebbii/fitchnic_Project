@@ -10,11 +10,19 @@ import type { NewLectureForm } from "@/lib/types";
 interface ParsedRow {
   instructor: string;
   lectureName: string;
+  cohort: string;
   liveDate: string;
   platform?: string;
   valid: boolean;
   partial: boolean;
   raw: string;
+}
+
+/* 강의명에서 기수 분리: "브랜드파이프 5기" → { name: "브랜드파이프", cohort: "5기" } */
+function splitCohort(raw: string): { name: string; cohort: string } {
+  const m = raw.match(/^(.*?)\s*(\d+기)\s*$/);
+  if (m) return { name: m[1].trim(), cohort: m[2] };
+  return { name: raw, cohort: "" };
 }
 
 /* ─────────── 날짜 파싱 ─────────── */
@@ -77,11 +85,12 @@ function parsePastedRows(text: string): ParsedRow[] {
 
       // 첫 셀 = 강사, 나머지 = 강의명
       const instructor = cleanedCells[0] || "";
-      const lectureName = cleanedCells.slice(1).join(" ").trim();
+      const rawLec = cleanedCells.slice(1).join(" ").trim();
+      const { name: lectureName, cohort } = splitCohort(rawLec);
 
       const valid = !!instructor && !!lectureName && !!liveDate;
       const partial = !valid && (!!instructor || !!lectureName || !!liveDate);
-      return { instructor, lectureName, liveDate, platform, valid, partial, raw };
+      return { instructor, lectureName, cohort, liveDate, platform, valid, partial, raw };
     });
 }
 
@@ -229,12 +238,13 @@ function parseCalendarGrid(text: string, knownInstructors: string[]): ParsedRow[
       const info = extractLectureFromCell(cell, knownInstructors);
       if (!info) continue;
 
-      const { instructor, lectureName, platform } = info;
+      const { instructor, lectureName: rawLec, platform } = info;
+      const { name: lectureName, cohort } = splitCohort(rawLec);
       const valid = !!instructor && !!lectureName && !!date;
       const partial = !valid && (!!instructor || !!lectureName || !!date);
 
       results.push({
-        instructor, lectureName, liveDate: date, platform,
+        instructor, lectureName, cohort, liveDate: date, platform,
         valid, partial, raw: cell.replace(/\n/g, " / "),
       });
     }
@@ -268,6 +278,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
     ...NEW_LECTURE_INIT,
     instructor: defaultInstructor || "",
   });
+  const [manualCohort, setManualCohort] = useState("");
   const [newInsColor, setNewInsColor] = useState(COLORS[Object.keys(state.data).length % COLORS.length]);
   const update = (partial: Partial<NewLectureForm>) => setForm((p) => ({ ...p, ...partial }));
   const isNewInstructor = !!form.instructor.trim() && !state.data[form.instructor.trim()];
@@ -276,6 +287,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
   /* 붙여넣기 */
   const [pasteText, setPasteText] = useState("");
   const [rowOverrides, setRowOverrides] = useState<Record<number, Partial<ParsedRow>>>({});
+  const [rowChecks, setRowChecks] = useState<Record<number, boolean>>({});
   const instructors = Object.keys(state.data);
 
   const { rows: parsed, isCalendar } = useMemo(
@@ -283,19 +295,67 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
     [pasteText, instructors],
   );
 
-  // 붙여넣기 텍스트 바뀌면 편집 오버라이드 초기화
-  useEffect(() => setRowOverrides({}), [pasteText]);
+  // 붙여넣기 텍스트 바뀌면 편집 오버라이드·체크 상태 초기화
+  useEffect(() => { setRowOverrides({}); setRowChecks({}); }, [pasteText]);
 
-  // 실제 표시 행 (파싱 결과 + 사용자 편집 병합)
+  /* 강사별 강의명 프리셋 (기존 강의에서 기수 제외한 고유 이름) */
+  const getPresetNames = (ins: string): string[] => {
+    const lectures = state.data[ins]?.lectures;
+    if (!lectures) return [];
+    return [...new Set(Object.keys(lectures).map((k) => splitCohort(k).name).filter(Boolean))];
+  };
+
+  // 실제 표시 행 (파싱 결과 + 사용자 편집 병합 + 스토어 자동 보완)
   const displayRows = parsed.map((r, i) => {
-    const merged = { ...r, ...(rowOverrides[i] ?? {}) };
+    const override = rowOverrides[i] ?? {};
+    const merged = { ...r, ...override };
+
+    // 강사가 알려진 경우 강의명·플랫폼을 스토어에서 자동 보완 (사용자가 직접 편집하지 않은 경우만)
+    if (merged.instructor) {
+      if (!merged.lectureName && !("lectureName" in override)) {
+        const presets = getPresetNames(merged.instructor);
+        if (presets.length === 1) merged.lectureName = presets[0];
+      }
+      if (!merged.platform && !("platform" in override)) {
+        const existingLectures = Object.values(state.data[merged.instructor]?.lectures ?? {});
+        const knownPlatform = existingLectures.find((l) => l.platform)?.platform;
+        if (knownPlatform) merged.platform = knownPlatform;
+      }
+    }
+
     const valid = !!merged.instructor?.trim() && !!merged.lectureName?.trim() && !!merged.liveDate;
     return { ...merged, valid, partial: !valid && (!!merged.instructor || !!merged.lectureName || !!merged.liveDate) };
   });
-  const validRows = displayRows.filter((r) => r.valid);
+  // 행 체크 상태: 명시적 설정 없으면 기본 true (모두 체크)
+  const isRowChecked = (i: number) =>
+    i in rowChecks ? rowChecks[i] : true;
+
+  const validRows = displayRows.filter((_, i) => isRowChecked(i));
+  const addableRows = validRows.filter((r) => r.instructor?.trim() && r.lectureName?.trim() && r.cohort?.trim());
 
   const updateRow = (i: number, field: keyof ParsedRow, value: string) => {
     setRowOverrides((prev) => ({ ...prev, [i]: { ...(prev[i] ?? {}), [field]: value } }));
+  };
+
+  const toggleRow = (i: number) => {
+    setRowChecks((prev) => ({ ...prev, [i]: !(i in prev ? prev[i] : true) }));
+  };
+
+  // 강사 선택 시 강의명 자동 채우기 (비어있을 때만)
+  useEffect(() => {
+    if (form.instructor && !form.lectureName) {
+      const presets = getPresetNames(form.instructor);
+      if (presets.length === 1) update({ lectureName: presets[0] });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.instructor]);
+
+  /* 같은 강사+날짜 기존 강의 찾기 */
+  const findExistingByDate = (ins: string, liveDate: string): string | null => {
+    const lectures = state.data[ins]?.lectures;
+    if (!lectures) return null;
+    const found = Object.entries(lectures).find(([, lec]) => lec.liveDate === liveDate);
+    return found ? found[0] : null;
   };
 
   /* ── 수기 추가 ── */
@@ -303,10 +363,16 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
     if (!canSubmitManual) return;
     const ins = form.instructor.trim();
     const color = state.data[ins]?.color ?? newInsColor;
+    const cohortSuffix = manualCohort.trim() ? ` ${manualCohort.trim()}` : "";
+    const lec = form.lectureName.trim() + cohortSuffix;
+    const existing = findExistingByDate(ins, form.liveDate);
+    if (existing && existing !== lec) {
+      dispatch({ type: "DELETE_LECTURE", ins, lec: existing });
+    }
     dispatch({
       type: "ADD_LECTURE",
       ins,
-      lec: form.lectureName.trim(),
+      lec,
       color,
       lecture: { ...NEW_LECTURE_DEFAULTS, liveDate: form.liveDate, status: "active" },
     });
@@ -319,11 +385,18 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
     let usedColors = Object.keys(state.data).length;
 
     for (const r of validRows) {
+      if (!r.instructor?.trim() || !r.lectureName?.trim()) continue;
       const color = state.data[r.instructor]?.color ?? COLORS[usedColors++ % COLORS.length];
+      const cohortSuffix = r.cohort?.trim() ? ` ${r.cohort.trim()}` : "";
+      const finalLec = r.lectureName.trim() + cohortSuffix;
+      const existing = findExistingByDate(r.instructor, r.liveDate);
+      if (existing && existing !== finalLec) {
+        dispatch({ type: "DELETE_LECTURE", ins: r.instructor, lec: existing });
+      }
       dispatch({
         type: "ADD_LECTURE",
         ins: r.instructor,
-        lec: r.lectureName,
+        lec: finalLec,
         color,
         lecture: {
           ...NEW_LECTURE_DEFAULTS,
@@ -335,9 +408,10 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
     }
 
     const first = validRows[0];
+    const firstCohort = first.cohort?.trim() ? ` ${first.cohort.trim()}` : "";
     dispatch({ type: "SELECT_INSTRUCTOR", ins: first.instructor });
     setTimeout(() => {
-      dispatch({ type: "SELECT_LECTURE", lec: first.lectureName });
+      dispatch({ type: "SELECT_LECTURE", lec: first.lectureName + firstCohort });
       dispatch({ type: "SET_TOP_TAB", tab: "home" });
     }, 0);
     onClose();
@@ -448,7 +522,36 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
               <input
                 value={form.lectureName}
                 onChange={(e) => update({ lectureName: e.target.value })}
-                placeholder="예: 브랜드파이프 5기"
+                placeholder="예: 브랜드파이프"
+                className="w-full bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2.5 text-[15px] outline-none"
+              />
+              {/* 강사별 강의명 프리셋 칩 */}
+              {getPresetNames(form.instructor).length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {getPresetNames(form.instructor).map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => update({ lectureName: name })}
+                      className={`text-[12px] px-2.5 py-0.5 rounded-full border-none cursor-pointer transition-colors ${
+                        form.lectureName === name
+                          ? "bg-primary text-white"
+                          : "bg-secondary text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="text-[13px] text-muted-foreground mb-1.5 font-semibold">기수</div>
+              <input
+                value={manualCohort}
+                onChange={(e) => setManualCohort(e.target.value)}
+                placeholder="예: 5기"
                 className="w-full bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2.5 text-[15px] outline-none"
               />
             </div>
@@ -514,6 +617,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                       <th className="text-center px-2 py-2 font-semibold w-6"></th>
                       <th className="text-left px-2 py-2 font-semibold">강사</th>
                       <th className="text-left px-2 py-2 font-semibold">강의명</th>
+                      <th className="text-left px-2 py-2 font-semibold">기수</th>
                       <th className="text-left px-2 py-2 font-semibold">날짜</th>
                       <th className="text-left px-2 py-2 font-semibold">플랫폼</th>
                     </tr>
@@ -523,17 +627,19 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                       <tr
                         key={i}
                         className={`border-t border-border ${
+                          !isRowChecked(i) ? "opacity-40" :
                           r.valid ? "" : r.partial ? "bg-yellow-50" : "bg-red-50"
                         }`}
                       >
-                        <td className="px-2 py-1 text-center text-base">
-                          {r.valid ? (
-                            <span className="text-emerald-600">✓</span>
-                          ) : (
-                            <span className="text-yellow-500">!</span>
-                          )}
+                        <td className="px-2 py-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isRowChecked(i)}
+                            onChange={() => toggleRow(i)}
+                            className="cursor-pointer accent-primary w-3.5 h-3.5"
+                          />
                         </td>
-                        {(["instructor", "lectureName", "liveDate", "platform"] as const).map((field) => (
+                        {(["instructor", "lectureName", "cohort", "liveDate", "platform"] as const).map((field) => (
                           <td key={field} className="px-1 py-1">
                             <input
                               value={(r[field] as string) || ""}
@@ -541,10 +647,11 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                               placeholder={
                                 field === "instructor" ? "강사명" :
                                 field === "lectureName" ? "강의명" :
+                                field === "cohort" ? "기수" :
                                 field === "liveDate" ? "YYYY-MM-DD" : "플랫폼"
                               }
                               className={`w-full px-2 py-1 rounded text-[12px] outline-none border focus:border-primary bg-white ${
-                                !r[field] && field !== "platform" ? "border-red-200" : "border-transparent"
+                                !r[field] && field !== "platform" && field !== "cohort" ? "border-red-200" : "border-transparent"
                               }`}
                             />
                           </td>
@@ -556,11 +663,9 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
               </div>
             )}
 
-            {displayRows.length > 0 && validRows.length < displayRows.length && (
-              <div className="text-[12px] text-yellow-700 bg-yellow-50 rounded-lg px-3 py-2 leading-relaxed">
-                {displayRows.length - validRows.length}개 행이 불완전합니다. 위 표에서 직접 수정하거나, 유효한 행만 추가됩니다.
-              </div>
-            )}
+            <div className={`text-[12px] text-yellow-700 bg-yellow-50 rounded-lg px-3 py-2 leading-relaxed transition-opacity ${validRows.length > 0 && addableRows.length < validRows.length ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+              체크된 {validRows.length - addableRows.length}개 행에 강사명·강의명·기수 중 빈 항목이 있습니다. 채워주세요.
+            </div>
 
             <div className="text-[12px] text-[#aeaeb2] bg-[#f8f8fa] rounded-lg px-3.5 py-2.5 leading-relaxed">
               {isCalendar
@@ -570,10 +675,10 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
 
             <button
               onClick={addPasted}
-              disabled={validRows.length === 0}
+              disabled={validRows.length === 0 || addableRows.length < validRows.length}
               className="w-full bg-gradient-to-br from-primary to-[#764ba2] rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
             >
-              {validRows.length > 0 ? `${validRows.length}개 강의 추가` : "붙여넣기 대기 중"}
+              {validRows.length === 0 ? "붙여넣기 대기 중" : addableRows.length < validRows.length ? "빈 항목을 채워주세요" : `${addableRows.length}개 강의 추가`}
             </button>
           </div>
         )}

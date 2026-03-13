@@ -15,6 +15,7 @@ export default function DesignerCalendarTab() {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [dropdown, setDropdown] = useState<string | null>(null); // "project|curKey" | "ms|curKey|milestoneId"
   const [showMoreProjects, setShowMoreProjects] = useState(false);
+  const [viewMode, setViewMode] = useState<"calendar" | "table">("calendar");
 
   const toggleProject = (curKey: string) => {
     setExpandedProjects((prev) => {
@@ -367,9 +368,32 @@ export default function DesignerCalendarTab() {
       <div className="flex-1 p-7 overflow-auto">
         <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_8px_rgba(0,0,0,.04)]">
           <div className="flex justify-between items-center mb-[18px]">
-            <div>
-              <h3 className="text-xl font-extrabold">🎨 디자이너 캘린더</h3>
-              <p className="text-sm text-muted-foreground mt-0.5">진행중 강의 {projects.length}개의 디자인 작업 일정</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <h3 className="text-xl font-extrabold">🎨 디자이너 캘린더</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">진행중 강의 {projects.length}개의 디자인 작업 일정</p>
+              </div>
+              {/* 뷰 토글 */}
+              <div className="flex gap-0.5 bg-secondary rounded-lg p-[3px]">
+                <button
+                  onClick={() => setViewMode("calendar")}
+                  className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all cursor-pointer border-none flex items-center gap-1 ${
+                    viewMode === "calendar" ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="14" x2="8" y2="14" strokeLinecap="round"/><line x1="12" y1="14" x2="12" y2="14" strokeLinecap="round"/><line x1="16" y1="14" x2="16" y2="14" strokeLinecap="round"/><line x1="8" y1="18" x2="8" y2="18" strokeLinecap="round"/><line x1="12" y1="18" x2="12" y2="18" strokeLinecap="round"/></svg>
+                  달력
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all cursor-pointer border-none flex items-center gap-1 ${
+                    viewMode === "table" ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                  표
+                </button>
+              </div>
             </div>
             <div className="flex gap-2 items-center">
               <button
@@ -386,6 +410,188 @@ export default function DesignerCalendarTab() {
             </div>
           </div>
 
+          {/* ── 표 뷰 ── */}
+          {viewMode === "table" && (() => {
+            function dday(dateStr: string) {
+              const t = new Date(); t.setHours(0,0,0,0);
+              const d = new Date(dateStr); d.setHours(0,0,0,0);
+              return Math.round((d.getTime() - t.getTime()) / 86400000);
+            }
+            function ddayBadge(dateStr: string, checked: boolean) {
+              const diff = dday(dateStr);
+              if (checked) return <span className="text-[10px] font-bold text-[#aeaeb2] bg-[#f0f0f0] rounded-full px-2 py-0.5">완료</span>;
+              if (diff < 0) return <span className="text-[10px] font-bold text-[#aeaeb2] bg-[#f5f5f5] rounded-full px-2 py-0.5">D+{Math.abs(diff)}</span>;
+              if (diff === 0) return <span className="text-[10px] font-bold text-white bg-red-400 rounded-full px-2 py-0.5">오늘!</span>;
+              if (diff <= 3) return <span className="text-[10px] font-bold text-red-500 bg-red-50 rounded-full px-2 py-0.5">D-{diff}</span>;
+              if (diff <= 7) return <span className="text-[10px] font-bold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">D-{diff}</span>;
+              return <span className="text-[10px] font-semibold text-muted-foreground bg-secondary rounded-full px-2 py-0.5">D-{diff}</span>;
+            }
+
+            // 프로젝트별로 그룹핑
+            if (projects.length === 0) {
+              return <div className="text-center text-muted-foreground py-16 text-[13px]">진행중인 강의가 없습니다</div>;
+            }
+
+            return (
+              <div className="flex flex-col gap-4">
+                {projects.map(({ ins, lec, liveDate, insColor }) => {
+                  const curKey = `${ins}|${lec}`;
+                  const milestones = state.designerMilestones[curKey] || {};
+                  const projectAssigneeName = state.designerProjectAssignees[curKey] ?? "";
+                  const liveDiff = dday(liveDate);
+
+                  return (
+                    <div key={curKey} className="rounded-2xl border border-border overflow-hidden">
+                      {/* 프로젝트 헤더 */}
+                      <div
+                        className="flex items-center justify-between px-4 py-3"
+                        style={{ borderLeft: `4px solid ${insColor}`, background: insColor + "08" }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-[14px]" style={{ color: insColor }}>{ins}</span>
+                          <span className="text-[12px] text-muted-foreground font-medium">{lec}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-muted-foreground">🔴 LIVE</span>
+                          <span className="text-[12px] font-bold text-foreground">{fmtDateKr(liveDate)}</span>
+                          {liveDiff >= 0
+                            ? <span className="text-[11px] font-bold text-white bg-red-400 rounded-full px-2 py-0.5">{liveDiff === 0 ? "오늘" : `D-${liveDiff}`}</span>
+                            : <span className="text-[11px] font-bold text-[#aeaeb2] bg-[#f5f5f5] rounded-full px-2 py-0.5">D+{Math.abs(liveDiff)}</span>
+                          }
+                        </div>
+                      </div>
+
+                      {/* 마일스톤 테이블 */}
+                      <table className="w-full text-[12px] border-collapse">
+                        <thead>
+                          <tr className="border-b border-border bg-[#fafafa]">
+                            <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[90px]">단계</th>
+                            <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide">작업 내용</th>
+                            <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[110px]">날짜</th>
+                            <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[80px]">D-day</th>
+                            <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[120px]">담당자</th>
+                            <th className="text-center py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[50px]">완료</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {DESIGNER_MILESTONES.map((ms) => {
+                            const msDate = fmtDate(addDays(liveDate, ms.dayOffset));
+                            const item = milestones[ms.id as MilestoneId] || { checked: false, assignee: "" };
+                            const isPast = msDate < todayStr && !item.checked;
+                            const isToday = msDate === todayStr;
+                            const effAssignee = item.assignee || projectAssigneeName;
+                            const effColor = effAssignee ? state.assignees.find((a) => a.name === effAssignee)?.color : undefined;
+                            const msDropKey = `ms|${curKey}|${ms.id}`;
+                            const days7 = ["일","월","화","수","목","금","토"];
+                            const dObj = new Date(msDate);
+
+                            return (
+                              <tr
+                                key={ms.id}
+                                className={`border-b border-border/40 transition-colors hover:bg-secondary/20 ${
+                                  item.checked ? "bg-[#f7f7f7]" : isToday ? "bg-amber-50/50" : isPast ? "bg-red-50/30" : ""
+                                }`}
+                              >
+                                {/* 단계 */}
+                                <td className="py-2.5 px-4">
+                                  <span
+                                    className="text-[10px] font-extrabold px-2 py-0.5 rounded-full"
+                                    style={item.checked
+                                      ? { background: "#ebebeb", color: "#aeaeb2" }
+                                      : { background: ms.color + "20", color: ms.color }}
+                                  >
+                                    {ms.label}
+                                  </span>
+                                </td>
+                                {/* 작업 내용 */}
+                                <td className="py-2.5 px-4">
+                                  <span className={`text-[12px] ${item.checked ? "line-through text-muted-foreground" : isPast ? "text-red-500 font-semibold" : "text-foreground"}`}>
+                                    {ms.title}
+                                  </span>
+                                  {isPast && !item.checked && (
+                                    <span className="ml-1.5 text-[9px] font-bold text-red-500 bg-red-100 px-1 py-0.5 rounded-full">지남</span>
+                                  )}
+                                </td>
+                                {/* 날짜 */}
+                                <td className="py-2.5 px-4">
+                                  <span className={`text-[11px] font-semibold ${isToday ? "text-amber-600" : isPast ? "text-[#ccc]" : "text-muted-foreground"}`}>
+                                    {dObj.getMonth()+1}/{dObj.getDate()}({days7[dObj.getDay()]})
+                                  </span>
+                                </td>
+                                {/* D-day */}
+                                <td className="py-2.5 px-4">
+                                  {ddayBadge(msDate, item.checked ?? false)}
+                                </td>
+                                {/* 담당자 */}
+                                <td className="py-2.5 px-4">
+                                  <div className="relative">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setDropdown(dropdown === msDropKey ? null : msDropKey); }}
+                                      className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer hover:opacity-80 px-0"
+                                    >
+                                      {effAssignee ? (
+                                        <>
+                                          <div
+                                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-extrabold flex-shrink-0"
+                                            style={{ background: effColor ?? "#aeaeb2", opacity: (!item.assignee && !!projectAssigneeName) ? 0.6 : 1 }}
+                                          >
+                                            {effAssignee.slice(0, 1)}
+                                          </div>
+                                          <span className="text-[11px] font-semibold" style={{ color: effColor ?? "#6e6e73" }}>
+                                            {effAssignee}
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <span className="text-[11px] text-[#aeaeb2]">+ 추가</span>
+                                      )}
+                                    </button>
+                                    {dropdown === msDropKey && (
+                                      <AssigneeDropdown
+                                        dropKey={msDropKey}
+                                        currentName={item.assignee}
+                                        onSelect={(name) => dispatch({
+                                          type: "SET_DESIGNER_MILESTONE",
+                                          curKey,
+                                          milestoneId: ms.id as MilestoneId,
+                                          assignee: name,
+                                        })}
+                                      />
+                                    )}
+                                  </div>
+                                </td>
+                                {/* 완료 체크 */}
+                                <td className="py-2.5 px-4 text-center">
+                                  <button
+                                    onClick={() => dispatch({
+                                      type: "SET_DESIGNER_MILESTONE",
+                                      curKey,
+                                      milestoneId: ms.id as MilestoneId,
+                                      checked: !item.checked,
+                                    })}
+                                    className="w-5 h-5 rounded border-none cursor-pointer flex items-center justify-center text-[11px] font-bold transition-colors mx-auto"
+                                    style={{
+                                      background: item.checked ? "#22c55e" : "transparent",
+                                      border: `1.5px solid ${item.checked ? "#22c55e" : ms.color}`,
+                                      color: "#fff",
+                                    }}
+                                  >
+                                    {item.checked ? "✓" : ""}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* ── 달력 뷰 ── */}
+          {viewMode === "calendar" && <>
           {/* 요일 헤더 */}
           <div className="grid grid-cols-7 gap-0.5 mb-1.5">
             {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
@@ -442,6 +648,9 @@ export default function DesignerCalendarTab() {
                           style={ev.isLive ? {
                             background: ev.color + "15",
                             border: `1px solid ${ev.color}40`,
+                          } : ev.checked ? {
+                            background: "#f0f0f0",
+                            border: "1px solid #e0e0e0",
                           } : ev.assigneeColor ? {
                             background: ev.assigneeColor + "18",
                             border: `1px solid ${ev.assigneeColor}38`,
@@ -459,25 +668,23 @@ export default function DesignerCalendarTab() {
                           ) : (
                             <>
                               <div className="flex items-center gap-0.5">
-                                <span
-                                  className="text-[9px] font-extrabold px-1 rounded-full mr-0.5 flex-shrink-0 bg-[#e8e8e8] text-[#6e6e73]"
-                                >
+                                <span className="text-[9px] font-extrabold px-1 rounded-full mr-0.5 flex-shrink-0 bg-[#e8e8e8] text-[#aeaeb2]">
                                   {ev.milestoneLabel}
                                 </span>
-                                <span className="font-bold truncate" style={{ color: ev.insColor }}>{ev.ins}</span>
+                                <span className="font-bold truncate" style={{ color: ev.checked ? "#aeaeb2" : ev.insColor }}>{ev.ins}</span>
                               </div>
-                              <div className="text-[10px] font-medium truncate" style={{ color: ev.checked ? "#059669" : "#6e6e73" }}>
-                                {ev.checked ? "✓ " : ""}{ev.milestoneTitle}
+                              <div className="text-[10px] font-medium truncate line-through" style={{ color: ev.checked ? "#c0c0c0" : "#6e6e73" }}>
+                                {ev.milestoneTitle}
                               </div>
                               {ev.assignee && (
                                 <div className="flex items-center gap-0.5 mt-0.5">
                                   <div
                                     className="w-3 h-3 rounded-full flex items-center justify-center text-white text-[7px] font-extrabold flex-shrink-0"
-                                    style={{ background: ev.assigneeColor ?? "#aeaeb2" }}
+                                    style={{ background: ev.checked ? "#d0d0d0" : (ev.assigneeColor ?? "#aeaeb2") }}
                                   >
                                     {ev.assignee.slice(0, 1)}
                                   </div>
-                                  <span className="text-[9px] truncate" style={{ color: "#6e6e73" }}>{ev.assignee}</span>
+                                  <span className="text-[9px] truncate" style={{ color: ev.checked ? "#c0c0c0" : "#6e6e73" }}>{ev.assignee}</span>
                                 </div>
                               )}
                             </>
@@ -498,6 +705,7 @@ export default function DesignerCalendarTab() {
               );
             })}
           </div>
+          </>}
         </div>
       </div>
     </div>
