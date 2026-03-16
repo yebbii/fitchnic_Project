@@ -353,12 +353,40 @@ export const LIVE_SETUP_ITEMS = [
 ];
 
 /* ── 디자이너 프로젝트 마일스톤 정의 ── */
+export interface MilestoneSubItem {
+  id: string;
+  name: string;
+  type?: "check" | "copy" | "benefit";  // default: "check"
+}
+
 export const DESIGNER_MILESTONES = [
-  { id: "d28" as const, label: "D-28", title: "무료 세팅",           dayOffset: -28, color: "#f97316" },
-  { id: "d14" as const, label: "D-14", title: "상세페이지 자료요청", dayOffset: -14, color: "#764ba2" },
-  { id: "d10" as const, label: "D-10", title: "혜택 마감일",         dayOffset: -10, color: "#ef4444" },
-  { id: "d3"  as const, label: "D-3",  title: "상세페이지 완성",     dayOffset: -3,  color: "#22c55e" },
+  { id: "d28" as const, label: "D-28", title: "무료 세팅",           dayOffset: -28, color: "#f97316", subItems: [
+    { id: "d28_homepage", name: "홈페이지 세팅" },
+    { id: "d28_banner", name: "홈페이지 좌측 배너 세팅" },
+    { id: "d28_cafe", name: "카페배너 세팅" },
+  ] as MilestoneSubItem[] },
+  { id: "d14" as const, label: "D-14", title: "상세페이지 자료요청", dayOffset: -14, color: "#764ba2", subItems: [
+    { id: "d14_request", name: "자료요청", type: "copy" },
+  ] as MilestoneSubItem[] },
+  { id: "d10" as const, label: "D-10", title: "혜택 마감",           dayOffset: -10, color: "#ef4444", subItems: [
+    { id: "d10_benefit", name: "혜택 전달", type: "benefit" },
+  ] as MilestoneSubItem[] },
+  { id: "d3"  as const, label: "D-3",  title: "유료 상페 완료",      dayOffset: -3,  color: "#22c55e", subItems: [
+    { id: "d3_toss", name: "토스 검수" },
+    { id: "d3_pm", name: "PM 공유" },
+    { id: "d3_instructor", name: "강사 공유" },
+  ] as MilestoneSubItem[] },
 ];
+
+export const DEFAULT_REQUEST_MSG = `안녕하세요, 강사님!
+상세페이지 제작을 위해 아래 자료를 요청드립니다.
+
+1. 프로필 사진 (고화질)
+2. 강의 소개 텍스트
+3. 수강생 후기/성과 자료
+4. 강조하고 싶은 핵심 내용
+
+감사합니다!`;
 
 /** 새 강의 추가 시 Lecture 기본값 (폼에서 안 쓰이는 필드) */
 export const NEW_LECTURE_DEFAULTS: Omit<Lecture, "liveDate" | "status"> = {

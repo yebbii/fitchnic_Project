@@ -12,6 +12,8 @@ const KEYS = {
   designerMilestones: "designer_milestones",
   assignees: "designer_assignees",
   designerProjectAssignees: "designer_project_assignees",
+  pmProjectAssignees: "pm_project_assignees",
+  milestoneMeta: "crm_milestone_meta",
 } as const;
 
 function load<T>(key: string): T | null {
@@ -66,4 +68,10 @@ export const storage = {
 
   loadDesignerProjectAssignees: () => load<Record<string, string>>(KEYS.designerProjectAssignees),
   saveDesignerProjectAssignees: (v: Record<string, string>) => save(KEYS.designerProjectAssignees, v),
+
+  loadPmProjectAssignees: () => load<Record<string, string>>(KEYS.pmProjectAssignees),
+  savePmProjectAssignees: (v: Record<string, string>) => save(KEYS.pmProjectAssignees, v),
+
+  loadMilestoneMeta: () => load<Record<string, Record<string, string>>>(KEYS.milestoneMeta),
+  saveMilestoneMeta: (v: Record<string, Record<string, string>>) => save(KEYS.milestoneMeta, v),
 };

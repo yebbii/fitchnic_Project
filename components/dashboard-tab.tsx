@@ -199,13 +199,13 @@ export default function DashboardTab() {
                               className="h-full rounded-sm transition-all duration-300"
                               style={{
                                 width: `${pctCheck}%`,
-                                background: pctCheck === 100 ? "#2ecc71" : "linear-gradient(90deg,#f39c12,#e67e22)",
+                                background: pctCheck === 100 ? "#9ca3af" : "linear-gradient(90deg,#f39c12,#e67e22)",
                               }}
                             />
                           </div>
                         </div>
                         {pctCheck === 100 && pctCopy === 100 && (
-                          <div className="text-[11px] text-emerald-600 font-bold mt-0.5">🎉 CRM 준비 완료!</div>
+                          <div className="text-[11px] text-gray-500 font-bold mt-0.5">CRM 준비 완료</div>
                         )}
                       </div>
 
@@ -257,8 +257,8 @@ export default function DashboardTab() {
                         >
                           다시 진행
                         </button>
-                        <span className="text-[12px] text-emerald-600 font-bold">
-                          ✅ {r.checkedCount}/{r.totalItems}
+                        <span className="text-[12px] text-gray-400 font-bold">
+                          ✓ {r.checkedCount}/{r.totalItems}
                         </span>
                       </div>
                     </div>
@@ -363,31 +363,23 @@ export default function DashboardTab() {
                         className="rounded-md px-1.5 py-1 text-xs font-semibold text-left cursor-pointer leading-tight"
                         style={{
                           background:
-                            ev.allDone && ev.allCopied
-                              ? "#ecfdf5"
-                              : ev.allDone
-                              ? "#2ecc7112"
+                            ev.allDone
+                              ? "#f5f5f5"
                               : ev.color + "10",
                           color:
-                            ev.allDone && ev.allCopied
-                              ? "#059669"
-                              : ev.allDone
-                              ? "#059669"
+                            ev.allDone
+                              ? "#9ca3af"
                               : ev.color,
                           border: `1px solid ${
-                            ev.allDone && ev.allCopied
-                              ? "#2ecc7150"
-                              : ev.allDone
-                              ? "#2ecc7130"
+                            ev.allDone
+                              ? "#d1d5db"
                               : ev.color + "25"
                           }`,
                         }}
                       >
                         <div className="flex items-center gap-0.5">
-                          {ev.allDone && ev.allCopied ? (
-                            <span>🎉</span>
-                          ) : ev.allDone ? (
-                            <span>✅</span>
+                          {ev.allDone ? (
+                            <span>✓</span>
                           ) : ev.isLiveDay ? (
                             <span>🔴</span>
                           ) : null}
@@ -395,7 +387,7 @@ export default function DashboardTab() {
                         </div>
                         <div
                           className="text-[11px] font-medium"
-                          style={{ color: ev.allDone ? "#059669" : "#6e6e73" }}
+                          style={{ color: ev.allDone ? "#9ca3af" : "#6e6e73" }}
                         >
                           {ev.seqLabel}
                         </div>
@@ -426,9 +418,9 @@ export default function DashboardTab() {
                                 <div
                                   key={it.id}
                                   className="text-[10px] flex items-center gap-0.5 leading-relaxed"
-                                  style={{ color: done ? "#059669" : hasCopy ? "#667eea" : "#aeaeb2", fontWeight: done ? 600 : 400 }}
+                                  style={{ color: done ? "#9ca3af" : hasCopy ? "#667eea" : "#aeaeb2", fontWeight: done ? 600 : 400 }}
                                 >
-                                  <span>{done ? "✅" : hasCopy ? "✏️" : "⬜"}</span>
+                                  <span>{done ? "✓" : hasCopy ? "✏️" : "⬜"}</span>
                                   <span>{it.icon} {it.name}</span>
                                 </div>
                               );

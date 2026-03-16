@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrm, useCurKey, useCurrentLecture, useCurrentSeq } from "@/hooks/use-crm-store";
-import { CH_OPTIONS } from "@/lib/constants";
+import { CH_OPTIONS, DEFAULT_SEQ } from "@/lib/constants";
 import { uid, fmtDateKr, fetchAICopy, genCopyLocal } from "@/lib/utils";
 import LectureInfoEditor from "./lecture-info-editor";
 import CopyModal from "./copy-modal";
 import AddLectureDialog from "./add-lecture-dialog";
 import type { SeqPhase, SeqItem } from "@/lib/types";
+import AssigneeManagerModal from "./assignee-manager-modal";
 
 export default function BoardTab() {
   const { state, dispatch } = useCrm();
@@ -23,6 +24,11 @@ export default function BoardTab() {
   const [addItemSeq, setAddItemSeq] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState("");
   const [newItemCh, setNewItemCh] = useState("문자");
+  const [showPmAssignee, setShowPmAssignee] = useState(false);
+  const [showAssigneeMgr, setShowAssigneeMgr] = useState(false);
+
+  const pmAssigneeName = curKey ? (state.pmProjectAssignees[curKey] ?? "") : "";
+  const desAssigneeName = curKey ? (state.designerProjectAssignees[curKey] ?? "") : "";
 
   const copies = curKey ? state.allCopies[curKey] || {} : {};
   const checks = curKey ? state.allChecks[curKey] || {} : {};
@@ -141,6 +147,64 @@ export default function BoardTab() {
                 {state.ins} · {state.lec}
               </span>
               {!editInfo && <span>📅 {fmtDateKr(ld.liveDate)} {ld.liveTime}</span>}
+              {!editInfo && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowPmAssignee((v) => !v)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold border border-border bg-transparent cursor-pointer hover:bg-secondary transition-colors"
+                  >
+                    <span className="text-muted-foreground">PM</span>
+                    <span className={pmAssigneeName ? "text-foreground" : "text-[#aeaeb2]"}>{pmAssigneeName || "미지정"}</span>
+                    <span className="text-[9px] text-muted-foreground">▾</span>
+                  </button>
+                  {showPmAssignee && (() => {
+                    const pmAssignees = state.assignees.filter((a) => a.role === "pm");
+                    return (
+                      <div className="absolute left-0 top-full mt-0.5 z-30 bg-white border border-border rounded-lg shadow-lg py-1 min-w-[150px]">
+                        <button
+                          onClick={() => { dispatch({ type: "SET_PM_PROJECT_ASSIGNEE", curKey, assignee: "" }); setShowPmAssignee(false); }}
+                          className="w-full text-left px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-secondary border-none bg-transparent cursor-pointer"
+                        >
+                          없음
+                        </button>
+                        {pmAssignees.length === 0 && (
+                          <div className="px-3 py-1.5 text-[11px] text-[#aeaeb2]">PM 담당자를 추가하세요</div>
+                        )}
+                        {pmAssignees.map((a) => (
+                          <button
+                            key={a.id}
+                            onClick={() => { dispatch({ type: "SET_PM_PROJECT_ASSIGNEE", curKey, assignee: a.name }); setShowPmAssignee(false); }}
+                            className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-secondary border-none bg-transparent cursor-pointer ${pmAssigneeName === a.name ? "bg-secondary" : ""}`}
+                          >
+                            <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0" style={{ background: a.color }}>{a.name.slice(0, 1)}</div>
+                            <span className="text-[11px] font-semibold">{a.name}</span>
+                          </button>
+                        ))}
+                        <div className="border-t border-border mt-1 pt-1">
+                          <button
+                            onClick={() => { setShowPmAssignee(false); setShowAssigneeMgr(true); }}
+                            className="w-full text-left px-3 py-1.5 text-[11px] text-primary font-semibold hover:bg-secondary border-none bg-transparent cursor-pointer"
+                          >
+                            ⚙️ 담당자 관리
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+              {!editInfo && (
+                desAssigneeName ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: "#764ba215", color: "#764ba2", border: "1px solid #764ba230" }}>
+                    <span className="w-3.5 h-3.5 rounded-full bg-[#764ba2] text-white text-[8px] font-extrabold flex items-center justify-center flex-shrink-0">{desAssigneeName.slice(0, 1)}</span>
+                    담당 {desAssigneeName}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-[#aeaeb2] bg-secondary border border-border">
+                    <span className="text-[10px]">👤</span> 담당 미지정
+                  </span>
+                )
+              )}
             </div>
             <div className="flex gap-2">
               <button
@@ -167,13 +231,76 @@ export default function BoardTab() {
       )}
 
       {/* 메인 콘텐츠 */}
-      {!ld ? (
-        <div className="flex flex-col items-center justify-center min-h-[55vh] text-[#aeaeb2]">
-          <div className="text-5xl mb-3.5">📋</div>
-          <div className="text-xl font-bold text-muted-foreground">강사와 강의를 선택하세요</div>
-          <div className="text-[15px] text-[#aeaeb2] mt-1.5">또는 대시보드에서 강의를 클릭하세요</div>
-        </div>
-      ) : (
+      {!ld ? (() => {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const projects: { ins: string; lec: string; liveDate: string; liveTime: string; color: string; platform: string }[] = [];
+        Object.entries(state.data).forEach(([ins, iD]) => {
+          Object.entries(iD.lectures)
+            .filter(([, l]) => l.status === "active" && l.liveDate >= todayStr)
+            .forEach(([lec, l]) => {
+              projects.push({ ins, lec, liveDate: l.liveDate, liveTime: l.liveTime, color: state.platformColors[l.platform] ?? iD.color, platform: l.platform || "" });
+            });
+        });
+        projects.sort((a, b) => a.liveDate.localeCompare(b.liveDate));
+        return (
+          <div className="px-7 py-6 max-w-[1100px] mx-auto">
+            <h3 className="text-[17px] font-extrabold mb-4">📋 진행중 강의 선택</h3>
+            {projects.length === 0 ? (
+              <div className="text-center text-muted-foreground py-16 text-[14px]">진행중인 강의가 없습니다</div>
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {projects.map((p) => {
+                  const key = `${p.ins}|${p.lec}`;
+                  const pmA = state.pmProjectAssignees[key] ?? "";
+                  const desA = state.designerProjectAssignees[key] ?? "";
+                  const ck = state.allChecks[key] || {};
+                  const seq = state.seqDataMap[key] || DEFAULT_SEQ;
+                  const totalI = seq.reduce((s, q) => s + q.items.length, 0);
+                  const checkedI = Object.values(ck).filter(Boolean).length;
+                  const pct = totalI ? Math.round((checkedI / totalI) * 100) : 0;
+                  const diff = Math.ceil((new Date(p.liveDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => {
+                        dispatch({ type: "SELECT_INSTRUCTOR", ins: p.ins });
+                        setTimeout(() => dispatch({ type: "SELECT_LECTURE", lec: p.lec }), 0);
+                      }}
+                      className="bg-white rounded-xl border border-border p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+                      style={{ borderTop: `3px solid ${p.color}` }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[13px] font-extrabold truncate" style={{ color: p.color }}>{p.ins}</span>
+                        {diff <= 7 && diff >= 0 && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${diff <= 1 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+                            {diff === 0 ? "D-Day" : `D-${diff}`}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[12px] font-semibold text-foreground truncate">{p.lec}</div>
+                      <div className="text-[11px] text-muted-foreground mt-1">{fmtDateKr(p.liveDate)} {p.liveTime}</div>
+                      {(pmA || desA) && (
+                        <div className="text-[10px] text-[#aeaeb2] mt-1 truncate">
+                          {pmA ? `PM ${pmA}` : ""}{pmA && desA ? " / " : ""}{desA ? `담당 ${desA}` : ""}
+                        </div>
+                      )}
+                      <div className="mt-2">
+                        <div className="flex justify-between text-[10px] text-muted-foreground mb-0.5">
+                          <span>진행률</span>
+                          <span>{checkedI}/{totalI}</span>
+                        </div>
+                        <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: p.color }} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })() : (
         <div className="px-7 py-5 pb-[120px] max-w-[1000px] mx-auto">
           <div className="flex justify-between items-center mb-5">
             <div className="text-[15px] text-muted-foreground font-semibold">
@@ -187,6 +314,39 @@ export default function BoardTab() {
               {isGen ? "⏳ 생성 중..." : "✨ 전체 카피 생성 (Claude AI)"}
             </button>
           </div>
+
+          {/* D-10 혜택 입력 (디자이너 탭 연동) */}
+          {curKey && (() => {
+            const meta = state.milestoneMeta[curKey] || {};
+            const benefitText = meta.benefit || "";
+            const benefitDone = meta.benefitDone === "true";
+            return (
+              <div className={`rounded-2xl border-2 p-5 mb-5 ${benefitDone ? "bg-gray-50 border-gray-200" : "bg-white border-red-200"}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-extrabold px-2.5 py-1 rounded-full bg-red-100 text-red-500">D-10</span>
+                    <span className="text-[15px] font-extrabold">혜택 전달</span>
+                    <span className="text-[12px] text-muted-foreground">→ 디자이너 탭에 자동 반영</span>
+                  </div>
+                  <button
+                    onClick={() => dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefitDone", value: benefitDone ? "false" : "true" })}
+                    className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors ${
+                      benefitDone ? "bg-gray-100 text-gray-500 hover:bg-gray-200" : "bg-secondary text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {benefitDone ? "✅ 전달 완료" : "전달 완료 체크"}
+                  </button>
+                </div>
+                <textarea
+                  value={benefitText}
+                  onChange={(e) => dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefit", value: e.target.value })}
+                  rows={3}
+                  placeholder="혜택 내용을 입력하세요 (디자이너 탭 D-10에 자동 반영됩니다)"
+                  className="w-full text-[13px] bg-secondary border border-border rounded-lg px-3.5 py-2.5 outline-none focus:ring-1 focus:ring-primary resize-y"
+                />
+              </div>
+            );
+          })()}
 
           {/* 시퀀스 타임라인 */}
           {seqData.map((seq, si) => (
@@ -215,7 +375,7 @@ export default function BoardTab() {
                       key={item.id}
                       onClick={() => setSel({ seq, item })}
                       className="bg-white rounded-xl px-4 py-3.5 cursor-pointer relative transition-all hover:-translate-y-0.5 hover:shadow-md"
-                      style={{ border: `2px solid ${ck ? "#2ecc71" : cp ? cardColor + "40" : "#e5e5ea"}` }}
+                      style={{ border: `2px solid ${ck ? "#d1d5db" : cp ? cardColor + "40" : "#e5e5ea"}` }}
                     >
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -240,7 +400,7 @@ export default function BoardTab() {
                             className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer text-[13px] text-white font-bold"
                             style={{
                               border: ck ? "none" : "2px solid #d2d2d7",
-                              background: ck ? "#2ecc71" : "#fff",
+                              background: ck ? "#9ca3af" : "#fff",
                             }}
                           >
                             {ck && "✓"}
@@ -325,6 +485,7 @@ export default function BoardTab() {
       {/* Modals */}
       {sel && <CopyModal sel={sel} onClose={() => setSel(null)} />}
       {showAdd && <AddLectureDialog defaultInstructor={state.ins} onClose={() => setShowAdd(false)} />}
+      {showAssigneeMgr && <AssigneeManagerModal onClose={() => setShowAssigneeMgr(false)} />}
     </div>
   );
 }

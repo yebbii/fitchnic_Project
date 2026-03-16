@@ -26,8 +26,9 @@ import type {
   DesignerMilestonesMap,
   MilestoneId,
   Assignee,
+  MilestoneMetaMap,
 } from "@/lib/types";
-import { INIT_DATA, DEFAULT_SEQ, DEFAULT_PLATFORM_COLORS } from "@/lib/constants";
+import { INIT_DATA, DEFAULT_SEQ, DEFAULT_PLATFORM_COLORS, DESIGNER_MILESTONES } from "@/lib/constants";
 import { storage } from "@/lib/storage";
 
 /* ─── State ─── */
@@ -46,9 +47,13 @@ interface CrmState {
   platformColors: Record<string, string>;
   designerMilestones: DesignerMilestonesMap;
   designerProjectAssignees: Record<string, string>;
+  pmProjectAssignees: Record<string, string>;
+  milestoneMeta: MilestoneMetaMap;
   assignees: Assignee[];
-  ins: string;
+  ins: string;           // PM 선택
   lec: string;
+  designerIns: string;   // 디자이너 선택
+  designerLec: string;
   hydrated: boolean;
 }
 
@@ -67,20 +72,26 @@ const initialState: CrmState = {
   platformColors: DEFAULT_PLATFORM_COLORS,
   designerMilestones: {},
   designerProjectAssignees: {},
+  pmProjectAssignees: {},
+  milestoneMeta: {},
   assignees: [],
   ins: "",
   lec: "",
+  designerIns: "",
+  designerLec: "",
   hydrated: false,
 };
 
 /* ─── Actions ─── */
 type Action =
-  | { type: "HYDRATE"; data: CrmData; checks: ChecksMap; copies: CopiesMap; seqDataMap: SeqDataMap; feedbacks: Feedback[]; designChecks: DesignChecksMap; workLogs: WorkLog[]; platformColors: Record<string, string>; designerMilestones: DesignerMilestonesMap; designerProjectAssignees: Record<string, string>; assignees: Assignee[] }
+  | { type: "HYDRATE"; data: CrmData; checks: ChecksMap; copies: CopiesMap; seqDataMap: SeqDataMap; feedbacks: Feedback[]; designChecks: DesignChecksMap; workLogs: WorkLog[]; platformColors: Record<string, string>; designerMilestones: DesignerMilestonesMap; designerProjectAssignees: Record<string, string>; pmProjectAssignees: Record<string, string>; milestoneMeta: MilestoneMetaMap; assignees: Assignee[] }
   | { type: "SET_DESIGNER_PROJECT_ASSIGNEE"; curKey: string; assignee: string }
+  | { type: "SET_PM_PROJECT_ASSIGNEE"; curKey: string; assignee: string }
   | { type: "ADD_ASSIGNEE"; assignee: Assignee }
   | { type: "UPDATE_ASSIGNEE"; id: string; name: string; color: string }
   | { type: "DELETE_ASSIGNEE"; id: string }
   | { type: "SET_DESIGNER_MILESTONE"; curKey: string; milestoneId: MilestoneId; checked?: boolean; assignee?: string }
+  | { type: "SET_MILESTONE_META"; curKey: string; field: string; value: string }
   | { type: "SET_TOP_TAB"; tab: TopTabId }
   | { type: "SET_TAB"; tab: TabId }
   | { type: "SET_DESIGNER_TAB"; tab: DesignerTabId }
@@ -88,6 +99,9 @@ type Action =
   | { type: "SELECT_INSTRUCTOR"; ins: string }
   | { type: "SELECT_LECTURE"; lec: string }
   | { type: "SELECT_LECTURE_AND_NAV"; ins: string; lec: string; tab: TabId }
+  | { type: "SELECT_DESIGNER_INSTRUCTOR"; ins: string }
+  | { type: "SELECT_DESIGNER_LECTURE"; lec: string }
+  | { type: "SELECT_DESIGNER_LECTURE_AND_NAV"; ins: string; lec: string }
   | { type: "SET_DATA"; data: CrmData }
   | { type: "UPDATE_LECTURE_FIELD"; ins: string; lec: string; field: string; value: unknown }
   | { type: "ADD_LECTURE"; ins: string; lec: string; lecture: Lecture; color: string }
@@ -122,6 +136,8 @@ function reducer(state: CrmState, action: Action): CrmState {
         platformColors: { ...DEFAULT_PLATFORM_COLORS, ...action.platformColors },
         designerMilestones: action.designerMilestones,
         designerProjectAssignees: action.designerProjectAssignees,
+        pmProjectAssignees: action.pmProjectAssignees,
+        milestoneMeta: action.milestoneMeta,
         assignees: action.assignees,
         hydrated: true,
       };
@@ -139,6 +155,12 @@ function reducer(state: CrmState, action: Action): CrmState {
       return { ...state, lec: action.lec };
     case "SELECT_LECTURE_AND_NAV":
       return { ...state, ins: action.ins, lec: action.lec, tab: action.tab };
+    case "SELECT_DESIGNER_INSTRUCTOR":
+      return { ...state, designerIns: action.ins, designerLec: "" };
+    case "SELECT_DESIGNER_LECTURE":
+      return { ...state, designerLec: action.lec };
+    case "SELECT_DESIGNER_LECTURE_AND_NAV":
+      return { ...state, designerIns: action.ins, designerLec: action.lec };
     case "SET_DATA":
       return { ...state, data: action.data };
     case "UPDATE_LECTURE_FIELD": {
@@ -337,6 +359,18 @@ function reducer(state: CrmState, action: Action): CrmState {
         ...state,
         designerProjectAssignees: { ...state.designerProjectAssignees, [action.curKey]: action.assignee },
       };
+    case "SET_PM_PROJECT_ASSIGNEE":
+      return {
+        ...state,
+        pmProjectAssignees: { ...state.pmProjectAssignees, [action.curKey]: action.assignee },
+      };
+    case "SET_MILESTONE_META": {
+      const prev = state.milestoneMeta[action.curKey] || {};
+      return {
+        ...state,
+        milestoneMeta: { ...state.milestoneMeta, [action.curKey]: { ...prev, [action.field]: action.value } },
+      };
+    }
     case "ADD_ASSIGNEE":
       return { ...state, assignees: [...state.assignees, action.assignee] };
     case "UPDATE_ASSIGNEE":
@@ -391,8 +425,10 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     const pc = storage.loadPlatformColors() || {};
     const dm = storage.loadDesignerMilestones() || {};
     const pa = storage.loadDesignerProjectAssignees() || {};
+    const pma = storage.loadPmProjectAssignees() || {};
+    const mm = storage.loadMilestoneMeta() || {};
     const as = storage.loadAssignees() || [];
-    dispatch({ type: "HYDRATE", data: d, checks: c, copies: cp, seqDataMap: sm, feedbacks: fb, designChecks: dc, workLogs: wl, platformColors: pc, designerMilestones: dm, designerProjectAssignees: pa, assignees: as });
+    dispatch({ type: "HYDRATE", data: d, checks: c, copies: cp, seqDataMap: sm, feedbacks: fb, designChecks: dc, workLogs: wl, platformColors: pc, designerMilestones: dm, designerProjectAssignees: pa, pmProjectAssignees: pma, milestoneMeta: mm, assignees: as });
   }, []);
 
   // Auto-complete lectures past D+2
@@ -481,6 +517,18 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [state.designerProjectAssignees, state.hydrated]);
 
+  useEffect(() => {
+    if (!state.hydrated) return;
+    const t = setTimeout(() => storage.savePmProjectAssignees(state.pmProjectAssignees), 500);
+    return () => clearTimeout(t);
+  }, [state.pmProjectAssignees, state.hydrated]);
+
+  useEffect(() => {
+    if (!state.hydrated) return;
+    const t = setTimeout(() => storage.saveMilestoneMeta(state.milestoneMeta), 500);
+    return () => clearTimeout(t);
+  }, [state.milestoneMeta, state.hydrated]);
+
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
   return <CrmContext.Provider value={value}>{children}</CrmContext.Provider>;
@@ -525,10 +573,75 @@ export function useGoToDesignerTimeline() {
   const { dispatch } = useCrm();
   return useCallback(
     (ins: string, lec: string) => {
-      dispatch({ type: "SELECT_LECTURE_AND_NAV", ins, lec, tab: "board" });
+      dispatch({ type: "SELECT_DESIGNER_LECTURE_AND_NAV", ins, lec });
       dispatch({ type: "SET_TOP_TAB", tab: "designer" });
       dispatch({ type: "SET_DESIGNER_TAB", tab: "timeline" });
     },
     [dispatch]
   );
+}
+
+export function useDesignerCurKey(): string {
+  const { state } = useCrm();
+  return state.designerIns && state.designerLec ? `${state.designerIns}|${state.designerLec}` : "";
+}
+
+export function useDesignerCurrentLecture(): import("@/lib/types").Lecture | null {
+  const { state } = useCrm();
+  if (!state.designerIns || !state.designerLec) return null;
+  return state.data[state.designerIns]?.lectures?.[state.designerLec] || null;
+}
+
+/**
+ * 마일스톤 블록(캘린더)과 타임라인 블록의 완료 상태를 동기화하는 공용 토글 훅.
+ * 상위 체크 시 하위 전부 완료 + 스냅샷 저장, 해제 시 스냅샷 복원.
+ */
+export function useToggleDesignerMilestone() {
+  const { state, dispatch } = useCrm();
+
+  const isSubChecked = useCallback(
+    (curKey: string, sub: { id: string; type?: string }) => {
+      if (sub.type === "benefit") return state.milestoneMeta[curKey]?.benefitDone === "true";
+      return !!state.designChecks[curKey]?.[sub.id];
+    },
+    [state.designChecks, state.milestoneMeta],
+  );
+
+  const toggle = useCallback(
+    (curKey: string, ms: (typeof DESIGNER_MILESTONES)[number]) => {
+      const milestones = state.designerMilestones[curKey] || {};
+      const item = milestones[ms.id] || { checked: false, assignee: "" };
+      const subs = ms.subItems || [];
+
+      if (!item.checked) {
+        // 체크: 스냅샷 저장 후 하위 전부 완료
+        const snapshot: Record<string, boolean> = {};
+        subs.forEach((sub) => { snapshot[sub.id] = isSubChecked(curKey, sub); });
+        dispatch({ type: "SET_MILESTONE_META", curKey, field: `snapshot_${ms.id}`, value: JSON.stringify(snapshot) });
+        subs.forEach((sub) => {
+          if (sub.type === "benefit") dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefitDone", value: "true" });
+          else dispatch({ type: "SET_DESIGN_CHECK", lectureKey: curKey, itemId: sub.id, checked: true });
+        });
+        dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: ms.id as MilestoneId, checked: true });
+      } else {
+        // 해제: 스냅샷에서 복원
+        const raw = state.milestoneMeta[curKey]?.[`snapshot_${ms.id}`];
+        const snapshot: Record<string, boolean> = raw ? JSON.parse(raw) : {};
+        subs.forEach((sub) => {
+          const prev = snapshot[sub.id] ?? false;
+          if (sub.type === "benefit") dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefitDone", value: prev ? "true" : "" });
+          else dispatch({ type: "SET_DESIGN_CHECK", lectureKey: curKey, itemId: sub.id, checked: prev });
+        });
+        dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: ms.id as MilestoneId, checked: false });
+        // 자동 완료 후 수동 해제 시 → dismissed 표시하여 재자동완료 방지
+        const autoKey = `autoCompleted_${ms.id}`;
+        if (state.milestoneMeta[curKey]?.[autoKey] === "done") {
+          dispatch({ type: "SET_MILESTONE_META", curKey, field: autoKey, value: "dismissed" });
+        }
+      }
+    },
+    [state.designerMilestones, state.milestoneMeta, isSubChecked, dispatch],
+  );
+
+  return toggle;
 }

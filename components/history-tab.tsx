@@ -76,13 +76,13 @@ export default function HistoryTab() {
                           className="h-full rounded-sm transition-all duration-300"
                           style={{
                             width: `${pctCheck}%`,
-                            background: pctCheck === 100 ? "#2ecc71" : "linear-gradient(90deg,#f39c12,#e67e22)",
+                            background: pctCheck === 100 ? "#9ca3af" : "linear-gradient(90deg,#f39c12,#e67e22)",
                           }}
                         />
                       </div>
                     </div>
                     {pctCheck === 100 && pctCopy === 100 && (
-                      <div className="text-[11px] text-emerald-600 font-bold mt-1">🎉 CRM 완료!</div>
+                      <div className="text-[11px] text-gray-500 font-bold mt-1">CRM 완료</div>
                     )}
                   </div>
 

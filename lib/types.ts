@@ -113,6 +113,10 @@ export interface MilestoneItem {
 }
 export type DesignerMilestonesMap = Record<string, Partial<Record<MilestoneId, MilestoneItem>>>;
 
+/* ── 마일스톤 메타 (자료요청 멘트, 혜택 내용 등) ── */
+export type MilestoneMetaMap = Record<string, Record<string, string>>;
+// curKey → { requestMsg: "...", benefit: "...", benefitDone: "true" }
+
 /* ── 작업일지 ── */
 export interface WorkLog {
   id: string;
@@ -123,10 +127,13 @@ export interface WorkLog {
 }
 
 /* ── 담당자 ── */
+export type AssigneeRole = "pm" | "designer";
+
 export interface Assignee {
   id: string;
   name: string;
   color: string;
+  role: AssigneeRole;
 }
 
 export interface ChOption {

@@ -75,7 +75,10 @@ function NavHeader() {
           {PM_SUB_TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => dispatch({ type: "SET_TAB", tab: t.id })}
+              onClick={() => {
+                dispatch({ type: "SET_TAB", tab: t.id });
+                if (t.id === "board") { dispatch({ type: "SELECT_INSTRUCTOR", ins: "" }); }
+              }}
               className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer border-none ${
                 state.tab === t.id
                   ? "bg-primary text-white"
@@ -94,7 +97,10 @@ function NavHeader() {
           {DESIGNER_SUB_TABS.map((t) => (
             <button
               key={t.id}
-              onClick={() => dispatch({ type: "SET_DESIGNER_TAB", tab: t.id })}
+              onClick={() => {
+                dispatch({ type: "SET_DESIGNER_TAB", tab: t.id });
+                if (t.id === "timeline") { dispatch({ type: "SELECT_DESIGNER_INSTRUCTOR", ins: "" }); }
+              }}
               className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer border-none ${
                 state.designerTab === t.id
                   ? "bg-[#764ba2] text-white"

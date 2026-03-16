@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
-import type { WorkLog, Assignee } from "@/lib/types";
+import type { WorkLog } from "@/lib/types";
+import AssigneeManagerModal from "./assignee-manager-modal";
 
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -13,7 +14,6 @@ function fmtDate(iso: string) {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
-const PRESET_COLORS = ["#764ba2", "#f97316", "#22c55e", "#38bdf8", "#ef4444", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#667eea"];
 
 export default function WorklogTab() {
   const { state, dispatch } = useCrm();
@@ -26,11 +26,7 @@ export default function WorklogTab() {
   const [editContent, setEditContent] = useState("");
 
   // 담당자 관리
-  const [newName, setNewName] = useState("");
-  const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editColor, setEditColor] = useState("");
+  const [showAssigneeMgr, setShowAssigneeMgr] = useState(false);
 
   const activeLectures: { key: string; label: string }[] = [];
   Object.entries(state.data).forEach(([ins, iD]) => {
@@ -61,25 +57,6 @@ export default function WorklogTab() {
     setEditContent("");
   };
 
-  const addAssignee = () => {
-    if (!newName.trim()) return;
-    const assignee: Assignee = { id: uid(), name: newName.trim(), color: newColor };
-    dispatch({ type: "ADD_ASSIGNEE", assignee });
-    setNewName("");
-    setNewColor(PRESET_COLORS[0]);
-  };
-
-  const startEditAssignee = (a: Assignee) => {
-    setEditingId(a.id);
-    setEditName(a.name);
-    setEditColor(a.color);
-  };
-
-  const saveAssignee = () => {
-    if (!editName.trim() || !editingId) return;
-    dispatch({ type: "UPDATE_ASSIGNEE", id: editingId, name: editName.trim(), color: editColor });
-    setEditingId(null);
-  };
 
   const grouped: Record<string, WorkLog[]> = {};
   for (const log of state.workLogs) {
@@ -92,106 +69,33 @@ export default function WorklogTab() {
     <div className="animate-fi flex min-h-[calc(100vh-100px)]">
       {/* ── 담당자 사이드바 ── */}
       <aside className="w-[240px] min-w-[240px] border-r border-border bg-white overflow-y-auto flex flex-col">
-        <div className="px-4 py-3 border-b border-border">
-          <div className="text-[13px] font-extrabold">👤 담당자</div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">{state.assignees.length}명</div>
-        </div>
-
-        {/* 담당자 목록 */}
-        <div className="flex-1 overflow-y-auto divide-y divide-border">
-          {state.assignees.length === 0 && (
-            <div className="text-center text-muted-foreground py-8 text-[12px]">담당자가 없습니다</div>
-          )}
-          {state.assignees.map((a) => (
-            <div key={a.id} className="px-4 py-3">
-              {editingId === a.id ? (
-                <div className="flex flex-col gap-2">
-                  <input
-                    autoFocus
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && saveAssignee()}
-                    className="w-full text-[12px] bg-secondary border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
-                    placeholder="이름"
-                  />
-                  <div className="flex flex-wrap gap-1">
-                    {PRESET_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setEditColor(c)}
-                        className="w-5 h-5 rounded-full border-none cursor-pointer flex-shrink-0 transition-transform"
-                        style={{ background: c, outline: editColor === c ? `2px solid ${c}` : "none", outlineOffset: "2px", transform: editColor === c ? "scale(1.2)" : "scale(1)" }}
-                      />
-                    ))}
-                    <input
-                      type="color"
-                      value={editColor}
-                      onChange={(e) => setEditColor(e.target.value)}
-                      className="w-5 h-5 rounded-full border-none cursor-pointer p-0 bg-transparent"
-                      title="직접 입력"
-                    />
-                  </div>
-                  <div className="flex gap-1.5">
-                    <button onClick={saveAssignee} className="flex-1 bg-[#764ba2] text-white rounded-lg py-1 text-[11px] font-semibold border-none cursor-pointer hover:opacity-90">저장</button>
-                    <button onClick={() => setEditingId(null)} className="flex-1 bg-secondary text-muted-foreground rounded-lg py-1 text-[11px] font-semibold border-none cursor-pointer hover:bg-accent">취소</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-extrabold" style={{ background: a.color }}>
-                    {a.name.slice(0, 1)}
-                  </div>
-                  <span className="flex-1 text-[12px] font-semibold truncate">{a.name}</span>
-                  <button
-                    onClick={() => startEditAssignee(a)}
-                    className="w-6 h-6 rounded-md bg-secondary flex items-center justify-center text-[11px] border-none cursor-pointer hover:bg-accent"
-                    title="수정"
-                  >✏️</button>
-                  <button
-                    onClick={() => dispatch({ type: "DELETE_ASSIGNEE", id: a.id })}
-                    className="w-6 h-6 rounded-md bg-red-50 flex items-center justify-center text-[12px] font-bold text-red-400 border-none cursor-pointer hover:bg-red-100"
-                    title="삭제"
-                  >×</button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* 담당자 추가 */}
-        <div className="border-t border-border px-4 py-3 bg-[#fafafa]">
-          <div className="text-[11px] font-extrabold text-muted-foreground mb-2">담당자 추가</div>
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addAssignee()}
-            placeholder="이름 입력"
-            className="w-full text-[12px] bg-white border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary mb-2"
-          />
-          <div className="flex flex-wrap gap-1 mb-2">
-            {PRESET_COLORS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setNewColor(c)}
-                className="w-5 h-5 rounded-full border-none cursor-pointer flex-shrink-0 transition-transform"
-                style={{ background: c, outline: newColor === c ? `2px solid ${c}` : "none", outlineOffset: "2px", transform: newColor === c ? "scale(1.2)" : "scale(1)" }}
-              />
-            ))}
-            <input
-              type="color"
-              value={newColor}
-              onChange={(e) => setNewColor(e.target.value)}
-              className="w-5 h-5 rounded-full border-none cursor-pointer p-0 bg-transparent"
-              title="직접 입력"
-            />
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <div>
+            <div className="text-[13px] font-extrabold">👤 담당자</div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">{state.assignees.filter((a) => a.role === "designer").length}명</div>
           </div>
           <button
-            onClick={addAssignee}
-            disabled={!newName.trim()}
-            className="w-full bg-[#764ba2] text-white rounded-lg py-1.5 text-[12px] font-semibold border-none cursor-pointer hover:opacity-90 disabled:opacity-40"
+            onClick={() => setShowAssigneeMgr(true)}
+            className="text-[11px] text-primary font-semibold px-2 py-1 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20"
           >
-            + 추가
+            ⚙️ 관리
           </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto divide-y divide-border">
+          {state.assignees.filter((a) => a.role === "designer").length === 0 && (
+            <div className="text-center text-muted-foreground py-8 text-[12px]">담당자가 없습니다</div>
+          )}
+          {state.assignees.filter((a) => a.role === "designer").map((a) => (
+            <div key={a.id} className="px-4 py-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-extrabold" style={{ background: a.color }}>
+                  {a.name.slice(0, 1)}
+                </div>
+                <span className="flex-1 text-[12px] font-semibold truncate">{a.name}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </aside>
 
@@ -313,6 +217,7 @@ export default function WorklogTab() {
           )}
         </div>
       </div>
+      {showAssigneeMgr && <AssigneeManagerModal onClose={() => setShowAssigneeMgr(false)} />}
     </div>
   );
 }

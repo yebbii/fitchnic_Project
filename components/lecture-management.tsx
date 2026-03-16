@@ -32,6 +32,7 @@ export default function LectureManagement() {
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
+  const [deleteConfirmKey, setDeleteConfirmKey] = useState<string | null>(null);
 
   // 현재와 가까운 순 정렬
   const allLectures = useMemo(() => {
@@ -160,6 +161,29 @@ export default function LectureManagement() {
             >
               디자인
             </button>
+            {deleteConfirmKey === detailKey ? (
+              <>
+                <button
+                  onClick={() => { dispatch({ type: "DELETE_LECTURE", ins, lec }); setDetailKey(null); setDeleteConfirmKey(null); }}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-red-500 text-white hover:bg-red-600 transition-colors"
+                >
+                  삭제 확인
+                </button>
+                <button
+                  onClick={() => setDeleteConfirmKey(null)}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground hover:bg-accent transition-colors"
+                >
+                  취소
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setDeleteConfirmKey(detailKey)}
+                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
+              >
+                삭제
+              </button>
+            )}
           </div>
         </div>
 
@@ -307,11 +331,13 @@ export default function LectureManagement() {
   const LectureCard = ({ l }: { l: typeof allLectures[0] }) => {
     const { pmTotal, pmChecked, desChecked } = getLecStats(l.ins, l.lec);
     const cardColor = state.platformColors[l.platform] ?? l.color;
+    const curKey = `${l.ins}|${l.lec}`;
+    const isDeleting = deleteConfirmKey === curKey;
     return (
       <div
         className="bg-white rounded-xl border border-border p-4 cursor-pointer hover:shadow-md transition-shadow"
         style={{ borderLeft: `3px solid ${cardColor}` }}
-        onClick={() => setDetailKey(`${l.ins}|${l.lec}`)}
+        onClick={() => setDetailKey(curKey)}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -331,9 +357,35 @@ export default function LectureManagement() {
               <div className="text-[11px] text-muted-foreground mt-0.5">{fmtDateKr(l.liveDate)} {l.liveTime}</div>
             )}
           </div>
-          <div className="flex-shrink-0 text-right">
-            <div className="text-[10px] text-muted-foreground mb-0.5">PM {pmChecked}/{pmTotal}</div>
-            <div className="text-[10px] text-muted-foreground">디자인 {desChecked}/{DES_TOTAL}</div>
+          <div className="flex-shrink-0 flex items-start gap-2">
+            <div className="text-right">
+              <div className="text-[10px] text-muted-foreground mb-0.5">PM {pmChecked}/{pmTotal}</div>
+              <div className="text-[10px] text-muted-foreground">디자인 {desChecked}/{DES_TOTAL}</div>
+            </div>
+            {isDeleting ? (
+              <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => { dispatch({ type: "DELETE_LECTURE", ins: l.ins, lec: l.lec }); setDeleteConfirmKey(null); }}
+                  className="px-2 py-1 rounded-md text-[10px] font-semibold border-none cursor-pointer bg-red-500 text-white hover:bg-red-600 transition-colors"
+                >
+                  확인
+                </button>
+                <button
+                  onClick={() => setDeleteConfirmKey(null)}
+                  className="px-2 py-1 rounded-md text-[10px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground hover:bg-accent transition-colors"
+                >
+                  취소
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setDeleteConfirmKey(curKey); }}
+                className="w-7 h-7 rounded-lg bg-red-50 text-red-400 border-none cursor-pointer text-[13px] hover:bg-red-100 transition-colors flex items-center justify-center flex-shrink-0"
+                title="삭제"
+              >
+                ×
+              </button>
+            )}
           </div>
         </div>
         <div className="mt-2.5 flex flex-col gap-1">

@@ -1,21 +1,25 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useCrm, useGoToDesignerTimeline } from "@/hooks/use-crm-store";
+import { useCrm, useGoToDesignerTimeline, useToggleDesignerMilestone } from "@/hooks/use-crm-store";
 import { DESIGNER_MILESTONES } from "@/lib/constants";
 import { addDays, fmtDate, fmtDateKr, isSameDay } from "@/lib/utils";
 import type { MilestoneId } from "@/lib/types";
+import AssigneeManagerModal from "./assignee-manager-modal";
 
 export default function DesignerCalendarTab() {
   const { state, dispatch } = useCrm();
   const goToTimeline = useGoToDesignerTimeline();
+  const toggleMilestone = useToggleDesignerMilestone();
   const today = new Date();
   const [calMonth, setCalMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [dropdown, setDropdown] = useState<string | null>(null); // "project|curKey" | "ms|curKey|milestoneId"
   const [showMoreProjects, setShowMoreProjects] = useState(false);
+  const [showAssigneeMgr, setShowAssigneeMgr] = useState(false);
   const [viewMode, setViewMode] = useState<"calendar" | "table">("calendar");
+  const [filterAssignee, setFilterAssignee] = useState<string | null>(null);
 
   const toggleProject = (curKey: string) => {
     setExpandedProjects((prev) => {
@@ -108,54 +112,100 @@ export default function DesignerCalendarTab() {
 
   const todayStr = fmtDate(today);
 
+  /* 담당자 필터용 목록 (프로젝트에 배정된 디자이너 담당자들) */
+  const assigneeList = useMemo(() => {
+    const names = new Set<string>();
+    projects.forEach(({ ins, lec }) => {
+      const curKey = `${ins}|${lec}`;
+      const name = state.designerProjectAssignees[curKey];
+      if (name) names.add(name);
+    });
+    return Array.from(names).map((name) => ({
+      name,
+      color: state.assignees.find((a) => a.name === name)?.color ?? "#aeaeb2",
+    }));
+  }, [projects, state.designerProjectAssignees, state.assignees]);
+
+  /* 필터된 이벤트 & 프로젝트 */
+  const filteredEvents = useMemo(() => {
+    if (!filterAssignee) return events;
+    return events.filter((ev) => {
+      if (ev.isLive) {
+        const curKey = `${ev.ins}|${ev.lec}`;
+        return state.designerProjectAssignees[curKey] === filterAssignee;
+      }
+      return ev.assignee === filterAssignee;
+    });
+  }, [events, filterAssignee, state.designerProjectAssignees]);
+
+  const filteredProjects = useMemo(() => {
+    if (!filterAssignee) return projects;
+    return projects.filter(({ ins, lec }) => {
+      const curKey = `${ins}|${lec}`;
+      return state.designerProjectAssignees[curKey] === filterAssignee;
+    });
+  }, [projects, filterAssignee, state.designerProjectAssignees]);
+
   /* 담당자 드롭다운 공통 렌더 */
   const AssigneeDropdown = ({
     dropKey,
     currentName,
     onSelect,
+    role,
   }: {
     dropKey: string;
     currentName: string;
     onSelect: (name: string) => void;
-  }) => (
-    <div
-      className="absolute left-0 top-full mt-0.5 z-30 bg-white border border-border rounded-lg shadow-lg py-1 min-w-[140px]"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        onClick={() => { onSelect(""); setDropdown(null); }}
-        className="w-full text-left px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-secondary border-none bg-transparent cursor-pointer"
+    role?: "pm" | "designer";
+  }) => {
+    const filtered = role ? state.assignees.filter((a) => a.role === role) : state.assignees;
+    return (
+      <div
+        className="absolute left-0 top-full mt-0.5 z-[100] bg-white border border-border rounded-lg shadow-lg py-1 min-w-[140px]"
+        onClick={(e) => e.stopPropagation()}
       >
-        없음
-      </button>
-      {state.assignees.length === 0 && (
-        <div className="px-3 py-1.5 text-[11px] text-[#aeaeb2]">담당자를 먼저 추가하세요</div>
-      )}
-      {state.assignees.map((a) => (
         <button
-          key={a.id}
-          onClick={() => { onSelect(a.name); setDropdown(null); }}
-          className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-secondary border-none bg-transparent cursor-pointer ${currentName === a.name ? "bg-secondary" : ""}`}
+          onClick={() => { onSelect(""); setDropdown(null); }}
+          className="w-full text-left px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-secondary border-none bg-transparent cursor-pointer"
         >
-          <div
-            className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0"
-            style={{ background: a.color }}
-          >
-            {a.name.slice(0, 1)}
-          </div>
-          <span className="text-[11px] font-semibold">{a.name}</span>
+          없음
         </button>
-      ))}
-    </div>
-  );
+        {filtered.length === 0 && (
+          <div className="px-3 py-1.5 text-[11px] text-[#aeaeb2]">담당자를 먼저 추가하세요</div>
+        )}
+        {filtered.map((a) => (
+          <button
+            key={a.id}
+            onClick={() => { onSelect(a.name); setDropdown(null); }}
+            className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-secondary border-none bg-transparent cursor-pointer ${currentName === a.name ? "bg-secondary" : ""}`}
+          >
+            <div
+              className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0"
+              style={{ background: a.color }}
+            >
+              {a.name.slice(0, 1)}
+            </div>
+            <span className="text-[11px] font-semibold">{a.name}</span>
+          </button>
+        ))}
+        <div className="border-t border-border mt-1 pt-1">
+          <button
+            onClick={() => { setDropdown(null); setShowAssigneeMgr(true); }}
+            className="w-full text-left px-3 py-1.5 text-[11px] text-primary font-semibold hover:bg-secondary border-none bg-transparent cursor-pointer"
+          >
+            ⚙️ 담당자 관리
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex min-h-[calc(100vh-100px)]" onClick={() => setDropdown(null)}>
       {/* ── 사이드 패널 ── */}
       <aside className="w-[300px] min-w-[300px] border-r border-border bg-[#f7f7f8] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="px-4 py-3 border-b border-border bg-white">
-          <div className="text-[13px] font-extrabold">📋 프로젝트 마일스톤</div>
-          <div className="text-[11px] text-muted-foreground mt-0.5">진행중 강의 {projects.length}개</div>
+          <div className="text-[13px] font-extrabold">📋 {calMonth.getMonth() + 1}월 진행강의 {projects.filter(({ liveDate }) => { const d = new Date(liveDate); return d.getFullYear() === calMonth.getFullYear() && d.getMonth() === calMonth.getMonth(); }).length}개</div>
         </div>
 
         {projects.length === 0 && (
@@ -163,10 +213,7 @@ export default function DesignerCalendarTab() {
         )}
 
         {(() => {
-          const fiveWeeksLater = fmtDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 35));
-          const withinWindow = projects.filter(({ liveDate }) => liveDate >= todayStr && liveDate < fiveWeeksLater);
-          const beyond = projects.filter(({ liveDate }) => liveDate >= fiveWeeksLater);
-          const displayed = showMoreProjects ? [...withinWindow, ...beyond] : withinWindow;
+          const displayed = showMoreProjects ? projects : projects.slice(0, 5);
 
           return (
         <div className="flex flex-col gap-3 p-3">
@@ -176,57 +223,79 @@ export default function DesignerCalendarTab() {
             const isExpanded = expandedProjects.has(curKey);
             const projectAssigneeName = state.designerProjectAssignees[curKey] ?? "";
             const projectAssigneeColor = projectAssigneeName ? getAssigneeColor(projectAssigneeName) : null;
+            const pmName = state.pmProjectAssignees[curKey] ?? "";
+            const pmColor = pmName ? getAssigneeColor(pmName) : null;
             const projectDropKey = `project|${curKey}`;
+            const msCheckedCount = DESIGNER_MILESTONES.filter((m) => milestones[m.id]?.checked).length;
+            const msTotal = DESIGNER_MILESTONES.length;
 
             return (
-              <div key={curKey} className="bg-white rounded-2xl border border-border shadow-[0_1px_4px_rgba(0,0,0,.05)] overflow-hidden">
+              <div key={curKey} className="bg-white rounded-2xl border border-border shadow-[0_1px_4px_rgba(0,0,0,.05)]">
                 {/* 카드 상단 색상 바 */}
-                <div className="h-1 w-full" style={{ background: insColor }} />
+                <div className="h-1 w-full rounded-t-2xl" style={{ background: insColor }} />
 
                 <div className="p-3.5">
-                  {/* 강사명 + 라이브 날짜 */}
-                  <div className="flex items-start justify-between gap-2 mb-0.5">
+                  {/* 1행: 강사명 + 날짜 */}
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
                     <div className="font-extrabold text-[13px] leading-tight truncate" style={{ color: insColor }}>{ins}</div>
                     <div className="text-[10px] text-muted-foreground font-semibold whitespace-nowrap flex-shrink-0">
                       🔴 {fmtDateKr(liveDate)}
                     </div>
                   </div>
 
-                  {/* 강의명 */}
-                  <div className="text-[11px] text-muted-foreground truncate mb-2.5">{lec}</div>
-
-                  {/* 담당자 */}
-                  <div className="relative">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDropdown(dropdown === projectDropKey ? null : projectDropKey); }}
-                      className="flex items-center gap-1.5 bg-secondary hover:bg-accent rounded-lg px-2.5 py-1.5 border-none cursor-pointer w-full text-left transition-colors"
-                    >
-                      {projectAssigneeName ? (
-                        <>
+                  {/* 2행: 강의명 + 담당자들 */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="text-[11px] text-muted-foreground truncate">{lec}</div>
+                    <div className="flex items-center gap-2.5 flex-shrink-0">
+                      {/* 디자이너 담당자 */}
+                      <div className="relative">
+                        <div
+                          onClick={(e) => { e.stopPropagation(); setDropdown(dropdown === projectDropKey ? null : projectDropKey); }}
+                          className="flex items-center gap-1 cursor-pointer"
+                        >
                           <div
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-extrabold flex-shrink-0"
-                            style={{ background: projectAssigneeColor ?? "#aeaeb2" }}
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0"
+                            style={{ background: projectAssigneeColor ?? "#d1d5db" }}
                           >
-                            {projectAssigneeName.slice(0, 1)}
+                            {projectAssigneeName ? projectAssigneeName.slice(0, 1) : "?"}
                           </div>
-                          <span className="text-[12px] font-semibold" style={{ color: projectAssigneeColor ?? "#1c1c1e" }}>
-                            {projectAssigneeName}
+                          <span className="text-[10px] font-semibold" style={{ color: projectAssigneeColor ?? "#aeaeb2" }}>
+                            {projectAssigneeName || "미지정"}
                           </span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-[#aeaeb2] text-[13px]">👤</span>
-                          <span className="text-[11px] text-[#aeaeb2]">담당자 추가</span>
-                        </>
-                      )}
-                    </button>
-                    {dropdown === projectDropKey && (
-                      <AssigneeDropdown
-                        dropKey={projectDropKey}
-                        currentName={projectAssigneeName}
-                        onSelect={(name) => dispatch({ type: "SET_DESIGNER_PROJECT_ASSIGNEE", curKey, assignee: name })}
-                      />
-                    )}
+                        </div>
+                        {dropdown === projectDropKey && (
+                          <AssigneeDropdown
+                            dropKey={projectDropKey}
+                            currentName={projectAssigneeName}
+                            onSelect={(name) => dispatch({ type: "SET_DESIGNER_PROJECT_ASSIGNEE", curKey, assignee: name })}
+                            role="designer"
+                          />
+                        )}
+                      </div>
+                      {/* PM 담당자 */}
+                      <div className="flex items-center gap-1">
+                        <div
+                          className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0"
+                          style={{ background: pmColor ?? "#d1d5db" }}
+                        >
+                          {pmName ? pmName.slice(0, 1) : "?"}
+                        </div>
+                        <span className="text-[10px] font-semibold" style={{ color: pmColor ?? "#aeaeb2" }}>
+                          {pmName ? `PM ${pmName}` : "PM 미지정"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3행: 진행률 바 */}
+                  <div>
+                    <div className="flex justify-between text-[10px] mb-0.5">
+                      <span className="font-semibold text-muted-foreground">마일스톤</span>
+                      <span className="font-semibold text-muted-foreground">{msCheckedCount}/{msTotal}</span>
+                    </div>
+                    <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${msTotal ? (msCheckedCount / msTotal) * 100 : 0}%`, background: "#764ba2" }} />
+                    </div>
                   </div>
 
                   {/* 마일스톤 목록 (펼쳤을 때) */}
@@ -246,7 +315,7 @@ export default function DesignerCalendarTab() {
                             key={ms.id}
                             className={`rounded-xl px-3 py-2.5 border transition-colors ${
                               item.checked
-                                ? "bg-green-50 border-green-200"
+                                ? "bg-gray-50 border-gray-200"
                                 : isPast
                                 ? "bg-red-50 border-red-100"
                                 : "bg-[#fafafa] border-border"
@@ -254,16 +323,11 @@ export default function DesignerCalendarTab() {
                           >
                             <div className="flex items-start gap-2">
                               <button
-                                onClick={() => dispatch({
-                                  type: "SET_DESIGNER_MILESTONE",
-                                  curKey,
-                                  milestoneId: ms.id as MilestoneId,
-                                  checked: !item.checked,
-                                })}
+                                onClick={() => toggleMilestone(curKey, ms)}
                                 className="w-4 h-4 mt-[2px] flex-shrink-0 rounded border-none cursor-pointer flex items-center justify-center text-[11px] font-bold transition-colors"
                                 style={{
-                                  background: item.checked ? "#22c55e" : "transparent",
-                                  border: `1.5px solid ${item.checked ? "#22c55e" : ms.color}`,
+                                  background: item.checked ? "#9ca3af" : "transparent",
+                                  border: `1.5px solid ${item.checked ? "#9ca3af" : ms.color}`,
                                   color: "#fff",
                                 }}
                               >
@@ -287,40 +351,6 @@ export default function DesignerCalendarTab() {
                                   {ms.title}
                                 </div>
 
-                                <div className="relative">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); setDropdown(dropdown === msDropKey ? null : msDropKey); }}
-                                    className="flex items-center gap-1 text-[10px] hover:opacity-80 bg-transparent border-none cursor-pointer px-0"
-                                  >
-                                    {effName ? (
-                                      <>
-                                        <div
-                                          className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0"
-                                          style={{ background: effColor ?? "#aeaeb2", opacity: isInherited ? 0.55 : 1 }}
-                                        >
-                                          {effName.slice(0, 1)}
-                                        </div>
-                                        <span className="font-semibold" style={{ color: effColor ?? "#6e6e73", opacity: isInherited ? 0.55 : 1 }}>
-                                          {effName}
-                                        </span>
-                                      </>
-                                    ) : (
-                                      <span className="text-[#aeaeb2]">+ 담당자</span>
-                                    )}
-                                  </button>
-                                  {dropdown === msDropKey && (
-                                    <AssigneeDropdown
-                                      dropKey={msDropKey}
-                                      currentName={item.assignee}
-                                      onSelect={(name) => dispatch({
-                                        type: "SET_DESIGNER_MILESTONE",
-                                        curKey,
-                                        milestoneId: ms.id as MilestoneId,
-                                        assignee: name,
-                                      })}
-                                    />
-                                  )}
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -340,18 +370,15 @@ export default function DesignerCalendarTab() {
               </div>
             );
           })}
-          {withinWindow.length === 0 && (
-            <div className="text-center text-muted-foreground py-8 text-[12px]">향후 5주 내 강의가 없습니다</div>
-          )}
-          {beyond.length > 0 && !showMoreProjects && (
+          {projects.length > 5 && !showMoreProjects && (
             <button
               onClick={() => setShowMoreProjects(true)}
               className="w-full py-2 text-[12px] text-[#764ba2] font-semibold bg-white border border-[#764ba2]/30 rounded-xl cursor-pointer hover:bg-[#764ba2]/5 transition-colors"
             >
-              + 5주 이후 강의 {beyond.length}개 더보기
+              + 나머지 {projects.length - 5}개 더보기
             </button>
           )}
-          {showMoreProjects && beyond.length > 0 && (
+          {showMoreProjects && projects.length > 5 && (
             <button
               onClick={() => setShowMoreProjects(false)}
               className="w-full py-2 text-[11px] text-[#aeaeb2] bg-transparent border-none cursor-pointer hover:text-[#6e6e73]"
@@ -369,10 +396,7 @@ export default function DesignerCalendarTab() {
         <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_8px_rgba(0,0,0,.04)]">
           <div className="flex justify-between items-center mb-[18px]">
             <div className="flex items-center gap-3">
-              <div>
-                <h3 className="text-xl font-extrabold">🎨 디자이너 캘린더</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">진행중 강의 {projects.length}개의 디자인 작업 일정</p>
-              </div>
+              <h3 className="text-xl font-extrabold">🎨 디자이너 캘린더</h3>
               {/* 뷰 토글 */}
               <div className="flex gap-0.5 bg-secondary rounded-lg p-[3px]">
                 <button
@@ -410,6 +434,75 @@ export default function DesignerCalendarTab() {
             </div>
           </div>
 
+          {/* ── 담당자 필터 ── */}
+          {assigneeList.length > 0 && (
+            <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+              <button
+                onClick={() => setFilterAssignee(null)}
+                className={`px-3 py-1.5 rounded-full text-[12px] font-semibold border-none cursor-pointer transition-colors ${
+                  filterAssignee === null
+                    ? "bg-foreground text-white"
+                    : "bg-secondary text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                전체
+              </button>
+              {assigneeList.map((a) => (
+                <button
+                  key={a.name}
+                  onClick={() => setFilterAssignee(filterAssignee === a.name ? null : a.name)}
+                  className="px-3 py-1.5 rounded-full text-[12px] font-semibold border-none cursor-pointer transition-colors flex items-center gap-1.5"
+                  style={filterAssignee === a.name ? {
+                    background: a.color,
+                    color: "#fff",
+                  } : {
+                    background: a.color + "18",
+                    color: a.color,
+                  }}
+                >
+                  <div
+                    className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0"
+                    style={{ background: filterAssignee === a.name ? "rgba(255,255,255,0.3)" : a.color }}
+                  >
+                    {a.name.slice(0, 1)}
+                  </div>
+                  {a.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── 오늘 할 일 배너 ── */}
+          {(() => {
+            const todayTasks = filteredEvents.filter((ev) => !ev.isLive && ev.date === todayStr && !ev.checked);
+            if (todayTasks.length === 0) return null;
+            return (
+              <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-[13px] font-extrabold text-amber-700 flex-shrink-0 whitespace-nowrap">
+                    📅 오늘 할 일 ({todayTasks.length}건)
+                  </span>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    {todayTasks.map((ev, i) => (
+                      <span
+                        key={i}
+                        onClick={() => goToTimeline(ev.ins, ev.lec)}
+                        className="text-[12px] text-amber-800 cursor-pointer hover:underline"
+                      >
+                        <span className="font-bold">{ev.lec}</span>
+                        {" "}
+                        <span className="font-extrabold" style={{ color: ev.milestoneColor }}>{ev.milestoneLabel}</span>
+                        {" "}
+                        <span className="text-amber-600">{ev.milestoneTitle}</span>
+                        {i < todayTasks.length - 1 && <span className="text-amber-300 ml-1">·</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ── 표 뷰 ── */}
           {viewMode === "table" && (() => {
             function dday(dateStr: string) {
@@ -428,35 +521,57 @@ export default function DesignerCalendarTab() {
             }
 
             // 프로젝트별로 그룹핑
-            if (projects.length === 0) {
-              return <div className="text-center text-muted-foreground py-16 text-[13px]">진행중인 강의가 없습니다</div>;
+            if (filteredProjects.length === 0) {
+              return <div className="text-center text-muted-foreground py-16 text-[13px]">{filterAssignee ? `${filterAssignee} 담당 강의가 없습니다` : "진행중인 강의가 없습니다"}</div>;
             }
 
             return (
-              <div className="flex flex-col gap-4">
-                {projects.map(({ ins, lec, liveDate, insColor }) => {
+              <div className="grid grid-cols-2 gap-4">
+                {filteredProjects.map(({ ins, lec, liveDate, insColor }) => {
                   const curKey = `${ins}|${lec}`;
                   const milestones = state.designerMilestones[curKey] || {};
                   const projectAssigneeName = state.designerProjectAssignees[curKey] ?? "";
+                  const projectAssigneeColor = projectAssigneeName ? getAssigneeColor(projectAssigneeName) : null;
                   const liveDiff = dday(liveDate);
 
                   return (
                     <div key={curKey} className="rounded-2xl border border-border overflow-hidden">
                       {/* 프로젝트 헤더 */}
                       <div
-                        className="flex items-center justify-between px-4 py-3"
+                        className="flex items-center justify-between px-4 py-3 gap-2"
                         style={{ borderLeft: `4px solid ${insColor}`, background: insColor + "08" }}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-[14px]" style={{ color: insColor }}>{ins}</span>
-                          <span className="text-[12px] text-muted-foreground font-medium">{lec}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-extrabold text-[14px] flex-shrink-0" style={{ color: insColor }}>{ins}</span>
+                          <span className="text-[12px] text-muted-foreground font-medium truncate">{lec}</span>
+                          {projectAssigneeName && (
+                            <button
+                              onClick={() => setFilterAssignee(filterAssignee === projectAssigneeName ? null : projectAssigneeName)}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border-none cursor-pointer flex-shrink-0 transition-colors"
+                              style={filterAssignee === projectAssigneeName ? {
+                                background: projectAssigneeColor ?? "#aeaeb2",
+                                color: "#fff",
+                              } : {
+                                background: (projectAssigneeColor ?? "#aeaeb2") + "18",
+                                color: projectAssigneeColor ?? "#aeaeb2",
+                              }}
+                            >
+                              <div
+                                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[7px] font-extrabold flex-shrink-0"
+                                style={{ background: filterAssignee === projectAssigneeName ? "rgba(255,255,255,0.3)" : (projectAssigneeColor ?? "#aeaeb2") }}
+                              >
+                                {projectAssigneeName.slice(0, 1)}
+                              </div>
+                              {projectAssigneeName}
+                            </button>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-muted-foreground">🔴 LIVE</span>
-                          <span className="text-[12px] font-bold text-foreground">{fmtDateKr(liveDate)}</span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <span className="text-[11px] text-muted-foreground">🔴</span>
+                          <span className="text-[11px] font-bold text-foreground">{fmtDateKr(liveDate)}</span>
                           {liveDiff >= 0
-                            ? <span className="text-[11px] font-bold text-white bg-red-400 rounded-full px-2 py-0.5">{liveDiff === 0 ? "오늘" : `D-${liveDiff}`}</span>
-                            : <span className="text-[11px] font-bold text-[#aeaeb2] bg-[#f5f5f5] rounded-full px-2 py-0.5">D+{Math.abs(liveDiff)}</span>
+                            ? <span className="text-[10px] font-bold text-white bg-red-400 rounded-full px-1.5 py-0.5">{liveDiff === 0 ? "오늘" : `D-${liveDiff}`}</span>
+                            : <span className="text-[10px] font-bold text-[#aeaeb2] bg-[#f5f5f5] rounded-full px-1.5 py-0.5">D+{Math.abs(liveDiff)}</span>
                           }
                         </div>
                       </div>
@@ -469,7 +584,6 @@ export default function DesignerCalendarTab() {
                             <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide">작업 내용</th>
                             <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[110px]">날짜</th>
                             <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[80px]">D-day</th>
-                            <th className="text-left py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[120px]">담당자</th>
                             <th className="text-center py-2 px-4 font-extrabold text-muted-foreground text-[10px] uppercase tracking-wide w-[50px]">완료</th>
                           </tr>
                         </thead>
@@ -522,52 +636,10 @@ export default function DesignerCalendarTab() {
                                 <td className="py-2.5 px-4">
                                   {ddayBadge(msDate, item.checked ?? false)}
                                 </td>
-                                {/* 담당자 */}
-                                <td className="py-2.5 px-4">
-                                  <div className="relative">
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); setDropdown(dropdown === msDropKey ? null : msDropKey); }}
-                                      className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer hover:opacity-80 px-0"
-                                    >
-                                      {effAssignee ? (
-                                        <>
-                                          <div
-                                            className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-extrabold flex-shrink-0"
-                                            style={{ background: effColor ?? "#aeaeb2", opacity: (!item.assignee && !!projectAssigneeName) ? 0.6 : 1 }}
-                                          >
-                                            {effAssignee.slice(0, 1)}
-                                          </div>
-                                          <span className="text-[11px] font-semibold" style={{ color: effColor ?? "#6e6e73" }}>
-                                            {effAssignee}
-                                          </span>
-                                        </>
-                                      ) : (
-                                        <span className="text-[11px] text-[#aeaeb2]">+ 추가</span>
-                                      )}
-                                    </button>
-                                    {dropdown === msDropKey && (
-                                      <AssigneeDropdown
-                                        dropKey={msDropKey}
-                                        currentName={item.assignee}
-                                        onSelect={(name) => dispatch({
-                                          type: "SET_DESIGNER_MILESTONE",
-                                          curKey,
-                                          milestoneId: ms.id as MilestoneId,
-                                          assignee: name,
-                                        })}
-                                      />
-                                    )}
-                                  </div>
-                                </td>
                                 {/* 완료 체크 */}
                                 <td className="py-2.5 px-4 text-center">
                                   <button
-                                    onClick={() => dispatch({
-                                      type: "SET_DESIGNER_MILESTONE",
-                                      curKey,
-                                      milestoneId: ms.id as MilestoneId,
-                                      checked: !item.checked,
-                                    })}
+                                    onClick={() => toggleMilestone(curKey, ms)}
                                     className="w-5 h-5 rounded border-none cursor-pointer flex items-center justify-center text-[11px] font-bold transition-colors mx-auto"
                                     style={{
                                       background: item.checked ? "#22c55e" : "transparent",
@@ -611,7 +683,7 @@ export default function DesignerCalendarTab() {
             {calDays.map((day, i) => {
               if (!day) return <div key={`e${i}`} className="min-h-[110px]" />;
               const ds = fmtDate(day);
-              const dayEvts = events.filter((e) => e.date === ds);
+              const dayEvts = filteredEvents.filter((e) => e.date === ds);
               const isT = isSameDay(day, today);
               const isPast = day < today && !isT;
               const showAll = expandedDay === ds;
@@ -640,6 +712,7 @@ export default function DesignerCalendarTab() {
                   </div>
                   <div className="flex flex-col gap-0.5">
                     {(showAll ? dayEvts : dayEvts.slice(0, 2)).map((ev, ei) => {
+                      const evMs = !ev.isLive ? DESIGNER_MILESTONES.find((m) => m.id === ev.milestoneId) : null;
                       return (
                         <div
                           key={ei}
@@ -668,12 +741,26 @@ export default function DesignerCalendarTab() {
                           ) : (
                             <>
                               <div className="flex items-center gap-0.5">
-                                <span className="text-[9px] font-extrabold px-1 rounded-full mr-0.5 flex-shrink-0 bg-[#e8e8e8] text-[#aeaeb2]">
+                                {/* 체크 토글 (캘린더 ↔ 타임라인 ↔ 마일스톤 3자 연동) */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (evMs) toggleMilestone(`${ev.ins}|${ev.lec}`, evMs);
+                                  }}
+                                  className="w-3 h-3 rounded-sm flex-shrink-0 flex items-center justify-center text-[7px] font-bold text-white border-none cursor-pointer p-0"
+                                  style={{
+                                    background: ev.checked ? "#9ca3af" : "transparent",
+                                    border: `1.5px solid ${ev.checked ? "#9ca3af" : (ev.milestoneColor ?? "#ccc")}`,
+                                  }}
+                                >
+                                  {ev.checked ? "✓" : ""}
+                                </button>
+                                <span className="text-[9px] font-extrabold px-1 rounded-full flex-shrink-0 bg-[#e8e8e8] text-[#aeaeb2]">
                                   {ev.milestoneLabel}
                                 </span>
                                 <span className="font-bold truncate" style={{ color: ev.checked ? "#aeaeb2" : ev.insColor }}>{ev.ins}</span>
                               </div>
-                              <div className="text-[10px] font-medium truncate line-through" style={{ color: ev.checked ? "#c0c0c0" : "#6e6e73" }}>
+                              <div className={`text-[10px] font-medium truncate ${ev.checked ? "line-through" : ""}`} style={{ color: ev.checked ? "#c0c0c0" : "#6e6e73" }}>
                                 {ev.milestoneTitle}
                               </div>
                               {ev.assignee && (
@@ -708,6 +795,7 @@ export default function DesignerCalendarTab() {
           </>}
         </div>
       </div>
+      {showAssigneeMgr && <AssigneeManagerModal onClose={() => setShowAssigneeMgr(false)} />}
     </div>
   );
 }
