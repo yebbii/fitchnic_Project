@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { useCrm, useGoToBoard, useGoToDesignerTimeline } from "@/hooks/use-crm-store";
 import { DEFAULT_SEQ, DEFAULT_DESIGN_SEQ, HOME_TAB_COLORS, DESIGNER_MILESTONES } from "@/lib/constants";
 import { addDays, fmtDate, fmtDateKr, isSameDay } from "@/lib/utils";
-import AddLectureDialog from "./add-lecture-dialog";
 type FilterTagId = "d10" | "pm" | "designer";
 type PlatformFilterId = "fitchnic" | "moneyup";
 
@@ -48,9 +47,6 @@ export default function HomeTab() {
 
   const [calMonth, setCalMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [sideExpanded, setSideExpanded] = useState(false);
-  const [lecturesExpanded, setLecturesExpanded] = useState(false);
 
   // 필터 태그 상태
   const ALL_STANDALONE: FilterTagId[] = STANDALONE_TAGS.map((t) => t.id);
@@ -90,7 +86,7 @@ export default function HomeTab() {
 
   const toggleLiveGroup = () => {
     if (isAllSelected) {
-      // 전체 → LIVE 전체만 선택
+      // 전체 → LIVE만
       setActiveFilters(new Set());
       setLiveEnabled(true);
       setActivePlatforms(new Set(ALL_PLATFORMS));
@@ -100,10 +96,9 @@ export default function HomeTab() {
       // LIVE 끄기
       setLiveEnabled(false);
       setActivePlatforms(new Set());
-      // 모두 해제 체크
       if (activeFilters.size === 0) selectAll();
     } else {
-      // LIVE 켜기 (전체 플랫폼)
+      // LIVE 켜기
       setLiveEnabled(true);
       setActivePlatforms(new Set(ALL_PLATFORMS));
     }
@@ -135,10 +130,6 @@ export default function HomeTab() {
   };
 
   // 강의 카드 상태
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [editKey, setEditKey] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ ins: "", lec: "", liveDate: "", color: "" });
-  const [deleteConfirmKey, setDeleteConfirmKey] = useState<string | null>(null);
   const [modalKey, setModalKey] = useState<string | null>(null);
   const [modalDeleteConfirm, setModalDeleteConfirm] = useState(false);
 
@@ -150,20 +141,55 @@ export default function HomeTab() {
   const showPm = activeFilters.has("pm");
   const showDesigner = activeFilters.has("designer");
 
-  /* 진행 예정 강의 목록 — 사이드바용 (오늘 이후만, 과거 제외) */
-  const activeLectures = useMemo(() => {
+  /* 오늘~3일 내 할 일 (PM 시퀀스 + 디자이너 체크리스트) */
+  const todoItems = useMemo(() => {
     const todayStr = fmtDate(today);
-    const twoWeeksLater = fmtDate(addDays(todayStr, 14));
-    const list: { ins: string; lec: string; liveDate: string; liveTime: string; color: string; platform: string; isNear: boolean }[] = [];
+    type TodoItem = { date: string; ins: string; lec: string; label: string; itemId: string; kind: "pm" | "designer" | "live"; done: boolean; color: string };
+    const items: TodoItem[] = [];
     Object.entries(state.data).forEach(([ins, iD]) => {
       Object.entries(iD.lectures)
-        .filter(([, l]) => l.status === "active" && l.liveDate >= todayStr)
-        .forEach(([lec, l]) => {
-          list.push({ ins, lec, liveDate: l.liveDate, liveTime: l.liveTime, color: l.color ?? iD.color, platform: l.platform || "", isNear: l.liveDate <= twoWeeksLater });
+        .filter(([, l]) => l.status === "active" && l.liveDate)
+        .forEach(([lec, lD]) => {
+          const curKey = `${ins}|${lec}`;
+          const cardColor = state.platformColors[lD.platform] ?? lD.color ?? iD.color;
+          const ck = state.allChecks[curKey] || {};
+          // PM 시퀀스 아이템
+          const seq = state.seqDataMap[curKey] || DEFAULT_SEQ;
+          seq.forEach((phase) => {
+            const d = fmtDate(addDays(lD.liveDate, phase.dayOffset));
+            if (d >= todayStr && d <= fmtDate(addDays(todayStr, 3))) {
+              phase.items.forEach((it) => {
+                items.push({ date: d, ins, lec, label: `${it.name}`, itemId: it.id, kind: "pm", done: !!ck[it.id], color: cardColor });
+              });
+            }
+          });
+          // 디자이너 체크리스트 아이템
+          const dck = state.designChecks[curKey] || {};
+          DEFAULT_DESIGN_SEQ.forEach((phase) => {
+            const d = fmtDate(addDays(lD.liveDate, phase.dayOffset));
+            if (d >= todayStr && d <= fmtDate(addDays(todayStr, 3))) {
+              phase.items.forEach((it) => {
+                items.push({ date: d, ins, lec, label: `${it.name}`, itemId: it.id, kind: "designer", done: !!dck[it.id], color: cardColor });
+              });
+            }
+          });
+          // LIVE 당일
+          if (lD.liveDate >= todayStr && lD.liveDate <= fmtDate(addDays(todayStr, 3))) {
+            if (lD.liveDate === fmtDate(addDays(lD.liveDate, 0))) {
+              items.push({ date: lD.liveDate, ins, lec, label: `라이브 ${lD.liveTime}`, itemId: `live_${curKey}`, kind: "live", done: false, color: cardColor });
+            }
+          }
         });
     });
-    return list.sort((a, b) => a.liveDate.localeCompare(b.liveDate));
-  }, [state.data]);
+    items.sort((a, b) => a.date.localeCompare(b.date) || (a.done ? 1 : 0) - (b.done ? 1 : 0));
+    // 날짜별 그룹
+    const grouped: Record<string, TodoItem[]> = {};
+    items.forEach((item) => {
+      if (!grouped[item.date]) grouped[item.date] = [];
+      grouped[item.date].push(item);
+    });
+    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+  }, [state.data, state.allChecks, state.designChecks, state.seqDataMap, state.platformColors]);
 
   /* 강의 LIVE 이벤트 (라이브 당일) — 완료된 강의도 포함 */
   const liveEvents = useMemo(() => {
@@ -254,38 +280,6 @@ export default function HomeTab() {
     return ev;
   }, [state.data]);
 
-  /* 사이드바 일정 리스트 — 항상 전체 표시 */
-  const sideSchedule = useMemo(() => {
-    const todayStr = fmtDate(today);
-    const cutoff = fmtDate(addDays(todayStr, 60));
-    type Item = { date: string; ins: string; lec: string; label: string; color: string; isLive: boolean; kind: "live" | "d10" | "pm" | "designer" };
-    const items: Item[] = [];
-    liveEvents.forEach((e) => {
-      if (e.date >= todayStr && e.date <= cutoff)
-        items.push({ ...e, label: "라이브", isLive: true, kind: "live" });
-    });
-    d10Events.forEach((e) => {
-      if (e.date >= todayStr && e.date <= cutoff)
-        items.push({ ...e, label: "D-10", color: HOME_TAB_COLORS.d10, isLive: false, kind: "d10" });
-    });
-    pmDetailEvents.forEach((e) => {
-      if (e.date >= todayStr && e.date <= cutoff)
-        items.push({ ...e, label: e.seqLabel, color: HOME_TAB_COLORS.pm, kind: "pm" });
-    });
-    designerDetailEvents.forEach((e) => {
-      if (e.date >= todayStr && e.date <= cutoff)
-        items.push({ ...e, label: e.phaseLabel, color: HOME_TAB_COLORS.designer, kind: "designer" });
-    });
-    const kindOrder = { live: 0, d10: 1, pm: 2, designer: 3 };
-    items.sort((a, b) => a.date.localeCompare(b.date) || kindOrder[a.kind] - kindOrder[b.kind]);
-    const grouped: Record<string, Item[]> = {};
-    items.forEach((item) => {
-      if (!grouped[item.date]) grouped[item.date] = [];
-      grouped[item.date].push(item);
-    });
-    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
-  }, [liveEvents, d10Events, pmDetailEvents, designerDetailEvents]);
-
   /* 달력 날짜 배열 */
   const calDays = useMemo(() => {
     const y = calMonth.getFullYear();
@@ -304,357 +298,97 @@ export default function HomeTab() {
     return `${d.getMonth() + 1}/${d.getDate()}(${days[d.getDay()]})`;
   }
 
-  function dateBadge(dateStr: string) {
-    const diff = diffDays(dateStr);
-    if (diff === 0) return <span className="text-[10px] font-bold text-white bg-primary rounded-full px-1.5 py-0.5 ml-1">오늘</span>;
-    if (diff === 1) return <span className="text-[10px] font-bold text-orange-500 bg-orange-50 rounded-full px-1.5 py-0.5 ml-1">내일</span>;
-    if (diff <= 7) return <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 rounded-full px-1.5 py-0.5 ml-1">D-{diff}</span>;
-    return null;
-  }
-
-  function startEdit(ins: string, lec: string, liveDate: string, color: string) {
-    const key = `${ins}|${lec}`;
-    if (editKey === key) {
-      setEditKey(null);
-      setDeleteConfirmKey(null);
-    } else {
-      setEditKey(key);
-      setEditForm({ ins, lec, liveDate, color });
-      setSelectedKey(null);
-      setModalKey(null);
-    }
-  }
-
-  function saveEdit(originalIns: string, originalLec: string, originalColor: string) {
-    const { ins: newIns, lec: newLec, liveDate, color } = editForm;
-    const trimIns = newIns.trim();
-    const trimLec = newLec.trim();
-    if (!trimIns || !trimLec) return;
-
-    if (trimIns !== originalIns) {
-      dispatch({ type: "RENAME_INSTRUCTOR", oldIns: originalIns, newIns: trimIns });
-    }
-    const curIns = trimIns !== originalIns ? trimIns : originalIns;
-    if (trimLec !== originalLec) {
-      dispatch({ type: "RENAME_LECTURE", ins: curIns, oldLec: originalLec, newLec: trimLec });
-    }
-    if (liveDate !== state.data[originalIns]?.lectures?.[originalLec]?.liveDate) {
-      const finalIns = trimIns !== originalIns ? trimIns : originalIns;
-      const finalLec = trimLec !== originalLec ? trimLec : originalLec;
-      dispatch({ type: "UPDATE_LECTURE_FIELD", ins: finalIns, lec: finalLec, field: "liveDate", value: liveDate });
-    }
-    if (color && color !== originalColor) {
-      dispatch({ type: "SET_INSTRUCTOR_COLOR", ins: trimIns, color });
-    }
-    setEditKey(null);
-  }
-
   return (
     <div className="flex min-h-[calc(100vh-52px)] animate-fi">
-      {/* ── 좌측 사이드바 ── */}
+      {/* ── 좌측 사이드바: 오늘 할 일 ── */}
       <aside className="w-[280px] min-w-[280px] max-w-[280px] flex-shrink-0 border-r border-border bg-white flex flex-col sticky top-[52px] h-[calc(100vh-52px)] overflow-y-auto overflow-x-hidden" style={{ scrollbarGutter: "stable" }}>
-        {/* 새 강의 추가 / 강의 관리 */}
-        <div className="px-4 py-3.5 border-b border-border flex flex-col gap-2">
-          <button
-            onClick={() => setShowAdd(true)}
-            className="w-full bg-gradient-to-br from-primary to-[#764ba2] text-white rounded-xl py-2.5 text-[13px] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
-          >
-            + 새 강의 추가
-          </button>
-          <button
-            onClick={() => dispatch({ type: "SET_TOP_TAB", tab: "lecture" })}
-            className="w-full bg-secondary text-foreground rounded-xl py-2 text-[13px] font-semibold border-none cursor-pointer hover:bg-accent transition-colors"
-          >
-            📚 강의 관리
-          </button>
-        </div>
-
-        {/* 진행중 강의 블록 */}
-        <div className="px-4 py-3 border-b border-border">
-          <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-2.5">
-            {calMonth.getMonth() + 1}월 진행 강의 {(() => {
-              let count = 0;
-              Object.values(state.data).forEach((iD) => {
-                Object.values(iD.lectures).forEach((l) => {
-                  if (l.liveDate) {
-                    const d = new Date(l.liveDate);
-                    if (d.getFullYear() === calMonth.getFullYear() && d.getMonth() === calMonth.getMonth()) count++;
-                  }
-                });
-              });
-              return count;
-            })()}개
-          </div>
-          {activeLectures.length === 0 ? (
-            <div className="text-[12px] text-[#aeaeb2] py-1">진행중인 강의가 없습니다</div>
+        <div className="px-4 py-4 flex-1">
+          {todoItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="text-2xl mb-2">✅</div>
+              <div className="text-[13px] font-semibold text-foreground">할 일이 없습니다</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">3일 내 예정된 작업이 없어요</div>
+            </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              {(lecturesExpanded ? activeLectures : activeLectures.filter((l) => l.isNear)).map((l) => {
-                const curKey = `${l.ins}|${l.lec}`;
-                const isEditing = editKey === curKey;
-                const isSelected = selectedKey === curKey;
-                const diff = l.liveDate ? diffDays(l.liveDate) : null;
-                const cardColor = state.platformColors[l.platform] ?? l.color;
-                const isDeleteConfirm = deleteConfirmKey === curKey;
-                const pmSeq = state.seqDataMap[curKey] || DEFAULT_SEQ;
-                const pmTotal = pmSeq.reduce((s, p) => s + p.items.length, 0);
-                const pmChecked = Object.values(state.allChecks[curKey] || {}).filter(Boolean).length;
-                const desProg = getDesignerProgress(curKey, state.designerMilestones);
-                const pmAssignee = state.pmProjectAssignees[curKey] || "";
-                const desAssignee = state.designerProjectAssignees[curKey] || "";
-
+            <div className="flex flex-col gap-4">
+              {todoItems.map(([date, items]) => {
+                const diff = diffDays(date);
+                const dayLabel = diff === 0 ? "오늘" : diff === 1 ? "내일" : fmtDayLabel(date);
+                const doneCount = items.filter((t) => t.done).length;
+                const totalCount = items.length;
                 return (
-                  <div
-                    key={curKey}
-                    className="rounded-xl overflow-hidden border border-border"
-                    style={{ borderLeft: `3px solid ${cardColor}` }}
-                  >
-                    {/* 카드 헤더 — 클릭 시 인라인 상세 토글 */}
-                    <div
-                      className="px-3 py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors"
-                      style={{ background: isSelected ? `${cardColor}08` : undefined }}
-                      onClick={() => { if (!isEditing) setSelectedKey(isSelected ? null : curKey); }}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[12px] font-extrabold truncate" style={{ color: cardColor }}>
-                              {l.ins}
-                            </span>
-                            {diff !== null && (
-                              diff === 0 ? (
-                                <span className="text-[9px] font-bold text-white bg-red-400 rounded-full px-1.5 py-0.5 flex-shrink-0">LIVE</span>
-                              ) : diff > 0 && diff <= 7 ? (
-                                <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 rounded-full px-1.5 flex-shrink-0">D-{diff}</span>
-                              ) : diff > 0 ? (
-                                <span className="text-[9px] font-semibold text-muted-foreground flex-shrink-0">D-{diff}</span>
-                              ) : null
-                            )}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground truncate mt-0.5">{l.lec}</div>
-                          {(pmAssignee || desAssignee) && (
-                            <div className="text-[10px] text-[#aeaeb2] truncate mt-0.5">
-                              {pmAssignee ? `PM ${pmAssignee}` : ""}{pmAssignee && desAssignee ? " / " : ""}{desAssignee ? `담당 ${desAssignee}` : ""}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); startEdit(l.ins, l.lec, l.liveDate, l.color); }}
-                          className="w-6 h-6 rounded-md bg-secondary flex items-center justify-center text-[11px] border-none cursor-pointer hover:bg-accent transition-colors flex-shrink-0"
-                          title="수정"
-                        >
-                          ✏️
-                        </button>
+                  <div key={date}>
+                    {/* 날짜 헤더 */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[13px] font-extrabold ${diff === 0 ? "text-primary" : "text-foreground"}`}>
+                          {dayLabel}
+                        </span>
+                        {diff === 0 && (
+                          <span className="text-[9px] font-bold text-white bg-primary rounded-full px-1.5 py-0.5">TODAY</span>
+                        )}
                       </div>
+                      <span className="text-[10px] text-muted-foreground font-semibold">
+                        {doneCount}/{totalCount}
+                      </span>
                     </div>
-
-                    {/* 인라인 수정 폼 */}
-                    {isEditing && (
-                      <div className="px-3 pb-3 pt-1 bg-secondary/30 border-t border-border animate-fi">
-                        <div className="flex flex-col gap-1.5">
-                          <div>
-                            <div className="text-[10px] text-muted-foreground mb-0.5 font-semibold">강사명</div>
-                            <input
-                              value={editForm.ins}
-                              onChange={(e) => setEditForm((f) => ({ ...f, ins: e.target.value }))}
-                              className="w-full bg-white border border-border rounded-lg text-foreground px-2.5 py-1.5 text-[12px] outline-none focus:ring-1 focus:ring-primary"
-                            />
+                    {/* 진행률 바 */}
+                    <div className="h-1 bg-secondary rounded-full overflow-hidden mb-2">
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{ width: `${totalCount ? (doneCount / totalCount) * 100 : 0}%`, background: diff === 0 ? "var(--primary)" : "#a1a1aa" }}
+                      />
+                    </div>
+                    {/* 아이템 리스트 */}
+                    <div className="flex flex-col gap-0.5">
+                      {items.map((item) => (
+                        <div
+                          key={item.itemId}
+                          onClick={() => {
+                            if (item.kind === "live" || item.kind === "pm") goToBoard(item.ins, item.lec);
+                            else goToDesignerTimeline(item.ins, item.lec);
+                          }}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                            item.done ? "opacity-40" : "hover:bg-secondary"
+                          }`}
+                        >
+                          {/* 상태 표시 */}
+                          <div
+                            className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 text-[8px] ${
+                              item.done ? "border-gray-300 bg-gray-100 text-gray-400" : "border-gray-300"
+                            }`}
+                          >
+                            {item.done && "✓"}
                           </div>
-                          <div>
-                            <div className="text-[10px] text-muted-foreground mb-0.5 font-semibold">강의명</div>
-                            <input
-                              value={editForm.lec}
-                              onChange={(e) => setEditForm((f) => ({ ...f, lec: e.target.value }))}
-                              className="w-full bg-white border border-border rounded-lg text-foreground px-2.5 py-1.5 text-[12px] outline-none focus:ring-1 focus:ring-primary"
-                            />
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-muted-foreground mb-0.5 font-semibold">라이브 일자</div>
-                            <input
-                              type="date"
-                              value={editForm.liveDate}
-                              onChange={(e) => setEditForm((f) => ({ ...f, liveDate: e.target.value }))}
-                              className="w-full bg-white border border-border rounded-lg text-foreground px-2.5 py-1.5 text-[12px] outline-none focus:ring-1 focus:ring-primary"
-                            />
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-muted-foreground mb-0.5 font-semibold">강사 색상</div>
-                            <div className="flex items-center gap-1.5">
-                              <input
-                                type="color"
-                                value={editForm.color}
-                                onChange={(e) => setEditForm((f) => ({ ...f, color: e.target.value }))}
-                                className="w-7 h-7 rounded border border-border cursor-pointer p-0.5 flex-shrink-0"
-                              />
-                              <input
-                                value={editForm.color}
-                                onChange={(e) => {
-                                  const stripped = e.target.value.replace(/#/g, "");
-                                  setEditForm((f) => ({ ...f, color: stripped ? "#" + stripped : "" }));
-                                }}
-                                placeholder="667eea"
-                                className="flex-1 bg-white border border-border rounded-lg text-foreground px-2 py-1.5 text-[11px] outline-none font-mono focus:ring-1 focus:ring-primary"
-                              />
+                          {/* 내용 */}
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-[11px] font-semibold truncate ${item.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                              {item.label}
+                            </div>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: item.color }} />
+                              <span className="text-[10px] text-muted-foreground truncate">{item.ins} · {item.lec}</span>
                             </div>
                           </div>
-                          {/* 저장 / 취소 */}
-                          <div className="flex gap-1.5 mt-0.5">
-                            <button
-                              onClick={() => saveEdit(l.ins, l.lec, l.color)}
-                              className="flex-1 bg-primary text-white rounded-lg py-1.5 text-[12px] font-semibold border-none cursor-pointer hover:opacity-90"
-                            >
-                              저장
-                            </button>
-                            <button
-                              onClick={() => { setEditKey(null); setDeleteConfirmKey(null); }}
-                              className="flex-1 bg-secondary text-muted-foreground rounded-lg py-1.5 text-[12px] font-semibold border-none cursor-pointer hover:bg-accent"
-                            >
-                              취소
-                            </button>
-                          </div>
-                          {/* 삭제 확인 UI */}
-                          {isDeleteConfirm ? (
-                            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 flex flex-col gap-1.5">
-                              <p className="text-[11px] text-red-600 font-semibold text-center">정말 삭제하시겠습니까?<br /><span className="font-normal">복구되지 않습니다.</span></p>
-                              <div className="flex gap-1.5">
-                                <button
-                                  onClick={() => {
-                                    dispatch({ type: "DELETE_LECTURE", ins: l.ins, lec: l.lec });
-                                    setEditKey(null);
-                                    setDeleteConfirmKey(null);
-                                  }}
-                                  className="flex-1 bg-red-500 text-white rounded-lg py-1.5 text-[12px] font-semibold border-none cursor-pointer hover:bg-red-600"
-                                >
-                                  삭제 확인
-                                </button>
-                                <button
-                                  onClick={() => setDeleteConfirmKey(null)}
-                                  className="flex-1 bg-secondary text-muted-foreground rounded-lg py-1.5 text-[12px] font-semibold border-none cursor-pointer hover:bg-accent"
-                                >
-                                  취소
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setDeleteConfirmKey(curKey)}
-                              className="w-full bg-red-50 text-red-500 rounded-lg py-1.5 text-[12px] font-semibold border border-red-100 cursor-pointer hover:bg-red-100 transition-colors"
-                            >
-                              삭제
-                            </button>
+                          {/* 종류 뱃지 */}
+                          {item.kind === "live" && (
+                            <span className="text-[8px] font-bold text-white bg-red-400 rounded-full px-1.5 py-0.5 flex-shrink-0">LIVE</span>
+                          )}
+                          {item.kind === "designer" && (
+                            <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#7c3aed" }} />
+                          )}
+                          {item.kind === "pm" && (
+                            <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#d97706" }} />
                           )}
                         </div>
-                      </div>
-                    )}
-
-                    {/* 인라인 상세 (클릭 시 펼침) */}
-                    {isSelected && !isEditing && (
-                      <div className="px-3 pb-3 pt-1 border-t border-border animate-fi" style={{ background: `${cardColor}05` }}>
-                        <div className="flex flex-col gap-1.5">
-                          <div className="text-[11px] text-muted-foreground"><span className="font-semibold">강사</span> {l.ins}</div>
-                          <div className="text-[11px] text-muted-foreground"><span className="font-semibold">강의</span> {l.lec}</div>
-                          {l.liveDate && (
-                            <div className="text-[11px] text-muted-foreground"><span className="font-semibold">라이브</span> {fmtDateKr(l.liveDate)} {l.liveTime}</div>
-                          )}
-                          <div className="mt-1">
-                            <div className="flex justify-between text-[10px] font-semibold mb-0.5">
-                              <span className="text-primary">PM 진행 <span className="text-[#aeaeb2] font-medium">{pmAssignee || "미지정"}</span></span>
-                              <span className="text-muted-foreground">{pmChecked}/{pmTotal}</span>
-                            </div>
-                            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                              <div className="h-full rounded-full transition-all" style={{ width: `${pmTotal ? (pmChecked / pmTotal) * 100 : 0}%`, background: cardColor }} />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex justify-between text-[10px] font-semibold mb-0.5">
-                              <span style={{ color: HOME_TAB_COLORS.designer }}>디자이너 진행 <span className="text-[#aeaeb2] font-medium">{desAssignee || "미지정"}</span></span>
-                              <span className="text-muted-foreground">{desProg.checked}/{desProg.total}</span>
-                            </div>
-                            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                              <div className="h-full rounded-full transition-all" style={{ width: `${desProg.total ? (desProg.checked / desProg.total) * 100 : 0}%`, background: HOME_TAB_COLORS.designer }} />
-                            </div>
-                          </div>
-                          <div className="flex gap-1.5 mt-1">
-                            <button onClick={() => goToBoard(l.ins, l.lec)} className="flex-1 rounded-lg py-1.5 text-[11px] font-semibold border-none cursor-pointer transition-colors" style={{ background: `${cardColor}15`, color: cardColor }}>PM 보드</button>
-                            <button onClick={() => goToDesignerTimeline(l.ins, l.lec)} className="flex-1 rounded-lg py-1.5 text-[11px] font-semibold border-none cursor-pointer transition-colors" style={{ background: `${HOME_TAB_COLORS.designer}1a`, color: HOME_TAB_COLORS.designer }}>디자인</button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
                 );
               })}
-              {activeLectures.filter((l) => !l.isNear).length > 0 && (
-                <button
-                  onClick={() => setLecturesExpanded((v) => !v)}
-                  className="w-full text-[11px] font-semibold text-muted-foreground py-1.5 rounded-lg bg-secondary border-none cursor-pointer hover:bg-accent transition-colors"
-                >
-                  {lecturesExpanded
-                    ? "▲ 접기"
-                    : `▼ 2주 이후 ${activeLectures.filter((l) => !l.isNear).length}개 더 보기`}
-                </button>
-              )}
             </div>
           )}
         </div>
-
-        {/* 일정 리스트 */}
-        <div className="px-4 py-3 flex-1 overflow-y-auto">
-          <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-2.5">
-            다가오는 일정
-          </div>
-
-          {sideSchedule.length === 0 ? (
-            <div className="text-[12px] text-[#aeaeb2]">향후 60일 내 일정 없음</div>
-          ) : (
-            <>
-              {(sideExpanded ? sideSchedule : sideSchedule.slice(0, 3)).map(([date, items]) => (
-                <div key={date} className="mb-3">
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="text-[11px] font-extrabold text-foreground">{fmtDayLabel(date)}</span>
-                    {dateBadge(date)}
-                  </div>
-                  <div className="flex flex-col gap-0.5 pl-1">
-                    {items.map((item, i) => (
-                      <div
-                        key={i}
-                        onClick={() => {
-                          if (item.kind === "pm") goToBoard(item.ins, item.lec);
-                          else goToDesignerTimeline(item.ins, item.lec);
-                        }}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer hover:bg-secondary transition-colors"
-                      >
-                        <div
-                          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                          style={{ background: item.color }}
-                        />
-                        <span
-                          className="text-[11px] font-bold truncate"
-                          style={{ color: item.color }}
-                        >
-                          {item.ins}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground truncate">{item.label}</span>
-                        {item.isLive && (
-                          <span className="text-[8px] font-bold text-white bg-red-400 rounded-full px-1 flex-shrink-0">LIVE</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {sideSchedule.length > 3 && (
-                <button
-                  onClick={() => setSideExpanded((v) => !v)}
-                  className="w-full text-[11px] font-semibold text-muted-foreground py-1.5 rounded-lg bg-secondary border-none cursor-pointer hover:bg-accent transition-colors"
-                >
-                  {sideExpanded ? "▲ 접기" : `▼ 더 보기`}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-
       </aside>
 
       {/* ── 우측: 달력 ── */}
@@ -683,8 +417,8 @@ export default function HomeTab() {
               </div>
             </div>
 
-            {/* 필터 태그 */}
-            <div className="flex items-center gap-4 mb-3 text-[12px]">
+            {/* 필터 태그 — 1단계 */}
+            <div className="flex items-center gap-3 mb-2 text-[12px]">
               {/* 전체 */}
               <button
                 onClick={selectAll}
@@ -699,49 +433,27 @@ export default function HomeTab() {
 
               <div className="w-px h-4 bg-border" />
 
-              {/* LIVE 그룹 */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={toggleLiveGroup}
-                  className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer transition-all"
-                >
-                  <span
-                    className="w-3 h-3 rounded-full border-2 transition-all"
-                    style={{
-                      borderColor: "#ef4444",
-                      background: showLive && !isAllSelected ? "#ef4444" : "transparent",
-                    }}
-                  />
-                  <span className={`font-semibold transition-colors ${showLive && !isAllSelected ? "text-foreground" : "text-muted-foreground"}`}>
-                    LIVE
-                  </span>
-                </button>
-                {PLATFORM_TAGS.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => togglePlatform(p.id)}
-                    className="flex items-center gap-1 bg-transparent border-none cursor-pointer transition-all"
-                  >
-                    <span
-                      className="w-2.5 h-2.5 rounded-full border-[1.5px] transition-all"
-                      style={{
-                        borderColor: p.color,
-                        background: activePlatforms.has(p.id) && !isAllSelected ? p.color : "transparent",
-                      }}
-                    />
-                    <span
-                      className="text-[11px] font-medium transition-colors"
-                      style={{ color: activePlatforms.has(p.id) && !isAllSelected ? p.color : "var(--muted-foreground)" }}
-                    >
-                      {p.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              {/* LIVE */}
+              <button
+                onClick={toggleLiveGroup}
+                className="flex items-center gap-1.5 bg-transparent border-none cursor-pointer transition-all"
+              >
+                <span
+                  className="w-3 h-3 rounded-full border-2 transition-all"
+                  style={{
+                    borderColor: "#ef4444",
+                    background: showLive && !isAllSelected ? "#ef4444" : "transparent",
+                  }}
+                />
+                <span className={`font-semibold transition-colors ${showLive && !isAllSelected ? "text-foreground" : "text-muted-foreground"}`}>
+                  LIVE
+                </span>
+                {showLive && !isAllSelected && (
+                  <span className="text-[10px] text-muted-foreground ml-[-2px]">▾</span>
+                )}
+              </button>
 
-              <div className="w-px h-4 bg-border" />
-
-              {/* 개별 태그 */}
+              {/* D-10 / PM / 디자이너 */}
               {STANDALONE_TAGS.map((t) => {
                 const active = activeFilters.has(t.id) && !isAllSelected;
                 return (
@@ -767,6 +479,33 @@ export default function HomeTab() {
                 );
               })}
             </div>
+
+            {/* LIVE 서브필터 — 2단계 */}
+            {showLive && !isAllSelected && (
+              <div className="flex items-center gap-3 mb-2 pl-[88px] text-[11px] animate-fi">
+                {PLATFORM_TAGS.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => togglePlatform(p.id)}
+                    className="flex items-center gap-1 bg-transparent border-none cursor-pointer transition-all"
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full border-[1.5px] transition-all"
+                      style={{
+                        borderColor: p.color,
+                        background: activePlatforms.has(p.id) ? p.color : "transparent",
+                      }}
+                    />
+                    <span
+                      className="font-medium transition-colors"
+                      style={{ color: activePlatforms.has(p.id) ? p.color : "var(--muted-foreground)" }}
+                    >
+                      {p.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* 요일 헤더 */}
             <div className="grid grid-cols-7 gap-0.5 mb-1.5">
@@ -828,82 +567,109 @@ export default function HomeTab() {
                     >
                       {day.getDate()}
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      {/* 1순위: 강의 LIVE 블록 */}
-                      {dayLiveEvts.map((ev, ei) => (
-                        <div
-                          key={`live-${ei}`}
-                          onClick={(e) => { e.stopPropagation(); setModalKey(`${ev.ins}|${ev.lec}`); setModalDeleteConfirm(false); }}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight truncate"
-                          style={{ background: ev.color + "25", color: ev.color, border: `1px solid ${ev.color}50` }}
-                        >
-                          <span className="font-bold">{ev.ins}</span>
-                          <span className="text-[9px] ml-0.5">🔴LIVE</span>
-                        </div>
-                      ))}
-                      {/* 2순위: D-10 블록 */}
-                      {dayD10Evts.map((ev, ei) => (
-                        <div
-                          key={`d10-${ei}`}
-                          onClick={(e) => { e.stopPropagation(); goToBoard(ev.ins, ev.lec); }}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight truncate"
-                          style={{ background: `${HOME_TAB_COLORS.d10}15`, color: HOME_TAB_COLORS.d10, border: `1px solid ${HOME_TAB_COLORS.d10}30` }}
-                        >
-                          <span className="font-bold">{ev.ins}</span>
-                          <span className="text-[9px] ml-0.5 opacity-80">D-10</span>
-                        </div>
-                      ))}
-                      {/* 3순위: PM 요약 블록 (PM+디자이너 둘 다 활성 시 요약) */}
-                      {showPm && showDesigner && dayPmCount > 0 && (
-                        <div
-                          onClick={(e) => { e.stopPropagation(); dispatch({ type: "SET_TOP_TAB", tab: "pm" }); dispatch({ type: "SET_TAB", tab: "board" }); }}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight cursor-pointer hover:opacity-75 transition-opacity truncate"
-                          style={{ background: `${HOME_TAB_COLORS.pm}18`, color: HOME_TAB_COLORS.pm, border: `1px solid ${HOME_TAB_COLORS.pm}30` }}
-                        >
-                          PM 일정 ({dayPmCount}건)
+                    <div className="flex flex-col gap-[3px]">
+                      {/* LIVE 섹션 — 컬러 배경 블록 (시선 1순위) */}
+                      {showLive && (
+                        <div className="min-h-[20px]">
+                          {dayLiveEvts.map((ev, ei) => (
+                            <div
+                              key={`live-${ei}`}
+                              onClick={(e) => { e.stopPropagation(); setModalKey(`${ev.ins}|${ev.lec}`); setModalDeleteConfirm(false); }}
+                              className="rounded-[5px] px-1.5 py-[3px] text-[10px] font-bold cursor-pointer leading-tight truncate"
+                              style={{ background: ev.color + "18", color: ev.color, border: `1.5px solid ${ev.color}35` }}
+                            >
+                              <span className="inline-block w-[5px] h-[5px] rounded-full bg-red-500 mr-0.5 align-middle flex-shrink-0" />{ev.ins}
+                            </div>
+                          ))}
                         </div>
                       )}
-                      {/* 4순위: 디자이너 요약 블록 (PM+디자이너 둘 다 활성 시 요약) */}
-                      {showPm && showDesigner && dayDesCount > 0 && (
-                        <div
-                          onClick={(e) => { e.stopPropagation(); dispatch({ type: "SET_TOP_TAB", tab: "designer" }); dispatch({ type: "SET_DESIGNER_TAB", tab: "timeline" }); }}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight cursor-pointer hover:opacity-75 transition-opacity truncate"
-                          style={{ background: `${HOME_TAB_COLORS.designer}18`, color: HOME_TAB_COLORS.designer, border: `1px solid ${HOME_TAB_COLORS.designer}30` }}
-                        >
-                          디자이너 ({dayDesCount}건)
+                      {/* D-10 섹션 — 연한 빨강 배경 블록 */}
+                      {showD10 && (
+                        <div className="min-h-[20px]">
+                          {dayD10Evts.map((ev, ei) => (
+                            <div
+                              key={`d10-${ei}`}
+                              onClick={(e) => { e.stopPropagation(); goToBoard(ev.ins, ev.lec); }}
+                              className="rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
+                              style={{ background: "#fefce8", color: "#a16207", border: "1.5px solid #fde68a" }}
+                            >
+                              <span className="text-[9px] mr-0.5">⚠</span>{ev.ins} D-10
+                            </div>
+                          ))}
                         </div>
                       )}
-                      {/* PM 상세 블록 (pm 뷰) */}
-                      {(showAll ? dayPmEvts : dayPmEvts.slice(0, 3)).map((ev, ei) => (
-                        <div
-                          key={`pm-${ei}`}
-                          onClick={(e) => { e.stopPropagation(); goToBoard(ev.ins, ev.lec); }}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight truncate"
-                          style={{ background: `${HOME_TAB_COLORS.pm}18`, color: HOME_TAB_COLORS.pm, border: `1px solid ${HOME_TAB_COLORS.pm}30` }}
-                        >
-                          <span className="font-bold">{ev.ins}</span>
-                          <span className="text-[9px] opacity-75 ml-0.5">{ev.seqLabel}</span>
+                      {/* PM 섹션 — 연회색 배경 + 주황 도트 */}
+                      {showPm && (
+                        <div className="min-h-[20px]">
+                          {showDesigner ? (
+                            dayPmCount > 0 ? (
+                              <div
+                                onClick={(e) => { e.stopPropagation(); dispatch({ type: "SET_TOP_TAB", tab: "pm" }); dispatch({ type: "SET_TAB", tab: "board" }); }}
+                                className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
+                                style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
+                              >
+                                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#d97706" }} />
+                                PM {dayPmCount}건
+                              </div>
+                            ) : null
+                          ) : (
+                            <>
+                              {(showAll ? dayPmEvts : dayPmEvts.slice(0, 3)).map((ev, ei) => (
+                                <div
+                                  key={`pm-${ei}`}
+                                  onClick={(e) => { e.stopPropagation(); goToBoard(ev.ins, ev.lec); }}
+                                  className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
+                                  style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
+                                >
+                                  <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#d97706" }} />
+                                  <span className="truncate">{ev.ins}</span>
+                                  <span className="text-[9px] opacity-60 truncate">{ev.seqLabel}</span>
+                                </div>
+                              ))}
+                            </>
+                          )}
                         </div>
-                      ))}
-                      {/* 디자이너 상세 블록 (designer 뷰) */}
-                      {(showAll ? dayDesEvts : dayDesEvts.slice(0, 3)).map((ev, ei) => (
-                        <div
-                          key={`des-${ei}`}
-                          onClick={(e) => { e.stopPropagation(); goToDesignerTimeline(ev.ins, ev.lec); }}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight truncate"
-                          style={{ background: `${HOME_TAB_COLORS.designer}18`, color: HOME_TAB_COLORS.designer, border: `1px solid ${HOME_TAB_COLORS.designer}30` }}
-                        >
-                          <span className="font-bold">{ev.ins}</span>
-                          <span className="text-[9px] opacity-75 ml-0.5">{ev.phaseLabel}</span>
+                      )}
+                      {/* 디자이너 섹션 — 연회색 배경 + 보라 도트 */}
+                      {showDesigner && (
+                        <div className="min-h-[20px]">
+                          {showPm ? (
+                            dayDesCount > 0 ? (
+                              <div
+                                onClick={(e) => { e.stopPropagation(); dispatch({ type: "SET_TOP_TAB", tab: "designer" }); dispatch({ type: "SET_DESIGNER_TAB", tab: "timeline" }); }}
+                                className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
+                                style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
+                              >
+                                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#7c3aed" }} />
+                                디자인 {dayDesCount}건
+                              </div>
+                            ) : null
+                          ) : (
+                            <>
+                              {(showAll ? dayDesEvts : dayDesEvts.slice(0, 3)).map((ev, ei) => (
+                                <div
+                                  key={`des-${ei}`}
+                                  onClick={(e) => { e.stopPropagation(); goToDesignerTimeline(ev.ins, ev.lec); }}
+                                  className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
+                                  style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
+                                >
+                                  <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#7c3aed" }} />
+                                  <span className="truncate">{ev.ins}</span>
+                                  <span className="text-[9px] opacity-60 truncate">{ev.phaseLabel}</span>
+                                </div>
+                              ))}
+                            </>
+                          )}
                         </div>
-                      ))}
+                      )}
+                      {/* 더 보기 / 접기 */}
                       {totalDetailEvts > 3 && !showAll && (
-                        <div className="text-[10px] text-primary text-center font-semibold py-0.5 cursor-pointer">
+                        <div className="text-[9px] text-muted-foreground text-center font-semibold py-0.5 cursor-pointer">
                           +{totalDetailEvts - 3}개
                         </div>
                       )}
                       {totalDetailEvts > 3 && showAll && (
-                        <div className="text-[10px] text-[#aeaeb2] text-center py-0.5">접기 ▲</div>
+                        <div className="text-[9px] text-[#aeaeb2] text-center py-0.5">접기 ▲</div>
                       )}
                     </div>
                   </div>
@@ -913,8 +679,6 @@ export default function HomeTab() {
           </div>
         </div>
       </div>
-
-      {showAdd && <AddLectureDialog onClose={() => setShowAdd(false)} />}
 
       {/* 강의 상세 모달 (달력 LIVE 클릭) */}
       {modalKey && (() => {
