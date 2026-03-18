@@ -3,14 +3,15 @@
 import { useState, useMemo } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
 import { DEFAULT_SEQ } from "@/lib/constants";
-import { addDays, fmtDate, fmtDateKr, isSameDay } from "@/lib/utils";
+import { addDays, fmtDate, fmtDateKr, isSameDay, daysUntil, seqTotalItems, seqCheckedItems } from "@/lib/utils";
+import { useCalendar } from "@/hooks/use-calendar";
+import { useActiveLectures, useCompletedLectures, useLiveEvents } from "@/hooks/use-derived-data";
 import AddLectureDialog from "./add-lecture-dialog";
 import type { CalendarEvent } from "@/lib/types";
 
 export default function DashboardTab() {
   const { state, dispatch } = useCrm();
-  const today = new Date();
-  const [calMonth, setCalMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const { today, calDays, prevMonth, nextMonth, monthLabel } = useCalendar();
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -38,42 +39,17 @@ export default function DashboardTab() {
     dispatch({ type: "COMPLETE_LECTURE", ins, lec });
   };
 
-  /* 최근 완료 강의 (7일 이내) */
+  /* 공통 훅: 최근 완료 / LIVE 이벤트 / 진행중 (홈탭과 동일 데이터 보장) */
+  const completedLectures = useCompletedLectures();
   const recentCompleted = useMemo(() => {
-    const result: { ins: string; lec: string; liveDate: string; color: string; checkedCount: number; copiedCount: number; totalItems: number }[] = [];
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    Object.entries(state.data).forEach(([iN, iD]) => {
-      Object.entries(iD.lectures)
-        .filter(([, l]) => l.status === "completed" && l.liveDate)
-        .forEach(([lN, lD]) => {
-          const live = new Date(lD.liveDate);
-          if (live >= sevenDaysAgo) {
-            const ck = state.allChecks[`${iN}|${lN}`] || {};
-            const cp = state.allCopies[`${iN}|${lN}`] || {};
-            const totalItems = DEFAULT_SEQ.reduce((s, q) => s + q.items.length, 0);
-            const checkedCount = DEFAULT_SEQ.reduce((s, q) => s + q.items.filter((it) => ck[it.id]).length, 0);
-            const copiedCount = Object.keys(cp).length;
-            result.push({ ins: iN, lec: lN, liveDate: lD.liveDate, color: iD.color, checkedCount, copiedCount, totalItems });
-          }
-        });
-    });
-    result.sort((a, b) => new Date(b.liveDate).getTime() - new Date(a.liveDate).getTime());
-    return result.slice(0, 3);
-  }, [state.data, state.allChecks, state.allCopies]);
-
-  /* 강의 LIVE 이벤트 — 홈탭과 동일한 데이터 소스 */
-  const liveEvents = useMemo(() => {
-    const ev: { date: string; ins: string; lec: string; color: string }[] = [];
-    Object.entries(state.data).forEach(([ins, iD]) => {
-      Object.entries(iD.lectures)
-        .filter(([, l]) => l.liveDate)
-        .forEach(([lec, lD]) => {
-          ev.push({ date: lD.liveDate, ins, lec, color: state.platformColors[lD.platform] ?? lD.color ?? iD.color });
-        });
-    });
-    return ev;
-  }, [state.data, state.platformColors]);
+    return completedLectures
+      .filter((l) => new Date(l.liveDate) >= sevenDaysAgo)
+      .slice(0, 3);
+  }, [completedLectures]);
+  const activeLectures = useActiveLectures();
+  const liveEvents = useLiveEvents();
 
   const calendarEvents = useMemo<CalendarEvent[]>(() => {
     const ev: CalendarEvent[] = [];
@@ -107,22 +83,7 @@ export default function DashboardTab() {
     return ev;
   }, [state.data, state.allChecks, state.allCopies]);
 
-  const calDays = useMemo(() => {
-    const y = calMonth.getFullYear();
-    const m = calMonth.getMonth();
-    const first = new Date(y, m, 1);
-    const last = new Date(y, m + 1, 0);
-    const pad = first.getDay();
-    const days: (Date | null)[] = [];
-    for (let i = 0; i < pad; i++) days.push(null);
-    for (let d = 1; d <= last.getDate(); d++) days.push(new Date(y, m, d));
-    return days;
-  }, [calMonth]);
-
-  const activeCount = Object.values(state.data).reduce(
-    (s, iD) => s + Object.values(iD.lectures).filter((l) => l.status === "active").length,
-    0
-  );
+  const activeCount = activeLectures.length;
 
   return (
     <div className="p-7 max-w-[1300px] mx-auto animate-fi">
@@ -139,53 +100,42 @@ export default function DashboardTab() {
             </button>
           </div>
           <div className="flex flex-col gap-2">
-            {Object.entries(state.data).flatMap(([iN, iD]) =>
-              Object.entries(iD.lectures)
-                .filter(([, l]) => l.status === "active")
-                .map(([lN, lD]) => {
-                  const daysLeft = lD.liveDate
-                    ? Math.ceil((new Date(lD.liveDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-                    : null;
-                  const ck = state.allChecks[`${iN}|${lN}`] || {};
-                  const cp = state.allCopies[`${iN}|${lN}`] || {};
-                  const totalI = DEFAULT_SEQ.reduce((s, q) => s + q.items.length, 0);
-                  const checkedI = DEFAULT_SEQ.reduce((s, q) => s + q.items.filter((it) => ck[it.id]).length, 0);
-                  const copiedI = Object.keys(cp).length;
-                  const pctCheck = totalI ? Math.round((checkedI / totalI) * 100) : 0;
-                  const pctCopy = totalI ? Math.round((copiedI / totalI) * 100) : 0;
+            {activeLectures.map((al) => {
+                  const pctCheck = al.pmTotal ? Math.round((al.pmChecked / al.pmTotal) * 100) : 0;
+                  const pctCopy = al.pmTotal ? Math.round((al.pmCopied / al.pmTotal) * 100) : 0;
 
                   return (
                     <div
-                      key={`${iN}|${lN}`}
-                      onClick={() => goToBoard(iN, lN)}
+                      key={al.curKey}
+                      onClick={() => goToBoard(al.ins, al.lec)}
                       className="bg-white border border-border rounded-xl px-4 py-3.5 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
-                      style={{ borderLeft: `4px solid ${iD.color}` }}
+                      style={{ borderLeft: `4px solid ${al.color}` }}
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="text-[15px] font-extrabold" style={{ color: iD.color }}>{iN}</span>
-                          <span className="text-sm text-muted-foreground ml-2">{lN}</span>
+                          <span className="text-[15px] font-extrabold" style={{ color: al.color }}>{al.ins}</span>
+                          <span className="text-sm text-muted-foreground ml-2">{al.lec}</span>
                         </div>
-                        {daysLeft !== null && (
+                        {al.liveDate && (
                           <span
                             className={`text-[13px] px-2.5 py-0.5 rounded-[10px] font-bold ${
-                              daysLeft <= 1
+                              al.daysLeft <= 1
                                 ? "bg-red-100 text-red-600"
-                                : daysLeft <= 3
+                                : al.daysLeft <= 3
                                 ? "bg-amber-100 text-amber-600"
                                 : "bg-emerald-50 text-emerald-600"
                             }`}
                           >
-                            {daysLeft <= 0 ? "D-Day" : `D-${daysLeft}`}
+                            {al.daysLeft <= 0 ? "D-Day" : `D-${al.daysLeft}`}
                           </span>
                         )}
                       </div>
-                      <div className="text-[13px] text-[#aeaeb2] mt-1">📅 {fmtDateKr(lD.liveDate)} {lD.liveTime}</div>
+                      <div className="text-[13px] text-[#aeaeb2] mt-1">📅 {fmtDateKr(al.liveDate)} {al.liveTime}</div>
 
                       <div className="mt-2">
                         <div className="flex justify-between text-[11px] text-muted-foreground mb-0.5">
-                          <span>✏️ 카피 {copiedI}/{totalI}</span>
-                          <span>✅ 체크 {checkedI}/{totalI}</span>
+                          <span>✏️ 카피 {al.pmCopied}/{al.pmTotal}</span>
+                          <span>✅ 체크 {al.pmChecked}/{al.pmTotal}</span>
                         </div>
                         <div className="flex gap-1">
                           <div className="flex-1 h-1.5 bg-[#f0f0f5] rounded-sm overflow-hidden">
@@ -211,15 +161,14 @@ export default function DashboardTab() {
 
                       {/* 완료 처리 버튼 */}
                       <button
-                        onClick={(e) => completeLecture(e, iN, lN)}
+                        onClick={(e) => completeLecture(e, al.ins, al.lec)}
                         className="mt-2.5 w-full bg-[#f8f8fa] border border-border rounded-lg text-[13px] text-muted-foreground font-semibold py-1.5 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors"
                       >
                         완료 처리
                       </button>
                     </div>
                   );
-                })
-            )}
+                })}
             {activeCount === 0 && (
               <div className="text-center text-[#aeaeb2] text-sm py-8">
                 진행중인 강의가 없습니다
@@ -258,7 +207,7 @@ export default function DashboardTab() {
                           다시 진행
                         </button>
                         <span className="text-[12px] text-gray-400 font-bold">
-                          ✓ {r.checkedCount}/{r.totalItems}
+                          ✓ {r.pmChecked}/{r.pmTotal}
                         </span>
                       </div>
                     </div>
@@ -282,16 +231,16 @@ export default function DashboardTab() {
             <h3 className="text-xl font-extrabold">📅 CRM 발송 캘린더</h3>
             <div className="flex gap-2 items-center">
               <button
-                onClick={() => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1))}
+                onClick={prevMonth}
                 className="bg-secondary rounded-lg px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >
                 ◀
               </button>
               <span className="text-lg font-bold min-w-[150px] text-center">
-                {calMonth.getFullYear()}년 {calMonth.getMonth() + 1}월
+                {monthLabel}
               </span>
               <button
-                onClick={() => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1))}
+                onClick={nextMonth}
                 className="bg-secondary rounded-lg px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >
                 ▶

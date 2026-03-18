@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { Lecture, SeqItem } from "./types";
+import type { Lecture, SeqItem, SeqPhase } from "./types";
+import { DESIGNER_MILESTONES } from "./constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -34,6 +35,48 @@ export function isSameDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+/* ── 공통 계산 유틸 ── */
+
+/** 강의 색상 결정 (플랫폼 색상 → 강의 개별 색상 → 강사 색상 → 기본값) */
+export function resolveColor(
+  platformColors: Record<string, string>,
+  platform: string | undefined,
+  lectureColor: string | undefined,
+  instructorColor: string,
+): string {
+  return (platform ? platformColors[platform] : undefined) ?? lectureColor ?? instructorColor;
+}
+
+/** 오늘 기준 D-day 계산 (양수 = 미래, 0 = 오늘, 음수 = 과거) */
+export function daysUntil(dateStr: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/** 시퀀스 전체 아이템 수 합산 */
+export function seqTotalItems(seq: { items: { id: string }[] }[]): number {
+  return seq.reduce((s, phase) => s + phase.items.length, 0);
+}
+
+/** 시퀀스 체크된 아이템 수 합산 */
+export function seqCheckedItems(seq: SeqPhase[], checks: Record<string, boolean>): number {
+  return seq.reduce((s, phase) => s + phase.items.filter((it) => checks[it.id]).length, 0);
+}
+
+/** 디자이너 마일스톤 진행률 (모든 탭에서 동일한 결과 보장) */
+export function getDesignerProgress(
+  curKey: string,
+  designerMilestones: Record<string, Record<string, { checked?: boolean; assignee?: string }>>,
+): { total: number; checked: number } {
+  const ms = designerMilestones[curKey] || {};
+  const total = DESIGNER_MILESTONES.length;
+  const checked = DESIGNER_MILESTONES.filter((m) => ms[m.id]?.checked).length;
+  return { total, checked };
 }
 
 export async function fetchAICopy(

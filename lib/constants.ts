@@ -356,7 +356,7 @@ export const LIVE_SETUP_ITEMS = [
 export interface MilestoneSubItem {
   id: string;
   name: string;
-  type?: "check" | "copy" | "benefit";  // default: "check"
+  type?: "check" | "copy" | "benefit" | "live_setting";  // default: "check"
 }
 
 export const DESIGNER_MILESTONES = [
@@ -375,6 +375,9 @@ export const DESIGNER_MILESTONES = [
     { id: "d3_toss", name: "토스 검수" },
     { id: "d3_pm", name: "PM 공유" },
     { id: "d3_instructor", name: "강사 공유" },
+  ] as MilestoneSubItem[] },
+  { id: "d0"  as const, label: "당일", title: "라이브 세팅",         dayOffset: 0,   color: "#ef4444", subItems: [
+    { id: "d0_live_setting", name: "라이브 세팅 완료", type: "live_setting" },
   ] as MilestoneSubItem[] },
 ];
 

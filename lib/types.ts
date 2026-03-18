@@ -106,7 +106,7 @@ export interface DesignSeqPhase {
 export type DesignChecksMap = Record<string, Record<string, boolean>>;
 
 /* ── 디자이너 프로젝트 마일스톤 ── */
-export type MilestoneId = "d28" | "d14" | "d10" | "d3";
+export type MilestoneId = "d28" | "d14" | "d10" | "d3" | "d0";
 export interface MilestoneItem {
   checked: boolean;
   assignee: string;

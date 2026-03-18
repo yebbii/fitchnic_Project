@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import { useCrm, useGoToDesignerTimeline, useToggleDesignerMilestone } from "@/hooks/use-crm-store";
 import { DESIGNER_MILESTONES } from "@/lib/constants";
-import { addDays, fmtDate, fmtDateKr, isSameDay } from "@/lib/utils";
+import { addDays, fmtDate, fmtDateKr, isSameDay, resolveColor } from "@/lib/utils";
+import { useCalendar } from "@/hooks/use-calendar";
 import type { MilestoneId } from "@/lib/types";
 import AssigneeManagerModal from "./assignee-manager-modal";
 
@@ -11,8 +12,7 @@ export default function DesignerCalendarTab() {
   const { state, dispatch } = useCrm();
   const goToTimeline = useGoToDesignerTimeline();
   const toggleMilestone = useToggleDesignerMilestone();
-  const today = new Date();
-  const [calMonth, setCalMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const { today, calMonth, calDays, prevMonth, nextMonth, monthLabel } = useCalendar();
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [dropdown, setDropdown] = useState<string | null>(null); // "project|curKey" | "ms|curKey|milestoneId"
@@ -50,7 +50,7 @@ export default function DesignerCalendarTab() {
         .forEach(([lec, lD]) => {
           list.push({
             ins, lec, liveDate: lD.liveDate,
-            color: state.platformColors[lD.platform] ?? iD.color,
+            color: resolveColor(state.platformColors, lD.platform, lD.color, iD.color),
             insColor: iD.color,
             platform: lD.platform,
           });
@@ -72,7 +72,7 @@ export default function DesignerCalendarTab() {
       Object.entries(iD.lectures)
         .filter(([, l]) => l.status === "active" && l.liveDate)
         .forEach(([lec, lD]) => {
-          const color = state.platformColors[lD.platform] ?? iD.color;
+          const color = resolveColor(state.platformColors, lD.platform, lD.color, iD.color);
           const insColor = iD.color;
           const curKey = `${ins}|${lec}`;
           const mks = state.designerMilestones[curKey] || {};
@@ -98,17 +98,6 @@ export default function DesignerCalendarTab() {
     });
     return ev;
   }, [state.data, state.designerMilestones, state.designerProjectAssignees, state.platformColors, state.assignees]);
-
-  const calDays = useMemo(() => {
-    const y = calMonth.getFullYear();
-    const m = calMonth.getMonth();
-    const first = new Date(y, m, 1);
-    const last = new Date(y, m + 1, 0);
-    const days: (Date | null)[] = [];
-    for (let i = 0; i < first.getDay(); i++) days.push(null);
-    for (let d = 1; d <= last.getDate(); d++) days.push(new Date(y, m, d));
-    return days;
-  }, [calMonth]);
 
   const todayStr = fmtDate(today);
 
@@ -421,14 +410,14 @@ export default function DesignerCalendarTab() {
             </div>
             <div className="flex gap-2 items-center">
               <button
-                onClick={() => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1))}
+                onClick={prevMonth}
                 className="bg-secondary rounded-lg px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >◀</button>
               <span className="text-lg font-bold min-w-[150px] text-center">
-                {calMonth.getFullYear()}년 {calMonth.getMonth() + 1}월
+                {monthLabel}
               </span>
               <button
-                onClick={() => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1))}
+                onClick={nextMonth}
                 className="bg-secondary rounded-lg px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >▶</button>
             </div>

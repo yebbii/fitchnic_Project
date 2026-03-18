@@ -602,6 +602,7 @@ export function useToggleDesignerMilestone() {
   const isSubChecked = useCallback(
     (curKey: string, sub: { id: string; type?: string }) => {
       if (sub.type === "benefit") return state.milestoneMeta[curKey]?.benefitDone === "true";
+      if (sub.type === "live_setting") return state.milestoneMeta[curKey]?.ls_masterDone === "true";
       return !!state.designChecks[curKey]?.[sub.id];
     },
     [state.designChecks, state.milestoneMeta],
@@ -620,6 +621,7 @@ export function useToggleDesignerMilestone() {
         dispatch({ type: "SET_MILESTONE_META", curKey, field: `snapshot_${ms.id}`, value: JSON.stringify(snapshot) });
         subs.forEach((sub) => {
           if (sub.type === "benefit") dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefitDone", value: "true" });
+          else if (sub.type === "live_setting") dispatch({ type: "SET_MILESTONE_META", curKey, field: "ls_masterDone", value: "true" });
           else dispatch({ type: "SET_DESIGN_CHECK", lectureKey: curKey, itemId: sub.id, checked: true });
         });
         dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: ms.id as MilestoneId, checked: true });
@@ -630,6 +632,7 @@ export function useToggleDesignerMilestone() {
         subs.forEach((sub) => {
           const prev = snapshot[sub.id] ?? false;
           if (sub.type === "benefit") dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefitDone", value: prev ? "true" : "" });
+          else if (sub.type === "live_setting") dispatch({ type: "SET_MILESTONE_META", curKey, field: "ls_masterDone", value: prev ? "true" : "" });
           else dispatch({ type: "SET_DESIGN_CHECK", lectureKey: curKey, itemId: sub.id, checked: prev });
         });
         dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: ms.id as MilestoneId, checked: false });

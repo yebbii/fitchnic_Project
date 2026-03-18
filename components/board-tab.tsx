@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrm, useCurKey, useCurrentLecture, useCurrentSeq } from "@/hooks/use-crm-store";
-import { CH_OPTIONS, DEFAULT_SEQ } from "@/lib/constants";
-import { uid, fmtDateKr, fetchAICopy, genCopyLocal } from "@/lib/utils";
+import { CH_OPTIONS } from "@/lib/constants";
+import { uid, fmtDateKr, fetchAICopy, genCopyLocal, resolveColor, seqTotalItems } from "@/lib/utils";
+import { useActiveLectures } from "@/hooks/use-derived-data";
 import LectureInfoEditor from "./lecture-info-editor";
 import CopyModal from "./copy-modal";
 import AddLectureDialog from "./add-lecture-dialog";
@@ -26,14 +27,15 @@ export default function BoardTab() {
   const [newItemCh, setNewItemCh] = useState("문자");
   const [showPmAssignee, setShowPmAssignee] = useState(false);
   const [showAssigneeMgr, setShowAssigneeMgr] = useState(false);
+  const activeLectures = useActiveLectures();
 
   const pmAssigneeName = curKey ? (state.pmProjectAssignees[curKey] ?? "") : "";
   const desAssigneeName = curKey ? (state.designerProjectAssignees[curKey] ?? "") : "";
 
   const copies = curKey ? state.allCopies[curKey] || {} : {};
   const checks = curKey ? state.allChecks[curKey] || {} : {};
-  const cardColor = ld?.color ?? (ld?.platform ? state.platformColors[ld.platform] : undefined) ?? state.data[state.ins]?.color ?? "#667eea";
-  const totalItems = seqData.reduce((s, q) => s + q.items.length, 0);
+  const cardColor = resolveColor(state.platformColors, ld?.platform, ld?.color, state.data[state.ins]?.color ?? "#667eea");
+  const totalItems = seqTotalItems(seqData);
   const gc = Object.keys(copies).length;
   const cc = Object.values(checks).filter(Boolean).length;
 
@@ -232,36 +234,21 @@ export default function BoardTab() {
 
       {/* 메인 콘텐츠 */}
       {!ld ? (() => {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const projects: { ins: string; lec: string; liveDate: string; liveTime: string; color: string; platform: string }[] = [];
-        Object.entries(state.data).forEach(([ins, iD]) => {
-          Object.entries(iD.lectures)
-            .filter(([, l]) => l.status === "active" && l.liveDate >= todayStr)
-            .forEach(([lec, l]) => {
-              projects.push({ ins, lec, liveDate: l.liveDate, liveTime: l.liveTime, color: state.platformColors[l.platform] ?? iD.color, platform: l.platform || "" });
-            });
-        });
-        projects.sort((a, b) => a.liveDate.localeCompare(b.liveDate));
+        const futureActive = activeLectures.filter((l) => l.daysLeft >= 0);
         return (
           <div className="px-7 py-6 max-w-[1100px] mx-auto">
             <h3 className="text-[17px] font-extrabold mb-4">📋 진행중 강의 선택</h3>
-            {projects.length === 0 ? (
+            {futureActive.length === 0 ? (
               <div className="text-center text-muted-foreground py-16 text-[14px]">진행중인 강의가 없습니다</div>
             ) : (
               <div className="grid grid-cols-4 gap-3">
-                {projects.map((p) => {
-                  const key = `${p.ins}|${p.lec}`;
-                  const pmA = state.pmProjectAssignees[key] ?? "";
-                  const desA = state.designerProjectAssignees[key] ?? "";
-                  const ck = state.allChecks[key] || {};
-                  const seq = state.seqDataMap[key] || DEFAULT_SEQ;
-                  const totalI = seq.reduce((s, q) => s + q.items.length, 0);
-                  const checkedI = Object.values(ck).filter(Boolean).length;
-                  const pct = totalI ? Math.round((checkedI / totalI) * 100) : 0;
-                  const diff = Math.ceil((new Date(p.liveDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                {futureActive.map((p) => {
+                  const pmA = state.pmProjectAssignees[p.curKey] ?? "";
+                  const desA = state.designerProjectAssignees[p.curKey] ?? "";
+                  const pct = p.pmTotal ? Math.round((p.pmChecked / p.pmTotal) * 100) : 0;
                   return (
                     <div
-                      key={key}
+                      key={p.curKey}
                       onClick={() => {
                         dispatch({ type: "SELECT_INSTRUCTOR", ins: p.ins });
                         setTimeout(() => dispatch({ type: "SELECT_LECTURE", lec: p.lec }), 0);
@@ -271,9 +258,9 @@ export default function BoardTab() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[13px] font-extrabold truncate" style={{ color: p.color }}>{p.ins}</span>
-                        {diff <= 7 && diff >= 0 && (
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${diff <= 1 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"}`}>
-                            {diff === 0 ? "D-Day" : `D-${diff}`}
+                        {p.daysLeft <= 7 && p.daysLeft >= 0 && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${p.daysLeft <= 1 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+                            {p.daysLeft === 0 ? "D-Day" : `D-${p.daysLeft}`}
                           </span>
                         )}
                       </div>
@@ -287,7 +274,7 @@ export default function BoardTab() {
                       <div className="mt-2">
                         <div className="flex justify-between text-[10px] text-muted-foreground mb-0.5">
                           <span>진행률</span>
-                          <span>{checkedI}/{totalI}</span>
+                          <span>{p.pmChecked}/{p.pmTotal}</span>
                         </div>
                         <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: p.color }} />

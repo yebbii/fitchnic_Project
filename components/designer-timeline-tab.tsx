@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useCrm, useDesignerCurKey, useToggleDesignerMilestone } from "@/hooks/use-crm-store";
-import { DESIGNER_MILESTONES, DEFAULT_DESIGN_SEQ } from "@/lib/constants";
-import { fmtDateKr, fmtDate, addDays } from "@/lib/utils";
+import { DESIGNER_MILESTONES } from "@/lib/constants";
+import { fmtDateKr, fmtDate, addDays, resolveColor, daysUntil } from "@/lib/utils";
+import { useActiveLectures } from "@/hooks/use-derived-data";
 import type { MilestoneId } from "@/lib/types";
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
@@ -28,7 +29,7 @@ export default function DesignerTimelineTab() {
   const { state, dispatch } = useCrm();
   const curKey = useDesignerCurKey();
   const toggleMilestone = useToggleDesignerMilestone();
-  const [editingAssignee, setEditingAssignee] = useState<string | null>(null);
+  const activeLectures = useActiveLectures();
 
   const ld = state.designerIns && state.designerLec ? state.data[state.designerIns]?.lectures?.[state.designerLec] : null;
   const milestones = curKey ? state.designerMilestones[curKey] || {} : {};
@@ -73,35 +74,21 @@ export default function DesignerTimelineTab() {
 
   // ── 카드 선택 화면 ──
   if (!ld) {
-    const todayStr2 = new Date().toISOString().slice(0, 10);
-    const DES_TOTAL = DEFAULT_DESIGN_SEQ.reduce((s, p) => s + p.items.length, 0);
-    const projects: { ins: string; lec: string; liveDate: string; liveTime: string; color: string; platform: string }[] = [];
-    Object.entries(state.data).forEach(([ins, iD]) => {
-      Object.entries(iD.lectures)
-        .filter(([, l]) => l.status === "active" && l.liveDate >= todayStr2)
-        .forEach(([lec, l]) => {
-          projects.push({ ins, lec, liveDate: l.liveDate, liveTime: l.liveTime, color: state.platformColors[l.platform] ?? iD.color, platform: l.platform || "" });
-        });
-    });
-    projects.sort((a, b) => a.liveDate.localeCompare(b.liveDate));
-
+    const futureActive = activeLectures.filter((l) => l.daysLeft >= 0);
     return (
       <div className="animate-fi px-7 py-6 max-w-[1100px] mx-auto">
         <h3 className="text-[17px] font-extrabold mb-4">🎨 진행중 강의 선택</h3>
-        {projects.length === 0 ? (
+        {futureActive.length === 0 ? (
           <div className="text-center text-muted-foreground py-16 text-[14px]">진행중인 강의가 없습니다</div>
         ) : (
           <div className="grid grid-cols-4 gap-3">
-            {projects.map((p) => {
-              const key = `${p.ins}|${p.lec}`;
-              const pmA = state.pmProjectAssignees[key] ?? "";
-              const desA = state.designerProjectAssignees[key] ?? "";
-              const desChecked = Object.values(state.designChecks[key] || {}).filter(Boolean).length;
-              const desPct = DES_TOTAL ? Math.round((desChecked / DES_TOTAL) * 100) : 0;
-              const diff = Math.ceil((new Date(p.liveDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            {futureActive.map((p) => {
+              const pmA = state.pmProjectAssignees[p.curKey] ?? "";
+              const desA = state.designerProjectAssignees[p.curKey] ?? "";
+              const desPct = p.desTotal ? Math.round((p.desChecked / p.desTotal) * 100) : 0;
               return (
                 <div
-                  key={key}
+                  key={p.curKey}
                   onClick={() => {
                     dispatch({ type: "SELECT_DESIGNER_INSTRUCTOR", ins: p.ins });
                     setTimeout(() => dispatch({ type: "SELECT_DESIGNER_LECTURE", lec: p.lec }), 0);
@@ -111,9 +98,9 @@ export default function DesignerTimelineTab() {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[13px] font-extrabold truncate" style={{ color: p.color }}>{p.ins}</span>
-                    {diff <= 7 && diff >= 0 && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${diff <= 1 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"}`}>
-                        {diff === 0 ? "D-Day" : `D-${diff}`}
+                    {p.daysLeft <= 7 && p.daysLeft >= 0 && (
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${p.daysLeft <= 1 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+                        {p.daysLeft === 0 ? "D-Day" : `D-${p.daysLeft}`}
                       </span>
                     )}
                   </div>
@@ -127,7 +114,7 @@ export default function DesignerTimelineTab() {
                   <div className="mt-2">
                     <div className="flex justify-between text-[10px] text-muted-foreground mb-0.5">
                       <span>디자인 진행률</span>
-                      <span>{desChecked}/{DES_TOTAL}</span>
+                      <span>{p.desChecked}/{p.desTotal}</span>
                     </div>
                     <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${desPct}%`, background: "#764ba2" }} />
@@ -143,7 +130,7 @@ export default function DesignerTimelineTab() {
   }
 
   // ── 상세 페이지 ──
-  const cardColor = state.platformColors[ld.platform] ?? state.data[state.designerIns]?.color ?? "#764ba2";
+  const cardColor = resolveColor(state.platformColors, ld.platform, ld.color, state.data[state.designerIns]?.color ?? "#764ba2");
   const pmA = state.pmProjectAssignees[curKey] ?? "";
   const desA = state.designerProjectAssignees[curKey] ?? "";
 
@@ -162,9 +149,27 @@ export default function DesignerTimelineTab() {
     return !!(state.designChecks[curKey]?.[sub.id]);
   };
 
-  // ── 마일스톤 상위 토글 (공용 훅 사용) ──
+  // ── d0 마일스톤 ↔ 라이브 세팅 양방향 동기화 ──
+  // 라이브 세팅 전부 완료 → d0 마일스톤 자동 체크
+  useEffect(() => {
+    if (!curKey) return;
+    const d0Checked = milestones.d0?.checked ?? false;
+    if (lsAllDone && !d0Checked) {
+      dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: "d0", checked: true });
+    } else if (!lsAllDone && d0Checked) {
+      dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: "d0", checked: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lsAllDone, curKey]);
+
+  // ── 마일스톤 상위 토글 (공용 훅 사용 + d0 특수 처리) ──
   const toggleMilestoneParent = (ms: typeof DESIGNER_MILESTONES[number]) => {
     if (!curKey) return;
+    // d0 마일스톤 토글 시 라이브 세팅 전체 토글
+    if (ms.id === "d0") {
+      toggleLsMaster();
+      return;
+    }
     toggleMilestone(curKey, ms);
   };
 
@@ -349,7 +354,7 @@ export default function DesignerTimelineTab() {
             </div>
 
             <div className="flex flex-col gap-3">
-              {[...DESIGNER_MILESTONES].sort((a, b) => {
+              {[...DESIGNER_MILESTONES].filter((ms) => ms.id !== "d0").sort((a, b) => {
                 const aChecked = milestones[a.id]?.checked ? 1 : 0;
                 const bChecked = milestones[b.id]?.checked ? 1 : 0;
                 return aChecked - bChecked;
@@ -357,7 +362,6 @@ export default function DesignerTimelineTab() {
                 const msDate = fmtDate(addDays(ld.liveDate, ms.dayOffset));
                 const item = milestones[ms.id] || { checked: false, assignee: "" };
                 const isPast = msDate < todayStr;
-                const isEditingThis = editingAssignee === ms.id;
 
                 return (
                   <div
