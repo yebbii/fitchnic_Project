@@ -42,6 +42,15 @@ export default function DesignerTimelineTab() {
     dispatch({ type: "SELECT_DESIGNER_INSTRUCTOR", ins: "" });
   };
 
+  // ── 라이브 세팅 (Hook 순서 보장을 위해 조기 반환 앞에 배치) ──
+  const lsChecks = curKey ? state.designChecks[curKey] || {} : {};
+  const lsMeta = curKey ? state.milestoneMeta[curKey] || {} : {};
+  const isFitchnic = ld?.platform === "핏크닉";
+  const lsCheckIds = ["ls_account", "ls_price", "ls_homepage", ...(isFitchnic ? ["ls_hpLink", "ls_banner"] : []), "ls_ebook", "ls_liveimg", "ls_salesppt", "ls_priceform"];
+  const lsCheckedCount = lsCheckIds.filter((id) => !!lsChecks[id]).length;
+  const lsTotalCount = lsCheckIds.length;
+  const lsAllDone = lsCheckedCount === lsTotalCount && lsTotalCount > 0;
+
   // ── 라이브 다음날(D+1) 이후 → 자동 완료 (1회만, 영구 저장) ──
   useEffect(() => {
     if (!curKey || !ld) return;
@@ -71,6 +80,18 @@ export default function DesignerTimelineTab() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [curKey]);
+
+  // ── d0 마일스톤 ↔ 라이브 세팅 양방향 동기화 ──
+  useEffect(() => {
+    if (!curKey) return;
+    const d0Checked = milestones.d0?.checked ?? false;
+    if (lsAllDone && !d0Checked) {
+      dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: "d0", checked: true });
+    } else if (!lsAllDone && d0Checked) {
+      dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: "d0", checked: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lsAllDone, curKey]);
 
   // ── 카드 선택 화면 ──
   if (!ld) {
@@ -130,37 +151,17 @@ export default function DesignerTimelineTab() {
   }
 
   // ── 상세 페이지 ──
-  const cardColor = resolveColor(state.platformColors, ld.platform, ld.color, state.data[state.designerIns]?.color ?? "#764ba2");
+  const cardColor = resolveColor(state.platformColors, ld.platform);
   const pmA = state.pmProjectAssignees[curKey] ?? "";
   const desA = state.designerProjectAssignees[curKey] ?? "";
 
-  // ── 라이브 세팅 ──
-  const lsChecks = curKey ? state.designChecks[curKey] || {} : {};
-  const lsMeta = curKey ? state.milestoneMeta[curKey] || {} : {};
+  // ── 라이브 세팅 (변수는 조기 반환 앞에서 선언됨) ──
   const setLsMeta = (field: string, value: string) => curKey && dispatch({ type: "SET_MILESTONE_META", curKey, field, value });
-  const isFitchnic = ld.platform === "핏크닉";
-  const lsCheckIds = ["ls_account", "ls_price", "ls_homepage", ...(isFitchnic ? ["ls_hpLink", "ls_banner"] : []), "ls_ebook", "ls_liveimg", "ls_salesppt", "ls_priceform"];
-  const lsCheckedCount = lsCheckIds.filter((id) => !!lsChecks[id]).length;
-  const lsTotalCount = lsCheckIds.length;
-  const lsAllDone = lsCheckedCount === lsTotalCount && lsTotalCount > 0;
   // ── 하위 체크 상태 판별 (benefit 타입 특수 처리) ──
   const isSubChecked = (sub: { id: string; type?: string }) => {
     if (sub.type === "benefit") return (state.milestoneMeta[curKey]?.benefitDone === "true");
     return !!(state.designChecks[curKey]?.[sub.id]);
   };
-
-  // ── d0 마일스톤 ↔ 라이브 세팅 양방향 동기화 ──
-  // 라이브 세팅 전부 완료 → d0 마일스톤 자동 체크
-  useEffect(() => {
-    if (!curKey) return;
-    const d0Checked = milestones.d0?.checked ?? false;
-    if (lsAllDone && !d0Checked) {
-      dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: "d0", checked: true });
-    } else if (!lsAllDone && d0Checked) {
-      dispatch({ type: "SET_DESIGNER_MILESTONE", curKey, milestoneId: "d0", checked: false });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lsAllDone, curKey]);
 
   // ── 마일스톤 상위 토글 (공용 훅 사용 + d0 특수 처리) ──
   const toggleMilestoneParent = (ms: typeof DESIGNER_MILESTONES[number]) => {
