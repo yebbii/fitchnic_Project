@@ -1,7 +1,6 @@
 /* ── 핏크닉 CRM 자동화 — 전체 타입 정의 ── */
 
 export interface Lecture {
-  color?: string;   // 강사 색상 변경 시 예정 강의에 자동 저장되는 개별 색상
   type: string;
   tone: string;
   platform: string;
@@ -20,7 +19,6 @@ export interface Lecture {
 }
 
 export interface InstructorData {
-  color: string;
   lectures: Record<string, Lecture>;
 }
 

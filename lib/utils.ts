@@ -22,6 +22,11 @@ export function fmtDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+export function fmtMonthDay(dateStr: string | Date): string {
+  const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
 export function fmtDateKr(dateStr: string): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -39,14 +44,12 @@ export function isSameDay(a: Date, b: Date): boolean {
 
 /* ── 공통 계산 유틸 ── */
 
-/** 강의 색상 결정 (플랫폼 색상 → 강의 개별 색상 → 강사 색상 → 기본값) */
+/** 강의 색상 결정 (플랫폼 색상 → 기본값) */
 export function resolveColor(
   platformColors: Record<string, string>,
   platform: string | undefined,
-  lectureColor: string | undefined,
-  instructorColor: string,
 ): string {
-  return (platform ? platformColors[platform] : undefined) ?? lectureColor ?? instructorColor;
+  return (platform ? platformColors[platform] : undefined) ?? "#667eea";
 }
 
 /** 오늘 기준 D-day 계산 (양수 = 미래, 0 = 오늘, 음수 = 과거) */

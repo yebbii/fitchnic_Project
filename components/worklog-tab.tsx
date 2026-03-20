@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
+import { HOME_TAB_COLORS } from "@/lib/constants";
 import type { WorkLog } from "@/lib/types";
 import AssigneeManagerModal from "./assignee-manager-modal";
 
@@ -141,7 +142,8 @@ export default function WorklogTab() {
               <button
                 onClick={addLog}
                 disabled={!content.trim()}
-                className="bg-[#764ba2] text-white rounded-xl px-6 py-2.5 text-[14px] font-semibold border-none cursor-pointer disabled:opacity-40 hover:opacity-90 transition-opacity"
+                className="text-white rounded-xl px-6 py-2.5 text-[14px] font-semibold border-none cursor-pointer disabled:opacity-40 hover:opacity-90 transition-opacity"
+                style={{ background: HOME_TAB_COLORS.designer }}
               >
                 저장
               </button>
@@ -159,7 +161,7 @@ export default function WorklogTab() {
             sortedDates.map((d) => (
               <div key={d} className="mb-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-[14px] font-extrabold text-[#764ba2]">{fmtDate(d)}</span>
+                  <span className="text-[14px] font-extrabold" style={{ color: HOME_TAB_COLORS.designer }}>{fmtDate(d)}</span>
                   <div className="flex-1 h-px bg-border" />
                   <span className="text-[12px] text-[#aeaeb2]">{grouped[d].length}건</span>
                 </div>
@@ -169,7 +171,7 @@ export default function WorklogTab() {
                       <div className="flex justify-between items-start gap-3">
                         <div className="flex-1">
                           {log.lectureKey && (
-                            <div className="text-[11px] font-semibold text-[#764ba2] bg-[#764ba2]/10 px-2 py-0.5 rounded-full inline-block mb-2">
+                            <div className="text-[11px] font-semibold px-2 py-0.5 rounded-full inline-block mb-2" style={{ color: HOME_TAB_COLORS.designer, background: HOME_TAB_COLORS.designer + "1a" }}>
                               {log.lectureKey.replace("|", " · ")}
                             </div>
                           )}
@@ -183,7 +185,7 @@ export default function WorklogTab() {
                                 className="w-full bg-secondary border border-border rounded-lg text-foreground px-3 py-2 text-sm outline-none resize-none leading-relaxed"
                               />
                               <div className="flex gap-2 mt-2">
-                                <button onClick={() => saveEdit(log.id)} className="bg-[#764ba2] text-white rounded-lg px-4 py-1.5 text-[13px] font-semibold border-none cursor-pointer">저장</button>
+                                <button onClick={() => saveEdit(log.id)} className="text-white rounded-lg px-4 py-1.5 text-[13px] font-semibold border-none cursor-pointer" style={{ background: HOME_TAB_COLORS.designer }}>저장</button>
                                 <button onClick={() => { setEditId(null); setEditContent(""); }} className="bg-secondary text-muted-foreground rounded-lg px-4 py-1.5 text-[13px] font-semibold border-none cursor-pointer">취소</button>
                               </div>
                             </div>

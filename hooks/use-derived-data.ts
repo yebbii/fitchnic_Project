@@ -46,7 +46,7 @@ export function useLectureSummaries(): LectureSummary[] {
     Object.entries(state.data).forEach(([ins, iD]) => {
       Object.entries(iD.lectures).forEach(([lec, lD]) => {
         const curKey = `${ins}|${lec}`;
-        const color = resolveColor(state.platformColors, lD.platform, lD.color, iD.color);
+        const color = resolveColor(state.platformColors, lD.platform);
         const seq = state.seqDataMap[curKey] || DEFAULT_SEQ;
         const ck = state.allChecks[curKey] || {};
         const cp = state.allCopies[curKey] || {};
@@ -101,7 +101,7 @@ export function useLiveEvents(): LiveEvent[] {
           ev.push({
             date: lD.liveDate,
             ins, lec,
-            color: resolveColor(state.platformColors, lD.platform, lD.color, iD.color),
+            color: resolveColor(state.platformColors, lD.platform),
             platform: lD.platform || "",
           });
         });

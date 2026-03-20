@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useCrm, useDesignerCurKey, useToggleDesignerMilestone } from "@/hooks/use-crm-store";
-import { DESIGNER_MILESTONES } from "@/lib/constants";
-import { fmtDateKr, fmtDate, addDays, resolveColor, daysUntil } from "@/lib/utils";
+import { DESIGNER_MILESTONES, HOME_TAB_COLORS } from "@/lib/constants";
+import { fmtDateKr, fmtDate, fmtMonthDay, addDays, resolveColor, daysUntil } from "@/lib/utils";
 import { useActiveLectures } from "@/hooks/use-derived-data";
 import type { MilestoneId } from "@/lib/types";
 
@@ -138,7 +138,7 @@ export default function DesignerTimelineTab() {
                       <span>{p.desChecked}/{p.desTotal}</span>
                     </div>
                     <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${desPct}%`, background: "#764ba2" }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${desPct}%`, background: HOME_TAB_COLORS.designer }} />
                     </div>
                   </div>
                 </div>
@@ -335,8 +335,8 @@ export default function DesignerTimelineTab() {
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span className="text-[13px] text-muted-foreground">📅 {fmtDateKr(ld.liveDate)} {ld.liveTime}</span>
                 {desA ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold" style={{ background: "#764ba215", color: "#764ba2", border: "1px solid #764ba230" }}>
-                    <span className="w-4 h-4 rounded-full bg-[#764ba2] text-white text-[9px] font-extrabold flex items-center justify-center flex-shrink-0">{desA.slice(0, 1)}</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold" style={{ background: HOME_TAB_COLORS.designer + "15", color: HOME_TAB_COLORS.designer, border: `1px solid ${HOME_TAB_COLORS.designer}30` }}>
+                    <span className="w-4 h-4 rounded-full text-white text-[9px] font-extrabold flex items-center justify-center flex-shrink-0" style={{ background: HOME_TAB_COLORS.designer }}>{desA.slice(0, 1)}</span>
                     담당 {desA}
                   </span>
                 ) : (
@@ -426,8 +426,8 @@ export default function DesignerTimelineTab() {
                                 const driveLink = meta.driveLink || "";
                                 const figmaLink = meta.figmaLink || "";
                                 const assigneeName = state.designerProjectAssignees[curKey] || "담당자";
-                                const d9Date = fmtDate(addDays(ld.liveDate, -9));
-                                const reqMsg = `[자료요청]\n안녕하세요 대표님 핏크닉 ${assigneeName}입니다\n${ld.liveDate} 예정된 강의 상세페이지 리뉴얼과 관련해 연락 드립니다\n\n아래 정보들 ${d9Date}까지 전달 주시면, 상세페이지에 활용하겠습니다!\n\n자료는 아래 링크로 업로드 부탁 드립니다 :)\n${driveLink || "[드라이브 링크]"}\n\n1. 최신 수익\n2. 수강생 수익 인증, 카톡 대화\n\n수강생 사례 전달 시 구체적인 정보 함께 전달 부탁 드립니다.\nEX) 40대 직장인, 5억 저렴하게 건물 매수!\n\n추가로\n지난 기수 상세페이지 링크 첨부드립니다 확인해보시고\n\n이번기수에\n1. 수강생 혜택 변동 있는지\n2. 커리큘럼 변동 있는지\n3. 강의 소구점 변동 또는 수정 원하시는 부분 있는지\n알려주시면 반영하도록 하겠습니다\n\n감사합니다! 좋은 하루 보내세요!\n\n${figmaLink || "[피그마 링크]"}`;
+                                const d9Date = fmtMonthDay(addDays(ld.liveDate, -9));
+                                const reqMsg = `[자료요청]\n안녕하세요 대표님 핏크닉 ${assigneeName}입니다\n${fmtMonthDay(ld.liveDate)} 예정된 강의 상세페이지 리뉴얼과 관련해 연락 드립니다\n\n아래 정보들 ${d9Date}까지 전달 주시면, 상세페이지에 활용하겠습니다!\n\n자료는 아래 링크로 업로드 부탁 드립니다 :)\n${driveLink || "[드라이브 링크]"}\n\n1. 최신 수익\n2. 수강생 수익 인증, 카톡 대화\n\n수강생 사례 전달 시 구체적인 정보 함께 전달 부탁 드립니다.\nEX) 40대 직장인, 5억 저렴하게 건물 매수!\n\n추가로\n지난 기수 상세페이지 링크 첨부드립니다 확인해보시고\n\n이번기수에\n1. 수강생 혜택 변동 있는지\n2. 커리큘럼 변동 있는지\n3. 강의 소구점 변동 또는 수정 원하시는 부분 있는지\n알려주시면 반영하도록 하겠습니다\n\n감사합니다! 좋은 하루 보내세요!\n\n${figmaLink || "[피그마 링크]"}`;
                                 return (
                                   <div key={sub.id} className="flex flex-col gap-1.5">
                                     <div className="flex items-center gap-2">

@@ -7,6 +7,7 @@ import HistoryTab from "@/components/history-tab";
 import HomeTab from "@/components/home-tab";
 import DesignerContainer from "@/components/designer-container";
 import LectureManagement from "@/components/lecture-management";
+import { HOME_TAB_COLORS } from "@/lib/constants";
 import type { TopTabId, TabId, DesignerTabId } from "@/lib/types";
 
 const TOP_TABS: { id: TopTabId; label: string }[] = [
@@ -38,7 +39,7 @@ function NavHeader() {
         <div className="flex items-center gap-5">
           {/* 로고 */}
           <div className="flex items-center gap-2.5">
-            <div className="w-[34px] h-[34px] rounded-[9px] bg-gradient-to-br from-primary to-[#764ba2] flex items-center justify-center text-[15px] font-extrabold text-white">
+            <div className="w-[34px] h-[34px] rounded-[9px] flex items-center justify-center text-[15px] font-extrabold text-white" style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}>
               F
             </div>
             <span className="text-[17px] font-extrabold">핏크닉 프로젝트 관리</span>
@@ -103,9 +104,10 @@ function NavHeader() {
               }}
               className={`px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer border-none ${
                 state.designerTab === t.id
-                  ? "bg-[#764ba2] text-white"
+                  ? "text-white"
                   : "bg-secondary text-muted-foreground hover:text-foreground"
               }`}
+              style={state.designerTab === t.id ? { background: HOME_TAB_COLORS.designer } : undefined}
             >
               {t.label}
             </button>

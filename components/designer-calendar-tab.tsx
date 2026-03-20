@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useCrm, useGoToDesignerTimeline, useToggleDesignerMilestone } from "@/hooks/use-crm-store";
-import { DESIGNER_MILESTONES } from "@/lib/constants";
+import { DESIGNER_MILESTONES, HOME_TAB_COLORS } from "@/lib/constants";
 import { addDays, fmtDate, fmtDateKr, isSameDay, resolveColor } from "@/lib/utils";
 import { useCalendar } from "@/hooks/use-calendar";
 import type { MilestoneId } from "@/lib/types";
@@ -43,15 +43,14 @@ export default function DesignerCalendarTab() {
 
   /* 진행중 강의 프로젝트 목록 */
   const projects = useMemo(() => {
-    const list: { ins: string; lec: string; liveDate: string; color: string; insColor: string; platform: string }[] = [];
+    const list: { ins: string; lec: string; liveDate: string; color: string; platform: string }[] = [];
     Object.entries(state.data).forEach(([ins, iD]) => {
       Object.entries(iD.lectures)
         .filter(([, l]) => l.status === "active" && l.liveDate)
         .forEach(([lec, lD]) => {
           list.push({
             ins, lec, liveDate: lD.liveDate,
-            color: resolveColor(state.platformColors, lD.platform, lD.color, iD.color),
-            insColor: iD.color,
+            color: resolveColor(state.platformColors, lD.platform),
             platform: lD.platform,
           });
         });
@@ -63,7 +62,7 @@ export default function DesignerCalendarTab() {
   const events = useMemo(() => {
     const ev: {
       date: string; ins: string; lec: string;
-      color: string; insColor: string;
+      color: string;
       isLive: boolean;
       milestoneId?: string; milestoneLabel?: string; milestoneTitle?: string; milestoneColor?: string;
       checked?: boolean; assignee?: string; assigneeColor?: string;
@@ -72,8 +71,7 @@ export default function DesignerCalendarTab() {
       Object.entries(iD.lectures)
         .filter(([, l]) => l.status === "active" && l.liveDate)
         .forEach(([lec, lD]) => {
-          const color = resolveColor(state.platformColors, lD.platform, lD.color, iD.color);
-          const insColor = iD.color;
+          const color = resolveColor(state.platformColors, lD.platform);
           const curKey = `${ins}|${lec}`;
           const mks = state.designerMilestones[curKey] || {};
           const projectAssignee = state.designerProjectAssignees[curKey] ?? "";
@@ -85,7 +83,7 @@ export default function DesignerCalendarTab() {
               : undefined;
             ev.push({
               date: fmtDate(addDays(lD.liveDate, ms.dayOffset)),
-              ins, lec, color, insColor, isLive: false,
+              ins, lec, color, isLive: false,
               milestoneId: ms.id, milestoneLabel: ms.label,
               milestoneTitle: ms.title, milestoneColor: ms.color,
               checked: mks[ms.id as MilestoneId]?.checked ?? false,
@@ -93,7 +91,7 @@ export default function DesignerCalendarTab() {
               assigneeColor,
             });
           });
-          ev.push({ date: lD.liveDate, ins, lec, color, insColor, isLive: true });
+          ev.push({ date: lD.liveDate, ins, lec, color, isLive: true });
         });
     });
     return ev;
@@ -206,7 +204,7 @@ export default function DesignerCalendarTab() {
 
           return (
         <div className="flex flex-col gap-3 p-3">
-          {displayed.map(({ ins, lec, liveDate, insColor }) => {
+          {displayed.map(({ ins, lec, liveDate, color }) => {
             const curKey = `${ins}|${lec}`;
             const milestones = state.designerMilestones[curKey] || {};
             const isExpanded = expandedProjects.has(curKey);
@@ -221,12 +219,12 @@ export default function DesignerCalendarTab() {
             return (
               <div key={curKey} className="bg-white rounded-2xl border border-border shadow-[0_1px_4px_rgba(0,0,0,.05)]">
                 {/* 카드 상단 색상 바 */}
-                <div className="h-1 w-full rounded-t-2xl" style={{ background: insColor }} />
+                <div className="h-1 w-full rounded-t-2xl" style={{ background: color }} />
 
                 <div className="p-3.5">
                   {/* 1행: 강사명 + 날짜 */}
                   <div className="flex items-center justify-between gap-2 mb-0.5">
-                    <div className="font-extrabold text-[13px] leading-tight truncate" style={{ color: insColor }}>{ins}</div>
+                    <div className="font-extrabold text-[13px] leading-tight truncate" style={{ color: color }}>{ins}</div>
                     <div className="text-[10px] text-muted-foreground font-semibold whitespace-nowrap flex-shrink-0">
                       🔴 {fmtDateKr(liveDate)}
                     </div>
@@ -283,7 +281,7 @@ export default function DesignerCalendarTab() {
                       <span className="font-semibold text-muted-foreground">{msCheckedCount}/{msTotal}</span>
                     </div>
                     <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${msTotal ? (msCheckedCount / msTotal) * 100 : 0}%`, background: "#764ba2" }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${msTotal ? (msCheckedCount / msTotal) * 100 : 0}%`, background: HOME_TAB_COLORS.designer }} />
                     </div>
                   </div>
 
@@ -362,7 +360,10 @@ export default function DesignerCalendarTab() {
           {projects.length > 5 && !showMoreProjects && (
             <button
               onClick={() => setShowMoreProjects(true)}
-              className="w-full py-2 text-[12px] text-[#764ba2] font-semibold bg-white border border-[#764ba2]/30 rounded-xl cursor-pointer hover:bg-[#764ba2]/5 transition-colors"
+              className="w-full py-2 text-[12px] font-semibold bg-white rounded-xl cursor-pointer transition-colors"
+              style={{ color: HOME_TAB_COLORS.designer, border: `1px solid ${HOME_TAB_COLORS.designer}4d` }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = HOME_TAB_COLORS.designer + "0d"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "white"; }}
             >
               + 나머지 {projects.length - 5}개 더보기
             </button>
@@ -516,7 +517,7 @@ export default function DesignerCalendarTab() {
 
             return (
               <div className="grid grid-cols-2 gap-4">
-                {filteredProjects.map(({ ins, lec, liveDate, insColor }) => {
+                {filteredProjects.map(({ ins, lec, liveDate, color }) => {
                   const curKey = `${ins}|${lec}`;
                   const milestones = state.designerMilestones[curKey] || {};
                   const projectAssigneeName = state.designerProjectAssignees[curKey] ?? "";
@@ -528,10 +529,10 @@ export default function DesignerCalendarTab() {
                       {/* 프로젝트 헤더 */}
                       <div
                         className="flex items-center justify-between px-4 py-3 gap-2"
-                        style={{ borderLeft: `4px solid ${insColor}`, background: insColor + "08" }}
+                        style={{ borderLeft: `4px solid ${color}`, background: color + "08" }}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-extrabold text-[14px] flex-shrink-0" style={{ color: insColor }}>{ins}</span>
+                          <span className="font-extrabold text-[14px] flex-shrink-0" style={{ color: color }}>{ins}</span>
                           <span className="text-[12px] text-muted-foreground font-medium truncate">{lec}</span>
                           {projectAssigneeName && (
                             <button
@@ -672,7 +673,7 @@ export default function DesignerCalendarTab() {
             {calDays.map((day, i) => {
               if (!day) return <div key={`e${i}`} className="min-h-[110px]" />;
               const ds = fmtDate(day);
-              const dayEvts = filteredEvents.filter((e) => e.date === ds);
+              const dayEvts = filteredEvents.filter((e) => e.date === ds).sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0));
               const isT = isSameDay(day, today);
               const isPast = day < today && !isT;
               const showAll = expandedDay === ds;
@@ -682,20 +683,22 @@ export default function DesignerCalendarTab() {
                   key={ds}
                   className={`min-h-[110px] rounded-[10px] p-1.5 overflow-hidden ${
                     isT
-                      ? "bg-[#764ba2]/5 border-[1.5px] border-[#764ba2]"
+                      ? "border-[1.5px]"
                       : isPast
                       ? "bg-[#fafafa] border-[1.5px] border-[#f0f0f0]"
                       : "bg-white border-[1.5px] border-[#f0f0f0]"
                   } ${dayEvts.length > 2 ? "cursor-pointer" : ""}`}
+                  style={isT ? { background: HOME_TAB_COLORS.designer + "0d", borderColor: HOME_TAB_COLORS.designer } : undefined}
                   onClick={() => { if (dayEvts.length > 2) setExpandedDay(showAll ? null : ds); }}
                 >
                   <div
                     className={`text-[15px] px-1 mb-1 ${
-                      isT ? "font-extrabold text-[#764ba2]"
+                      isT ? "font-extrabold"
                       : isPast ? "font-semibold text-[#ccc]"
                       : day.getDay() === 0 ? "font-semibold text-red-500"
                       : "font-semibold text-foreground"
                     }`}
+                    style={isT ? { color: HOME_TAB_COLORS.designer } : undefined}
                   >
                     {day.getDate()}
                   </div>
@@ -747,7 +750,7 @@ export default function DesignerCalendarTab() {
                                 <span className="text-[9px] font-extrabold px-1 rounded-full flex-shrink-0 bg-[#e8e8e8] text-[#aeaeb2]">
                                   {ev.milestoneLabel}
                                 </span>
-                                <span className="font-bold truncate" style={{ color: ev.checked ? "#aeaeb2" : ev.insColor }}>{ev.ins}</span>
+                                <span className="font-bold truncate" style={{ color: ev.checked ? "#aeaeb2" : ev.color }}>{ev.ins}</span>
                               </div>
                               <div className={`text-[10px] font-medium truncate ${ev.checked ? "line-through" : ""}`} style={{ color: ev.checked ? "#c0c0c0" : "#6e6e73" }}>
                                 {ev.milestoneTitle}
@@ -769,7 +772,7 @@ export default function DesignerCalendarTab() {
                       );
                     })}
                     {dayEvts.length > 2 && !showAll && (
-                      <div className="text-xs text-[#764ba2] text-center font-semibold py-0.5 cursor-pointer">
+                      <div className="text-xs text-center font-semibold py-0.5 cursor-pointer" style={{ color: HOME_TAB_COLORS.designer }}>
                         +{dayEvts.length - 2}개 더 보기
                       </div>
                     )}

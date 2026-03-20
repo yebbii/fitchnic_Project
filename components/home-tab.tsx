@@ -11,8 +11,8 @@ type PlatformFilterId = "fitchnic" | "moneyup";
 
 const STANDALONE_TAGS: { id: FilterTagId; label: string; color: string }[] = [
   { id: "d10", label: "D-10", color: "#ef4444" },
-  { id: "pm", label: "PM 업무", color: "#f97316" },
-  { id: "designer", label: "디자이너", color: "#764ba2" },
+  { id: "pm", label: "PM 업무", color: HOME_TAB_COLORS.pm },
+  { id: "designer", label: "디자이너", color: HOME_TAB_COLORS.designer },
 ];
 
 const PLATFORM_TAGS: { id: PlatformFilterId; label: string; color: string }[] = [
@@ -264,10 +264,10 @@ export default function HomeTab() {
                             <div className="flex-1 h-[5px] bg-[#f0f0f5] rounded-full overflow-hidden">
                               <div
                                 className="h-full rounded-full transition-all duration-500"
-                                style={{ width: `${pctPm}%`, background: pctPm === 100 ? "#22c55e" : "linear-gradient(90deg, #f39c12, #e67e22)" }}
+                                style={{ width: `${pctPm}%`, background: pctPm === 100 ? "#22c55e" : HOME_TAB_COLORS.pm }}
                               />
                             </div>
-                            <span className="text-[10px] font-bold w-8 text-right" style={{ color: pctPm === 100 ? "#22c55e" : "#f39c12" }}>
+                            <span className="text-[10px] font-bold w-8 text-right" style={{ color: pctPm === 100 ? "#22c55e" : HOME_TAB_COLORS.pm }}>
                               {lc.pmChecked}/{lc.pmTotal}
                             </span>
                           </div>
@@ -277,10 +277,10 @@ export default function HomeTab() {
                             <div className="flex-1 h-[5px] bg-[#f0f0f5] rounded-full overflow-hidden">
                               <div
                                 className="h-full rounded-full transition-all duration-500"
-                                style={{ width: `${pctDes}%`, background: pctDes === 100 ? "#22c55e" : "#7c3aed" }}
+                                style={{ width: `${pctDes}%`, background: pctDes === 100 ? "#22c55e" : HOME_TAB_COLORS.designer }}
                               />
                             </div>
-                            <span className="text-[10px] font-bold w-8 text-right" style={{ color: pctDes === 100 ? "#22c55e" : "#7c3aed" }}>
+                            <span className="text-[10px] font-bold w-8 text-right" style={{ color: pctDes === 100 ? "#22c55e" : HOME_TAB_COLORS.designer }}>
                               {lc.desChecked}/{lc.desTotal}
                             </span>
                           </div>
@@ -535,7 +535,7 @@ export default function HomeTab() {
                                 className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
                                 style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
                               >
-                                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#d97706" }} />
+                                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: HOME_TAB_COLORS.pm }} />
                                 PM {dayPmCount}건
                               </div>
                             ) : null
@@ -548,7 +548,7 @@ export default function HomeTab() {
                                   className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
                                   style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
                                 >
-                                  <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#d97706" }} />
+                                  <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: HOME_TAB_COLORS.pm }} />
                                   <span className="truncate">{ev.ins}</span>
                                   <span className="text-[9px] opacity-60 truncate">{ev.seqLabel}</span>
                                 </div>
@@ -567,7 +567,7 @@ export default function HomeTab() {
                                 className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
                                 style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
                               >
-                                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#7c3aed" }} />
+                                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: HOME_TAB_COLORS.designer }} />
                                 디자인 {dayDesCount}건
                               </div>
                             ) : null
@@ -580,7 +580,7 @@ export default function HomeTab() {
                                   className="flex items-center gap-1 rounded-[5px] px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity"
                                   style={{ background: "#f5f5f4", color: "#78716c", border: "1.5px solid #e7e5e4" }}
                                 >
-                                  <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: "#7c3aed" }} />
+                                  <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ background: HOME_TAB_COLORS.designer }} />
                                   <span className="truncate">{ev.ins}</span>
                                   <span className="text-[9px] opacity-60 truncate">{ev.phaseLabel}</span>
                                 </div>
@@ -613,7 +613,7 @@ export default function HomeTab() {
         const mID = state.data[mIns];
         const mLD = mID?.lectures?.[mLec];
         if (!mID || !mLD) return null;
-        const mColor = resolveColor(state.platformColors, mLD.platform, mLD.color, mID.color);
+        const mColor = resolveColor(state.platformColors, mLD.platform);
         const mPmSeq = state.seqDataMap[modalKey] || DEFAULT_SEQ;
         const mPmTotal = seqTotalItems(mPmSeq);
         const mPmChecked = Object.values(state.allChecks[modalKey] || {}).filter(Boolean).length;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrm, useCurKey, useCurrentLecture, useCurrentSeq } from "@/hooks/use-crm-store";
-import { CH_OPTIONS } from "@/lib/constants";
+import { CH_OPTIONS, HOME_TAB_COLORS } from "@/lib/constants";
 import { uid, fmtDateKr, fetchAICopy, genCopyLocal, resolveColor, seqTotalItems } from "@/lib/utils";
 import { useActiveLectures } from "@/hooks/use-derived-data";
 import LectureInfoEditor from "./lecture-info-editor";
@@ -34,7 +34,7 @@ export default function BoardTab() {
 
   const copies = curKey ? state.allCopies[curKey] || {} : {};
   const checks = curKey ? state.allChecks[curKey] || {} : {};
-  const cardColor = resolveColor(state.platformColors, ld?.platform, ld?.color, state.data[state.ins]?.color ?? "#667eea");
+  const cardColor = resolveColor(state.platformColors, ld?.platform);
   const totalItems = seqTotalItems(seqData);
   const gc = Object.keys(copies).length;
   const cc = Object.values(checks).filter(Boolean).length;
@@ -197,8 +197,8 @@ export default function BoardTab() {
               )}
               {!editInfo && (
                 desAssigneeName ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: "#764ba215", color: "#764ba2", border: "1px solid #764ba230" }}>
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#764ba2] text-white text-[8px] font-extrabold flex items-center justify-center flex-shrink-0">{desAssigneeName.slice(0, 1)}</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: HOME_TAB_COLORS.designer + "15", color: HOME_TAB_COLORS.designer, border: `1px solid ${HOME_TAB_COLORS.designer}30` }}>
+                    <span className="w-3.5 h-3.5 rounded-full text-white text-[8px] font-extrabold flex items-center justify-center flex-shrink-0" style={{ background: HOME_TAB_COLORS.designer }}>{desAssigneeName.slice(0, 1)}</span>
                     담당 {desAssigneeName}
                   </span>
                 ) : (
@@ -296,7 +296,8 @@ export default function BoardTab() {
             <button
               onClick={doGenAll}
               disabled={isGen}
-              className="bg-gradient-to-br from-primary to-[#764ba2] rounded-[10px] text-white px-7 py-3 text-[15px] font-semibold border-none cursor-pointer disabled:opacity-50"
+              className="rounded-[10px] text-white px-7 py-3 text-[15px] font-semibold border-none cursor-pointer disabled:opacity-50"
+              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
             >
               {isGen ? "⏳ 생성 중..." : "✨ 전체 카피 생성 (Claude AI)"}
             </button>

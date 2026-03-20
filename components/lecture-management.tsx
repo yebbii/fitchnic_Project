@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useCrm, useGoToBoard, useGoToDesignerTimeline } from "@/hooks/use-crm-store";
-import { DEFAULT_SEQ, DEFAULT_DESIGN_SEQ, TONE_PRESETS, TARGET_PRESETS, TYPE_PRESETS } from "@/lib/constants";
+import { DEFAULT_SEQ, DEFAULT_DESIGN_SEQ, TONE_PRESETS, TARGET_PRESETS, TYPE_PRESETS, HOME_TAB_COLORS } from "@/lib/constants";
 import { fmtDate, fmtDateKr, addDays, isSameDay } from "@/lib/utils";
 import TagPicker from "./tag-picker";
 
@@ -39,7 +39,7 @@ export default function LectureManagement() {
     const list: { ins: string; lec: string; liveDate: string; liveTime: string; platform: string; color: string; status: "active" | "completed"; type: string }[] = [];
     Object.entries(state.data).forEach(([ins, iD]) => {
       Object.entries(iD.lectures).forEach(([lec, l]) => {
-        list.push({ ins, lec, liveDate: l.liveDate, liveTime: l.liveTime, platform: l.platform, color: iD.color, status: l.status, type: l.type });
+        list.push({ ins, lec, liveDate: l.liveDate, liveTime: l.liveTime, platform: l.platform, color: state.platformColors[l.platform] ?? "#667eea", status: l.status, type: l.type });
       });
     });
     return list.sort((a, b) => {
@@ -91,7 +91,7 @@ export default function LectureManagement() {
     const ev: { date: string; ins: string; lec: string; color: string; status: string }[] = [];
     Object.entries(state.data).forEach(([ins, iD]) => {
       Object.entries(iD.lectures).forEach(([lec, l]) => {
-        if (l.liveDate) ev.push({ date: l.liveDate, ins, lec, color: state.platformColors[l.platform] ?? iD.color, status: l.status });
+        if (l.liveDate) ev.push({ date: l.liveDate, ins, lec, color: state.platformColors[l.platform] ?? "#667eea", status: l.status });
       });
     });
     return ev;
@@ -108,7 +108,7 @@ export default function LectureManagement() {
     const pmTotal = pmSeq ? pmSeq.reduce((s, p) => s + p.items.length, 0) : PM_DEFAULT_TOTAL;
     const pmChecked = Object.values(state.allChecks[curKey] || {}).filter(Boolean).length;
     const desChecked = Object.values(state.designChecks[curKey] || {}).filter(Boolean).length;
-    const cardColor = state.platformColors[ld.platform] ?? iD.color;
+    const cardColor = state.platformColors[ld.platform] ?? "#667eea";
 
     const upd = (field: string, value: unknown) =>
       dispatch({ type: "UPDATE_LECTURE_FIELD", ins, lec, field, value });
@@ -157,7 +157,8 @@ export default function LectureManagement() {
             </button>
             <button
               onClick={() => goToDesignerTimeline(ins, lec)}
-              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-[#764ba2] text-white"
+              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer text-white"
+              style={{ background: HOME_TAB_COLORS.designer }}
             >
               디자인
             </button>
@@ -248,17 +249,17 @@ export default function LectureManagement() {
               <div className="flex flex-col gap-3">
                 <div>
                   <div className="flex justify-between text-[12px] font-semibold mb-1.5">
-                    <span style={{ color: "#f97316" }}>PM 진행률</span>
+                    <span style={{ color: HOME_TAB_COLORS.pm }}>PM 진행률</span>
                     <span className="text-muted-foreground">{pmChecked}/{pmTotal} ({pmTotal ? Math.round(pmChecked/pmTotal*100) : 0}%)</span>
                   </div>
-                  <ProgressBar checked={pmChecked} total={pmTotal} color="#f97316" />
+                  <ProgressBar checked={pmChecked} total={pmTotal} color={HOME_TAB_COLORS.pm} />
                 </div>
                 <div>
                   <div className="flex justify-between text-[12px] font-semibold mb-1.5">
-                    <span style={{ color: "#764ba2" }}>디자이너 진행률</span>
+                    <span style={{ color: HOME_TAB_COLORS.designer }}>디자이너 진행률</span>
                     <span className="text-muted-foreground">{desChecked}/{DES_TOTAL} ({DES_TOTAL ? Math.round(desChecked/DES_TOTAL*100) : 0}%)</span>
                   </div>
-                  <ProgressBar checked={desChecked} total={DES_TOTAL} color="#764ba2" />
+                  <ProgressBar checked={desChecked} total={DES_TOTAL} color={HOME_TAB_COLORS.designer} />
                 </div>
               </div>
             </div>
@@ -389,8 +390,8 @@ export default function LectureManagement() {
           </div>
         </div>
         <div className="mt-2.5 flex flex-col gap-1">
-          <ProgressBar checked={pmChecked} total={pmTotal} color="#f97316" />
-          <ProgressBar checked={desChecked} total={DES_TOTAL} color="#764ba2" />
+          <ProgressBar checked={pmChecked} total={pmTotal} color={HOME_TAB_COLORS.pm} />
+          <ProgressBar checked={desChecked} total={DES_TOTAL} color={HOME_TAB_COLORS.designer} />
         </div>
       </div>
     );

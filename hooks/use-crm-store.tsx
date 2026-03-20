@@ -104,7 +104,7 @@ type Action =
   | { type: "SELECT_DESIGNER_LECTURE_AND_NAV"; ins: string; lec: string }
   | { type: "SET_DATA"; data: CrmData }
   | { type: "UPDATE_LECTURE_FIELD"; ins: string; lec: string; field: string; value: unknown }
-  | { type: "ADD_LECTURE"; ins: string; lec: string; lecture: Lecture; color: string }
+  | { type: "ADD_LECTURE"; ins: string; lec: string; lecture: Lecture }
   | { type: "SET_CHECK"; curKey: string; itemId: string; checked: boolean }
   | { type: "SET_COPY"; curKey: string; itemId: string; copy: { text: string; edited: string; status: "ai" | "edited" } }
   | { type: "UPDATE_SEQ"; curKey: string; seq: SeqPhase[] }
@@ -117,7 +117,6 @@ type Action =
   | { type: "UPDATE_WORK_LOG"; id: string; content: string }
   | { type: "DELETE_WORK_LOG"; id: string }
   | { type: "RENAME_INSTRUCTOR"; oldIns: string; newIns: string }
-  | { type: "SET_INSTRUCTOR_COLOR"; ins: string; color: string }
   | { type: "SET_PLATFORM_COLOR"; platform: string; color: string }
   | { type: "DELETE_LECTURE"; ins: string; lec: string };
 
@@ -175,7 +174,7 @@ function reducer(state: CrmState, action: Action): CrmState {
     case "ADD_LECTURE": {
       const d = { ...state.data };
       if (!d[action.ins]) {
-        d[action.ins] = { color: action.color, lectures: {} };
+        d[action.ins] = { lectures: {} };
       } else {
         d[action.ins] = { ...d[action.ins], lectures: { ...d[action.ins].lectures } };
       }
@@ -261,21 +260,6 @@ function reducer(state: CrmState, action: Action): CrmState {
         designChecks: newDesignChecks,
         lec: state.lec === oldLec && state.ins === ins ? newLec : state.lec,
       };
-    }
-    case "SET_INSTRUCTOR_COLOR": {
-      if (!state.data[action.ins]) return state;
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-      const d = { ...state.data };
-      const lectures = { ...d[action.ins].lectures };
-      Object.keys(lectures).forEach((lec) => {
-        const l = lectures[lec];
-        if (l.liveDate && l.liveDate >= todayStr) {
-          lectures[lec] = { ...l, color: action.color };
-        }
-      });
-      d[action.ins] = { ...d[action.ins], color: action.color, lectures };
-      return { ...state, data: d };
     }
     case "SET_PLATFORM_COLOR":
       return {

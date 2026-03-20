@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
-import { DEFAULT_SEQ } from "@/lib/constants";
-import { addDays, fmtDate, fmtDateKr, isSameDay, daysUntil, seqTotalItems, seqCheckedItems } from "@/lib/utils";
+import { DEFAULT_SEQ, HOME_TAB_COLORS } from "@/lib/constants";
+import { addDays, fmtDate, fmtDateKr, isSameDay, daysUntil, seqTotalItems, seqCheckedItems, resolveColor } from "@/lib/utils";
 import { useCalendar } from "@/hooks/use-calendar";
 import { useActiveLectures, useCompletedLectures, useLiveEvents } from "@/hooks/use-derived-data";
 import AddLectureDialog from "./add-lecture-dialog";
@@ -70,7 +70,7 @@ export default function DashboardTab() {
               seqId: seq.id,
               seqLabel: seq.label,
               items: seq.items,
-              color: iD.color,
+              color: resolveColor(state.platformColors, lD.platform),
               isLiveDay: seq.dayOffset === 0,
               checkedCount,
               copiedCount,
@@ -94,7 +94,8 @@ export default function DashboardTab() {
             <h3 className="text-lg font-extrabold">진행중 ({activeCount})</h3>
             <button
               onClick={() => setShowAdd(true)}
-              className="bg-gradient-to-br from-primary to-[#764ba2] text-white rounded-lg px-3.5 py-1.5 text-[13px] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+              className="text-white rounded-lg px-3.5 py-1.5 text-[13px] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
             >
               + 새 강의
             </button>
@@ -140,8 +141,8 @@ export default function DashboardTab() {
                         <div className="flex gap-1">
                           <div className="flex-1 h-1.5 bg-[#f0f0f5] rounded-sm overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-primary to-[#764ba2] rounded-sm transition-all duration-300"
-                              style={{ width: `${pctCopy}%` }}
+                              className="h-full rounded-sm transition-all duration-300"
+                              style={{ width: `${pctCopy}%`, background: `linear-gradient(to right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
                             />
                           </div>
                           <div className="flex-1 h-1.5 bg-[#f0f0f5] rounded-sm overflow-hidden">

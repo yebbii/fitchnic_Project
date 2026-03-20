@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
+import { HOME_TAB_COLORS } from "@/lib/constants";
 import type { Assignee, AssigneeRole } from "@/lib/types";
 
-const PRESET_COLORS = ["#764ba2", "#f97316", "#22c55e", "#38bdf8", "#ef4444", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#667eea"];
+const PRESET_COLORS = [HOME_TAB_COLORS.designer, HOME_TAB_COLORS.pm, "#22c55e", "#38bdf8", "#ef4444", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#667eea"];
 
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
 const ROLE_TABS: { id: AssigneeRole; label: string; color: string }[] = [
-  { id: "pm", label: "PM", color: "#f97316" },
-  { id: "designer", label: "디자이너", color: "#764ba2" },
+  { id: "pm", label: "PM", color: HOME_TAB_COLORS.pm },
+  { id: "designer", label: "디자이너", color: HOME_TAB_COLORS.designer },
 ];
 
 export default function AssigneeManagerModal({ onClose }: { onClose: () => void }) {

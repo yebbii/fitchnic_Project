@@ -2,6 +2,7 @@
 
 import { useCrm, useGoToBoard } from "@/hooks/use-crm-store";
 import { fmtDateKr } from "@/lib/utils";
+import { HOME_TAB_COLORS } from "@/lib/constants";
 import { useCompletedLectures } from "@/hooks/use-derived-data";
 
 export default function HistoryTab() {
@@ -21,7 +22,8 @@ export default function HistoryTab() {
       <h2 className="text-[22px] font-extrabold mb-5">CRM 히스토리</h2>
       {[...grouped.entries()].map(([iN, lectures]) => {
         const iD = state.data[iN];
-        const color = iD?.color ?? "#667eea";
+        const firstLec = iD ? Object.values(iD.lectures)[0] : null;
+        const color = (firstLec ? state.platformColors[firstLec.platform] : undefined) ?? "#667eea";
         return (
           <div key={iN} className="mb-6">
             <div className="flex items-center gap-2 mb-3">
@@ -71,8 +73,8 @@ export default function HistoryTab() {
                     <div className="flex gap-1.5">
                       <div className="flex-1 h-2 bg-[#f0f0f5] rounded-sm overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-primary to-[#764ba2] rounded-sm transition-all duration-300"
-                          style={{ width: `${pctCopy}%` }}
+                          className="h-full rounded-sm transition-all duration-300"
+                          style={{ width: `${pctCopy}%`, background: `linear-gradient(to right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
                         />
                       </div>
                       <div className="flex-1 h-2 bg-[#f0f0f5] rounded-sm overflow-hidden">

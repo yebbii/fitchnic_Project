@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
-import { COLORS, NEW_LECTURE_INIT, NEW_LECTURE_DEFAULTS } from "@/lib/constants";
+import { NEW_LECTURE_INIT, NEW_LECTURE_DEFAULTS, HOME_TAB_COLORS } from "@/lib/constants";
 import type { NewLectureForm } from "@/lib/types";
 
 /* ─────────── 공통 타입 ─────────── */
@@ -279,9 +279,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
     instructor: defaultInstructor || "",
   });
   const [manualCohort, setManualCohort] = useState("");
-  const [newInsColor, setNewInsColor] = useState(COLORS[Object.keys(state.data).length % COLORS.length]);
   const update = (partial: Partial<NewLectureForm>) => setForm((p) => ({ ...p, ...partial }));
-  const isNewInstructor = !!form.instructor.trim() && !state.data[form.instructor.trim()];
   const canSubmitManual = !!form.instructor.trim() && !!form.lectureName.trim() && !!form.liveDate;
 
   /* 붙여넣기 */
@@ -362,7 +360,6 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
   const addManual = () => {
     if (!canSubmitManual) return;
     const ins = form.instructor.trim();
-    const color = state.data[ins]?.color ?? newInsColor;
     const cohortSuffix = manualCohort.trim() ? ` ${manualCohort.trim()}` : "";
     const lec = form.lectureName.trim() + cohortSuffix;
     const existing = findExistingByDate(ins, form.liveDate);
@@ -373,7 +370,6 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
       type: "ADD_LECTURE",
       ins,
       lec,
-      color,
       lecture: { ...NEW_LECTURE_DEFAULTS, liveDate: form.liveDate, status: "active" },
     });
     onClose();
@@ -382,11 +378,8 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
   /* ── 붙여넣기 일괄 추가 ── */
   const addPasted = () => {
     if (validRows.length === 0) return;
-    let usedColors = Object.keys(state.data).length;
-
     for (const r of validRows) {
       if (!r.instructor?.trim() || !r.lectureName?.trim()) continue;
-      const color = state.data[r.instructor]?.color ?? COLORS[usedColors++ % COLORS.length];
       const cohortSuffix = r.cohort?.trim() ? ` ${r.cohort.trim()}` : "";
       const finalLec = r.lectureName.trim() + cohortSuffix;
       const existing = findExistingByDate(r.instructor, r.liveDate);
@@ -397,7 +390,6 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
         type: "ADD_LECTURE",
         ins: r.instructor,
         lec: finalLec,
-        color,
         lecture: {
           ...NEW_LECTURE_DEFAULTS,
           ...(r.platform ? { platform: r.platform } : {}),
@@ -482,39 +474,6 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
               />
             </div>
 
-            {/* 신규 강사일 때 색상 지정 */}
-            {isNewInstructor && (
-              <div>
-                <div className="text-[13px] text-muted-foreground mb-1.5 font-semibold">
-                  강사 색상 <span className="text-[11px] font-normal text-[#aeaeb2]">(신규 강사)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={newInsColor}
-                    onChange={(e) => setNewInsColor(e.target.value)}
-                    className="w-9 h-9 rounded-lg border border-border cursor-pointer p-0.5"
-                  />
-                  <input
-                    value={newInsColor}
-                    onChange={(e) => setNewInsColor(e.target.value)}
-                    placeholder="#667eea"
-                    className="flex-1 bg-secondary border border-border rounded-lg text-foreground px-3 py-2 text-[14px] outline-none font-mono"
-                  />
-                  <div className="flex gap-1">
-                    {COLORS.slice(0, 5).map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setNewInsColor(c)}
-                        className="w-6 h-6 rounded-full border-2 cursor-pointer"
-                        style={{ background: c, borderColor: newInsColor === c ? "#1c1c1e" : "transparent" }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div>
               <div className="text-[13px] text-muted-foreground mb-1.5 font-semibold">
                 강의명 <span className="text-red-500">*</span>
@@ -575,7 +534,8 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
             <button
               onClick={addManual}
               disabled={!canSubmitManual}
-              className="w-full bg-gradient-to-br from-primary to-[#764ba2] rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              className="w-full rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
             >
               강의 추가하고 타임라인으로 이동
             </button>
@@ -676,7 +636,8 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
             <button
               onClick={addPasted}
               disabled={validRows.length === 0 || addableRows.length < validRows.length}
-              className="w-full bg-gradient-to-br from-primary to-[#764ba2] rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              className="w-full rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
             >
               {validRows.length === 0 ? "붙여넣기 대기 중" : addableRows.length < validRows.length ? "빈 항목을 채워주세요" : `${addableRows.length}개 강의 추가`}
             </button>

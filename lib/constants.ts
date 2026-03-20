@@ -6,11 +6,6 @@ function daysFromNow(offset: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export const COLORS = [
-  "#667eea", "#e67e22", "#e74c3c", "#2ecc71", "#9b59b6",
-  "#1abc9c", "#e84393", "#00b894", "#fdcb6e", "#6c5ce7",
-];
-
 /** 플랫폼별 기본 색상 (state.platformColors에 없으면 이 값 사용) */
 export const DEFAULT_PLATFORM_COLORS: Record<string, string> = {
   "핏크닉": "#38BDF8",
@@ -23,9 +18,9 @@ export const DEFAULT_PLATFORM_COLORS: Record<string, string> = {
  */
 export const HOME_TAB_COLORS = {
   /** PM 업무 블록 색상 — 주황색 */
-  pm: "#f97316",
+  pm: "#fc8b57",
   /** 디자이너 업무 블록 색상 — 보라색 */
-  designer: "#764ba2",
+  designer: "#b589e0",
   /** 강의 D-10 알림 블록 색상 — 빨간색 */
   d10: "#ef4444",
 } as const;
@@ -48,7 +43,6 @@ export const TYPE_PRESETS = [
 export function createInitData(): CrmData {
   return {
     셀링남: {
-      color: "#667eea",
       lectures: {
         "브랜드파이프 4기": {
           type: "이커머스(브랜드)", tone: "열정+전문가형", platform: "머니업",
@@ -77,7 +71,6 @@ export function createInitData(): CrmData {
       },
     },
     파이: {
-      color: "#e67e22",
       lectures: {
         "AI 대량등록 3기": {
           type: "쇼핑몰(대량등록)", tone: "친근+실전형", platform: "핏크닉",
@@ -90,7 +83,6 @@ export function createInitData(): CrmData {
       },
     },
     디선제압: {
-      color: "#e74c3c",
       lectures: {
         "상세페이지 7기": {
           type: "상세페이지", tone: "도전+자신감형", platform: "핏크닉",
@@ -111,7 +103,6 @@ export function createInitData(): CrmData {
       },
     },
     지인옥: {
-      color: "#2ecc71",
       lectures: {
         "유튜브 롱폼 2기": {
           type: "유튜브(롱폼)", tone: "시니어친화+진정성", platform: "핏크닉",
@@ -132,7 +123,6 @@ export function createInitData(): CrmData {
       },
     },
     셀팜: {
-      color: "#1abc9c",
       lectures: {
         "AI 숏폼 1기": {
           type: "유튜브(숏폼)", tone: "실전+친근형", platform: "핏크닉",
