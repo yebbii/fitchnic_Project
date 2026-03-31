@@ -109,3 +109,31 @@ export function useLiveEvents(): LiveEvent[] {
     return ev;
   }, [state.data, state.platformColors]);
 }
+
+/** 강사별 통계 (자동 집계) */
+export interface InstructorStats {
+  name: string;
+  totalLectures: number;
+  activeLectures: number;
+  completedLectures: number;
+  lastLiveDate: string | null;
+  platforms: string[];
+}
+
+export function useInstructorStats(): InstructorStats[] {
+  const { state } = useCrm();
+  return useMemo(() => {
+    return Object.entries(state.data).map(([name, iD]) => {
+      const lectures = Object.values(iD.lectures);
+      const liveDates = lectures.filter((l) => l.liveDate).map((l) => l.liveDate).sort();
+      return {
+        name,
+        totalLectures: lectures.length,
+        activeLectures: lectures.filter((l) => l.status === "active").length,
+        completedLectures: lectures.filter((l) => l.status === "completed").length,
+        lastLiveDate: liveDates.length ? liveDates[liveDates.length - 1] : null,
+        platforms: [...new Set(lectures.map((l) => l.platform).filter(Boolean))],
+      };
+    });
+  }, [state.data]);
+}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrm, useCurKey, useCurrentLecture } from "@/hooks/use-crm-store";
-import { CH_RULES, FEEDBACK_TAGS, HOME_TAB_COLORS } from "@/lib/constants";
+import { CH_RULES, FEEDBACK_TAGS, HOME_TAB_COLORS, BRAND_GRADIENT } from "@/lib/constants";
 import { fetchAICopy, genCopyLocal } from "@/lib/utils";
 import type { SeqPhase, SeqItem, CopyData } from "@/lib/types";
 
@@ -128,7 +128,7 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
                 onClick={doGen}
                 disabled={isGen}
                 className="rounded-xl text-white px-8 py-3.5 text-base font-semibold border-none cursor-pointer disabled:opacity-50"
-                style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
+                style={{ background: BRAND_GRADIENT }}
               >
                 {isGen ? "⏳ 생성중..." : "✨ AI 카피 생성"}
               </button>

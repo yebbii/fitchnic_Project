@@ -2,18 +2,18 @@
 
 import { useState, useMemo } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
-import { DEFAULT_SEQ, HOME_TAB_COLORS } from "@/lib/constants";
+import { DEFAULT_SEQ, HOME_TAB_COLORS, BRAND_GRADIENT, BRAND_GRADIENT_H } from "@/lib/constants";
 import { addDays, fmtDate, fmtDateKr, isSameDay, daysUntil, seqTotalItems, seqCheckedItems, resolveColor } from "@/lib/utils";
 import { useCalendar } from "@/hooks/use-calendar";
 import { useActiveLectures, useCompletedLectures, useLiveEvents } from "@/hooks/use-derived-data";
-import AddLectureDialog from "./add-lecture-dialog";
+
 import type { CalendarEvent } from "@/lib/types";
 
 export default function DashboardTab() {
   const { state, dispatch } = useCrm();
   const { today, calDays, prevMonth, nextMonth, monthLabel } = useCalendar();
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
+
 
   const goToBoard = (iN: string, lN: string, seqId?: string) => {
     dispatch({ type: "SELECT_INSTRUCTOR", ins: iN });
@@ -92,13 +92,6 @@ export default function DashboardTab() {
         <div>
           <div className="flex items-center justify-between mb-3.5">
             <h3 className="text-lg font-extrabold">진행중 ({activeCount})</h3>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="text-white rounded-lg px-3.5 py-1.5 text-[13px] font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
-              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
-            >
-              + 새 강의
-            </button>
           </div>
           <div className="flex flex-col gap-2">
             {activeLectures.map((al) => {
@@ -109,7 +102,7 @@ export default function DashboardTab() {
                     <div
                       key={al.curKey}
                       onClick={() => goToBoard(al.ins, al.lec)}
-                      className="bg-white border border-border rounded-xl px-4 py-3.5 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
+                      className="bg-secondary/30 border border-border rounded-xl px-4 py-3.5 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
                       style={{ borderLeft: `4px solid ${al.color}` }}
                     >
                       <div className="flex justify-between items-center">
@@ -142,7 +135,7 @@ export default function DashboardTab() {
                           <div className="flex-1 h-1.5 bg-[#f0f0f5] rounded-sm overflow-hidden">
                             <div
                               className="h-full rounded-sm transition-all duration-300"
-                              style={{ width: `${pctCopy}%`, background: `linear-gradient(to right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
+                              style={{ width: `${pctCopy}%`, background: BRAND_GRADIENT_H }}
                             />
                           </div>
                           <div className="flex-1 h-1.5 bg-[#f0f0f5] rounded-sm overflow-hidden">
@@ -227,7 +220,7 @@ export default function DashboardTab() {
         </div>
 
         {/* 우측: 캘린더 */}
-        <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_8px_rgba(0,0,0,.04)]">
+        <div className="bg-secondary/30 rounded-2xl border border-border p-6">
           <div className="flex justify-between items-center mb-[18px]">
             <h3 className="text-xl font-extrabold">📅 CRM 발송 캘린더</h3>
             <div className="flex gap-2 items-center">
@@ -394,7 +387,7 @@ export default function DashboardTab() {
           </div>
         </div>
       </div>
-      {showAdd && <AddLectureDialog onClose={() => setShowAdd(false)} />}
+
     </div>
   );
 }

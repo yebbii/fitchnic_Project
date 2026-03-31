@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
-import { NEW_LECTURE_INIT, NEW_LECTURE_DEFAULTS, HOME_TAB_COLORS } from "@/lib/constants";
+import { NEW_LECTURE_INIT, NEW_LECTURE_DEFAULTS, HOME_TAB_COLORS, BRAND_GRADIENT } from "@/lib/constants";
 import type { NewLectureForm } from "@/lib/types";
 
 /* ─────────── 공통 타입 ─────────── */
@@ -372,6 +372,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
       lec,
       lecture: { ...NEW_LECTURE_DEFAULTS, liveDate: form.liveDate, status: "active" },
     });
+    dispatch({ type: "SET_TOP_TAB", tab: "lecture" });
     onClose();
   };
 
@@ -399,13 +400,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
       });
     }
 
-    const first = validRows[0];
-    const firstCohort = first.cohort?.trim() ? ` ${first.cohort.trim()}` : "";
-    dispatch({ type: "SELECT_INSTRUCTOR", ins: first.instructor });
-    setTimeout(() => {
-      dispatch({ type: "SELECT_LECTURE", lec: first.lectureName + firstCohort });
-      dispatch({ type: "SET_TOP_TAB", tab: "home" });
-    }, 0);
+    dispatch({ type: "SET_TOP_TAB", tab: "lecture" });
     onClose();
   };
 
@@ -535,9 +530,9 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
               onClick={addManual}
               disabled={!canSubmitManual}
               className="w-full rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
-              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
+              style={{ background: BRAND_GRADIENT }}
             >
-              강의 추가하고 타임라인으로 이동
+              강의 추가
             </button>
           </div>
         )}
@@ -637,7 +632,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
               onClick={addPasted}
               disabled={validRows.length === 0 || addableRows.length < validRows.length}
               className="w-full rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
-              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
+              style={{ background: BRAND_GRADIENT }}
             >
               {validRows.length === 0 ? "붙여넣기 대기 중" : addableRows.length < validRows.length ? "빈 항목을 채워주세요" : `${addableRows.length}개 강의 추가`}
             </button>

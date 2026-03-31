@@ -217,7 +217,7 @@ export default function DesignerCalendarTab() {
             const msTotal = DESIGNER_MILESTONES.length;
 
             return (
-              <div key={curKey} className="bg-white rounded-2xl border border-border shadow-[0_1px_4px_rgba(0,0,0,.05)]">
+              <div key={curKey} className="bg-secondary/30 rounded-2xl border border-border">
                 {/* 카드 상단 색상 바 */}
                 <div className="h-1 w-full rounded-t-2xl" style={{ background: color }} />
 
@@ -383,7 +383,7 @@ export default function DesignerCalendarTab() {
 
       {/* ── 캘린더 ── */}
       <div className="flex-1 p-7 overflow-auto">
-        <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_8px_rgba(0,0,0,.04)]">
+        <div className="bg-secondary/30 rounded-2xl border border-border p-6">
           <div className="flex justify-between items-center mb-[18px]">
             <div className="flex items-center gap-3">
               <h3 className="text-xl font-extrabold">🎨 디자이너 캘린더</h3>

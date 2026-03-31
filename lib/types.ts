@@ -83,7 +83,20 @@ export type TabId = "dashboard" | "board" | "history";
 /* ── 최상위 탭 ── */
 export type TopTabId = "home" | "pm" | "designer" | "lecture";
 export type DesignerTabId = "calendar" | "timeline" | "worklog";
+export type LectureSubTabId = "lec-dashboard" | "lec-management" | "lec-instructor";
 export type HomeCalendarView = "all" | "pm" | "designer";
+
+/* ── 강사 프로필 ── */
+export interface InstructorProfile {
+  id: string;
+  name: string;
+  contact: string;
+  specialty: string;
+  platforms: string[];
+  profileImageUrl: string;
+  memo: string;
+  createdAt: string;
+}
 
 /* ── 디자이너 체크리스트 ── */
 export interface DesignCheckItem {

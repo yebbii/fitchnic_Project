@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useCrm, useCurrentLecture } from "@/hooks/use-crm-store";
 import { TONE_PRESETS, TARGET_PRESETS, TYPE_PRESETS } from "@/lib/constants";
 import TagPicker from "./tag-picker";
@@ -8,27 +7,12 @@ import TagPicker from "./tag-picker";
 export default function LectureInfoEditor() {
   const { state, dispatch } = useCrm();
   const ld = useCurrentLecture();
-  const [editingName, setEditingName] = useState(false);
-  const [nameValue, setNameValue] = useState("");
   if (!ld) return null;
 
   const { ins, lec } = state;
 
   const updateLd = (field: string, value: unknown) => {
     dispatch({ type: "UPDATE_LECTURE_FIELD", ins, lec, field, value });
-  };
-
-  const startRename = () => {
-    setNameValue(lec);
-    setEditingName(true);
-  };
-
-  const confirmRename = () => {
-    const trimmed = nameValue.trim();
-    if (trimmed && trimmed !== lec) {
-      dispatch({ type: "RENAME_LECTURE", ins, oldLec: lec, newLec: trimmed });
-    }
-    setEditingName(false);
   };
 
   const updateArrayItem = (field: "usps" | "proof", idx: number, val: string) => {
@@ -47,44 +31,6 @@ export default function LectureInfoEditor() {
 
   return (
     <div className="animate-fi">
-      {/* 강의명 수정 */}
-      <div className="mb-3 pb-3 border-b border-border">
-        <div className="text-xs text-muted-foreground mb-1 font-semibold">강의명</div>
-        {editingName ? (
-          <div className="flex gap-2">
-            <input
-              value={nameValue}
-              onChange={(e) => setNameValue(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") confirmRename(); if (e.key === "Escape") setEditingName(false); }}
-              autoFocus
-              className="flex-1 bg-secondary border border-primary rounded-lg text-foreground px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-            />
-            <button
-              onClick={confirmRename}
-              className="px-3 py-2 rounded-lg text-[13px] font-semibold border-none cursor-pointer bg-primary text-white hover:opacity-90"
-            >
-              확인
-            </button>
-            <button
-              onClick={() => setEditingName(false)}
-              className="px-3 py-2 rounded-lg text-[13px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground hover:bg-accent"
-            >
-              취소
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-foreground">{lec}</span>
-            <button
-              onClick={startRename}
-              className="text-[12px] text-primary font-semibold px-2 py-0.5 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20 transition-colors"
-            >
-              이름 변경
-            </button>
-          </div>
-        )}
-      </div>
-
       <TagPicker label="톤앤매너" options={TONE_PRESETS} value={ld.tone} onChange={(v) => updateLd("tone", v)} />
       <TagPicker label="타겟" options={TARGET_PRESETS} value={ld.target} onChange={(v) => updateLd("target", v)} />
       <TagPicker label="강의 유형" options={TYPE_PRESETS} value={ld.type} onChange={(v) => updateLd("type", v)} />
@@ -99,7 +45,7 @@ export default function LectureInfoEditor() {
           <div key={f}>
             <div className="text-xs text-muted-foreground mb-0.5 font-semibold flex items-center gap-1">
               {l}
-              {disabled && <span className="text-[10px] text-[#aeaeb2] font-normal">(홈탭에서 수정)</span>}
+              {disabled && <span className="text-[10px] text-[#aeaeb2] font-normal">(강의 관리에서 수정)</span>}
             </div>
             <input
               value={(ld[f] as string) || ""}

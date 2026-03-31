@@ -224,7 +224,7 @@ export default function HomeTab() {
                   return (
                     <div
                       key={`${lc.ins}|${lc.lec}`}
-                      className="bg-white rounded-xl border border-border overflow-hidden transition-all"
+                      className="bg-secondary/30 rounded-xl border border-border overflow-hidden transition-all"
                     >
                       {/* 컬러 헤더 */}
                       <div
@@ -321,7 +321,7 @@ export default function HomeTab() {
       {/* ── 우측: 달력 ── */}
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-[1000px] mx-auto">
-          <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_8px_rgba(0,0,0,.04)]">
+          <div className="bg-secondary/30 rounded-2xl border border-border p-6">
             {/* 달력 헤더 */}
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-extrabold">📅 통합 캘린더</h3>

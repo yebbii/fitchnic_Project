@@ -2,12 +2,18 @@
 
 import { useState, useMemo } from "react";
 import { useCrm, useGoToBoard, useGoToDesignerTimeline } from "@/hooks/use-crm-store";
-import { DEFAULT_SEQ, DEFAULT_DESIGN_SEQ, TONE_PRESETS, TARGET_PRESETS, TYPE_PRESETS, HOME_TAB_COLORS } from "@/lib/constants";
-import { fmtDate, fmtDateKr, addDays, isSameDay } from "@/lib/utils";
+import { useLectureSummaries, type LectureSummary } from "@/hooks/use-derived-data";
+import { TONE_PRESETS, TARGET_PRESETS, TYPE_PRESETS, HOME_TAB_COLORS, BRAND_GRADIENT } from "@/lib/constants";
+import { fmtDate, fmtDateKr, isSameDay } from "@/lib/utils";
 import TagPicker from "./tag-picker";
+import AddLectureDialog from "./add-lecture-dialog";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./ui/tooltip";
 
-const DES_TOTAL = DEFAULT_DESIGN_SEQ.reduce((s, p) => s + p.items.length, 0);
-const PM_DEFAULT_TOTAL = DEFAULT_SEQ.reduce((s, p) => s + p.items.length, 0);
+function splitCohort(raw: string): { name: string; cohort: string } {
+  const m = raw.match(/^(.*?)\s*(\d+기)\s*$/);
+  if (m) return { name: m[1].trim(), cohort: m[2] };
+  return { name: raw, cohort: "" };
+}
 
 function ProgressBar({ checked, total, color }: { checked: number; total: number; color: string }) {
   const pct = total ? (checked / total) * 100 : 0;
@@ -24,30 +30,26 @@ export default function LectureManagement() {
   const goToDesignerTimeline = useGoToDesignerTimeline();
   const today = new Date();
 
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const [view, setView] = useState<"list" | "calendar">("list");
   const [calMonth, setCalMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [listMonth, setListMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [detailKey, setDetailKey] = useState<string | null>(null);
+  const [detailStep, setDetailStep] = useState<1 | 2>(1);
+  const [detailLayout, setDetailLayout] = useState<"step" | "split">("step");
+  const [draft, setDraft] = useState<{ ins: string; lecName: string; cohort: string; platform: string; liveDate: string; liveTime: string } | null>(null);
+  const [contentDraft, setContentDraft] = useState<{ tone: string; target: string; type: string; ebook: string; story: string; usps: string[]; proof: string[]; freeUrl: string; youtubeUrl: string; payUrl: string; ebookUrl: string } | null>(null);
   const [listTab, setListTab] = useState<"active" | "completed">("active");
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
   const [deleteConfirmKey, setDeleteConfirmKey] = useState<string | null>(null);
 
+  const summaries = useLectureSummaries();
   // 현재와 가까운 순 정렬
   const allLectures = useMemo(() => {
-    const list: { ins: string; lec: string; liveDate: string; liveTime: string; platform: string; color: string; status: "active" | "completed"; type: string }[] = [];
-    Object.entries(state.data).forEach(([ins, iD]) => {
-      Object.entries(iD.lectures).forEach(([lec, l]) => {
-        list.push({ ins, lec, liveDate: l.liveDate, liveTime: l.liveTime, platform: l.platform, color: state.platformColors[l.platform] ?? "#667eea", status: l.status, type: l.type });
-      });
-    });
-    return list.sort((a, b) => {
-      const da = Math.abs(new Date(a.liveDate).getTime() - today.getTime());
-      const db = Math.abs(new Date(b.liveDate).getTime() - today.getTime());
-      return da - db;
-    });
-  }, [state.data]);
+    return [...summaries].sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [summaries]);
 
   const activeLectures = allLectures.filter((l) => l.status === "active");
   const completedLectures = allLectures.filter((l) => l.status === "completed");
@@ -86,16 +88,12 @@ export default function LectureManagement() {
     return days;
   }, [calMonth]);
 
-  // Calendar events: all lectures
+  // Calendar events: summaries에서 파생
   const calEvents = useMemo(() => {
-    const ev: { date: string; ins: string; lec: string; color: string; status: string }[] = [];
-    Object.entries(state.data).forEach(([ins, iD]) => {
-      Object.entries(iD.lectures).forEach(([lec, l]) => {
-        if (l.liveDate) ev.push({ date: l.liveDate, ins, lec, color: state.platformColors[l.platform] ?? "#667eea", status: l.status });
-      });
-    });
-    return ev;
-  }, [state.data, state.platformColors]);
+    return summaries.filter((s) => s.liveDate).map((s) => ({
+      date: s.liveDate, ins: s.ins, lec: s.lec, color: s.color, status: s.status, platform: s.platform,
+    }));
+  }, [summaries]);
 
   // ── 상세 페이지 ──
   if (detailKey) {
@@ -104,31 +102,198 @@ export default function LectureManagement() {
     const ld = iD?.lectures[lec];
     if (!ld || !iD) return <div className="p-8 text-muted-foreground">강의를 찾을 수 없습니다.</div>;
     const curKey = detailKey;
-    const pmSeq = state.seqDataMap[curKey];
-    const pmTotal = pmSeq ? pmSeq.reduce((s, p) => s + p.items.length, 0) : PM_DEFAULT_TOTAL;
-    const pmChecked = Object.values(state.allChecks[curKey] || {}).filter(Boolean).length;
-    const desChecked = Object.values(state.designChecks[curKey] || {}).filter(Boolean).length;
-    const cardColor = state.platformColors[ld.platform] ?? "#667eea";
+    const summary = summaries.find((s) => s.curKey === curKey);
+    const pmTotal = summary?.pmTotal ?? 0;
+    const pmChecked = summary?.pmChecked ?? 0;
+    const desTotal = summary?.desTotal ?? 0;
+    const desChecked = summary?.desChecked ?? 0;
+    const cardColor = summary?.color ?? "#667eea";
+    const platforms = Object.keys(state.platformColors);
 
-    const upd = (field: string, value: unknown) =>
-      dispatch({ type: "UPDATE_LECTURE_FIELD", ins, lec, field, value });
-    const updArr = (field: "usps" | "proof", idx: number, val: string) => {
-      const arr = [...(ld[field] || [])];
-      arr[idx] = val;
-      upd(field, arr);
+    // ── 강의 정보 드래프트 ──
+    const d = draft ?? { ins, lecName: splitCohort(lec).name, cohort: splitCohort(lec).cohort, platform: ld.platform, liveDate: ld.liveDate, liveTime: ld.liveTime };
+    const setD = (partial: Partial<typeof d>) => setDraft({ ...d, ...partial });
+    const isDirty = draft !== null && (
+      d.ins !== ins || (d.cohort ? `${d.lecName} ${d.cohort}` : d.lecName) !== lec ||
+      d.platform !== ld.platform || d.liveDate !== ld.liveDate || d.liveTime !== ld.liveTime
+    );
+    const handleSave = () => {
+      if (!draft) return;
+      const newLec = d.cohort.trim() ? `${d.lecName.trim()} ${d.cohort.trim()}` : d.lecName.trim();
+      if (!d.ins.trim() || !newLec) return;
+      let currentIns = ins;
+      if (d.ins.trim() !== ins) { dispatch({ type: "RENAME_INSTRUCTOR", oldIns: ins, newIns: d.ins.trim() }); currentIns = d.ins.trim(); }
+      let currentLec = lec;
+      if (newLec !== lec) { dispatch({ type: "RENAME_LECTURE", ins: currentIns, oldLec: lec, newLec }); currentLec = newLec; }
+      if (d.platform !== ld.platform) dispatch({ type: "UPDATE_LECTURE_FIELD", ins: currentIns, lec: currentLec, field: "platform", value: d.platform });
+      if (d.liveDate !== ld.liveDate) dispatch({ type: "UPDATE_LECTURE_FIELD", ins: currentIns, lec: currentLec, field: "liveDate", value: d.liveDate });
+      if (d.liveTime !== ld.liveTime) dispatch({ type: "UPDATE_LECTURE_FIELD", ins: currentIns, lec: currentLec, field: "liveTime", value: d.liveTime });
+      setDetailKey(`${currentIns}|${currentLec}`); setDraft(null);
     };
 
+    // ── 콘텐츠 드래프트 ──
+    const cd = contentDraft ?? { tone: ld.tone, target: ld.target, type: ld.type, ebook: ld.ebook, story: ld.story, usps: [...(ld.usps || [])], proof: [...(ld.proof || [])], freeUrl: ld.freeUrl, youtubeUrl: ld.youtubeUrl, payUrl: ld.payUrl, ebookUrl: ld.ebookUrl };
+    const setCd = (partial: Partial<typeof cd>) => setContentDraft({ ...cd, ...partial });
+    const isContentDirty = contentDraft !== null && (
+      cd.tone !== ld.tone || cd.target !== ld.target || cd.type !== ld.type ||
+      cd.ebook !== ld.ebook || cd.story !== ld.story ||
+      cd.freeUrl !== ld.freeUrl || cd.youtubeUrl !== ld.youtubeUrl || cd.payUrl !== ld.payUrl || cd.ebookUrl !== ld.ebookUrl ||
+      JSON.stringify(cd.usps) !== JSON.stringify(ld.usps || []) ||
+      JSON.stringify(cd.proof) !== JSON.stringify(ld.proof || [])
+    );
+    const handleContentSave = () => {
+      if (!contentDraft) return;
+      const fields: [string, unknown][] = [
+        ["tone", cd.tone], ["target", cd.target], ["type", cd.type],
+        ["ebook", cd.ebook], ["story", cd.story],
+        ["freeUrl", cd.freeUrl], ["youtubeUrl", cd.youtubeUrl], ["payUrl", cd.payUrl], ["ebookUrl", cd.ebookUrl],
+        ["usps", cd.usps], ["proof", cd.proof],
+      ];
+      for (const [f, v] of fields) dispatch({ type: "UPDATE_LECTURE_FIELD", ins, lec, field: f, value: v });
+      setContentDraft(null);
+    };
+
+    // 나가기
+    const handleBack = () => { setDraft(null); setContentDraft(null); setDetailKey(null); setDetailStep(1); };
+
+    // ── 공통 UI 조각 ──
+    const labelCls = "text-[13px] text-muted-foreground mb-1.5 font-semibold";
+    const inputCls = "w-full bg-secondary border-[1.5px] border-border rounded-lg text-foreground px-4 py-[7px] text-sm outline-none focus:ring-1 focus:ring-primary";
+
+    const MetaFields = () => (
+      <div className="flex flex-col gap-4">
+        <div>
+          <div className={labelCls}>강사명</div>
+          <input value={d.ins} onChange={(e) => setD({ ins: e.target.value })} className={inputCls} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className={labelCls}>강의명</div>
+            <input value={d.lecName} onChange={(e) => setD({ lecName: e.target.value })} placeholder="강의명" className={inputCls} />
+          </div>
+          <div>
+            <div className={labelCls}>기수</div>
+            <input value={d.cohort} onChange={(e) => setD({ cohort: e.target.value })} placeholder="예: 5기" className={inputCls} />
+          </div>
+        </div>
+        <div>
+          <div className={labelCls}>플랫폼</div>
+          <div className="flex gap-1.5 flex-wrap">
+            {platforms.map((p) => (
+              <button key={p} onClick={() => setD({ platform: p })} className="px-4 py-[7px] rounded-full text-sm font-medium border-[1.5px] cursor-pointer transition-all duration-150"
+                style={{ background: d.platform === p ? (state.platformColors[p] ?? "#667eea") : undefined, color: d.platform === p ? "#fff" : (state.platformColors[p] ?? "#667eea"), borderColor: d.platform === p ? (state.platformColors[p] ?? "#667eea") : "var(--border)" }}>
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className={labelCls}>라이브 날짜</div>
+            <input type="date" value={d.liveDate} onChange={(e) => setD({ liveDate: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <div className={labelCls}>라이브 시간</div>
+            <input value={d.liveTime} onChange={(e) => setD({ liveTime: e.target.value })} className={inputCls} />
+          </div>
+        </div>
+      </div>
+    );
+
+    const ContentFields = () => (
+      <div className="flex flex-col gap-4">
+        <TagPicker label="톤앤매너" options={TONE_PRESETS} value={cd.tone} onChange={(v) => setCd({ tone: v })} />
+        <TagPicker label="타겟" options={TARGET_PRESETS} value={cd.target} onChange={(v) => setCd({ target: v })} />
+        <TagPicker label="강의 유형" options={TYPE_PRESETS} value={cd.type} onChange={(v) => setCd({ type: v })} />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className={labelCls}>전자책</div>
+            <input value={cd.ebook} onChange={(e) => setCd({ ebook: e.target.value })} className={inputCls} />
+          </div>
+          <div>
+            <div className={labelCls}>강사스토리</div>
+            <input value={cd.story} onChange={(e) => setCd({ story: e.target.value })} className={inputCls} />
+          </div>
+        </div>
+        {/* USP */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <div className={labelCls}>핵심 USP</div>
+            <button onClick={() => setCd({ usps: [...cd.usps, ""] })} className="text-sm text-primary font-semibold px-3 py-1 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20">+ 추가</button>
+          </div>
+          {cd.usps.length === 0 && <div className="text-sm text-[#aeaeb2]">USP를 추가하세요</div>}
+          {cd.usps.map((u, i) => (
+            <div key={i} className="flex gap-1.5 mb-1.5">
+              <input value={u} onChange={(e) => { const arr = [...cd.usps]; arr[i] = e.target.value; setCd({ usps: arr }); }} placeholder={`USP ${i + 1}`} className={`flex-1 ${inputCls}`} />
+              <button onClick={() => setCd({ usps: cd.usps.filter((_, j) => j !== i) })} className="w-9 rounded-lg bg-red-50 text-red-400 border-none cursor-pointer text-base font-bold hover:bg-red-100">×</button>
+            </div>
+          ))}
+        </div>
+        {/* 성과증거 */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <div className={labelCls}>성과증거</div>
+            <button onClick={() => setCd({ proof: [...cd.proof, ""] })} className="text-sm text-primary font-semibold px-3 py-1 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20">+ 추가</button>
+          </div>
+          {cd.proof.length === 0 && <div className="text-sm text-[#aeaeb2]">성과증거를 추가하세요</div>}
+          {cd.proof.map((p, i) => (
+            <div key={i} className="flex gap-1.5 mb-1.5">
+              <input value={p} onChange={(e) => { const arr = [...cd.proof]; arr[i] = e.target.value; setCd({ proof: arr }); }} placeholder={`성과 ${i + 1}`} className={`flex-1 ${inputCls}`} />
+              <button onClick={() => setCd({ proof: cd.proof.filter((_, j) => j !== i) })} className="w-9 rounded-lg bg-red-50 text-red-400 border-none cursor-pointer text-base font-bold hover:bg-red-100">×</button>
+            </div>
+          ))}
+        </div>
+        {/* 링크 */}
+        <div>
+          <div className={labelCls}>링크 관리</div>
+          <div className="grid grid-cols-1 gap-2">
+            {([{ l: "무료 톡방", f: "freeUrl" as const }, { l: "유튜브 라이브", f: "youtubeUrl" as const }, { l: "결제 페이지", f: "payUrl" as const }, { l: "전자책 다운", f: "ebookUrl" as const }]).map(({ l, f }) => (
+              <div key={f}>
+                <div className={labelCls}>{l}</div>
+                <input value={cd[f]} onChange={(e) => setCd({ [f]: e.target.value })} placeholder="https://" className={inputCls} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+
+    const ProgressSection = () => (
+      <div className="bg-secondary/30 rounded-2xl border border-border p-5">
+        <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-3">진행 상황</div>
+        <div className="flex flex-col gap-3">
+          <div>
+            <div className="flex justify-between text-[12px] font-semibold mb-1.5">
+              <span style={{ color: HOME_TAB_COLORS.pm }}>PM 진행률</span>
+              <span className="text-muted-foreground">{pmChecked}/{pmTotal} ({pmTotal ? Math.round(pmChecked/pmTotal*100) : 0}%)</span>
+            </div>
+            <ProgressBar checked={pmChecked} total={pmTotal} color={HOME_TAB_COLORS.pm} />
+          </div>
+          <div>
+            <div className="flex justify-between text-[12px] font-semibold mb-1.5">
+              <span style={{ color: HOME_TAB_COLORS.designer }}>디자이너 진행률</span>
+              <span className="text-muted-foreground">{desChecked}/{desTotal} ({desTotal ? Math.round(desChecked/desTotal*100) : 0}%)</span>
+            </div>
+            <ProgressBar checked={desChecked} total={desTotal} color={HOME_TAB_COLORS.designer} />
+          </div>
+        </div>
+      </div>
+    );
+
+    const SaveButton = ({ dirty, onSave }: { dirty: boolean; onSave: () => void }) => (
+      <button onClick={onSave} disabled={!dirty}
+        className="w-full py-3 rounded-xl text-[14px] font-bold border-none cursor-pointer text-white transition-opacity hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ background: HOME_TAB_COLORS.primary }}>
+        {dirty ? "수정 완료" : "변경사항 없음"}
+      </button>
+    );
+
     return (
-      <div className="min-h-[calc(100vh-60px)] bg-background">
+      <div className="min-h-[calc(100vh-60px)] bg-white">
         {/* 헤더 */}
         <div className="bg-white border-b border-border px-8 py-4 flex items-center justify-between sticky top-[60px] z-10">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setDetailKey(null)}
-              className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground font-semibold border-none bg-transparent cursor-pointer px-0"
-            >
-              ← 강의 목록
-            </button>
+            <button onClick={handleBack} className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground font-semibold border-none bg-transparent cursor-pointer px-0">← 강의 목록</button>
             <span className="text-muted-foreground/40">|</span>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: cardColor }} />
@@ -136,207 +301,106 @@ export default function LectureManagement() {
               <span className="text-muted-foreground text-[14px]">/</span>
               <span className="font-bold text-[15px]">{lec}</span>
             </div>
+            {(isDirty || isContentDirty) && <span className="text-[11px] text-amber-500 font-semibold">● 수정됨</span>}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => dispatch({ type: "UPDATE_LECTURE_FIELD", ins, lec, field: "status", value: ld.status === "active" ? "completed" : "active" })}
-              className={`px-3 py-1.5 rounded-full text-[12px] font-bold border-none cursor-pointer transition-colors ${
-                ld.status === "active"
-                  ? "bg-green-100 text-green-700 hover:bg-green-200"
-                  : "bg-secondary text-muted-foreground hover:bg-accent"
-              }`}
-            >
+            {/* 레이아웃 토글 */}
+            <div className="flex gap-1 bg-secondary rounded-lg p-[2px]">
+              {([{ id: "step" as const, label: "스텝" }, { id: "split" as const, label: "2단" }]).map((v) => (
+                <button key={v.id} onClick={() => setDetailLayout(v.id)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer border-none ${detailLayout === v.id ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"}`}>
+                  {v.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => dispatch({ type: "UPDATE_LECTURE_FIELD", ins, lec, field: "status", value: ld.status === "active" ? "completed" : "active" })}
+              className={`px-3 py-1.5 rounded-full text-[12px] font-bold border-none cursor-pointer transition-colors ${ld.status === "active" ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-secondary text-muted-foreground hover:bg-accent"}`}>
               {ld.status === "active" ? "● 진행중" : "○ 완료"}
             </button>
-            <button
-              onClick={() => goToBoard(ins, lec)}
-              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer text-white"
-              style={{ background: cardColor }}
-            >
-              PM 보드
-            </button>
-            <button
-              onClick={() => goToDesignerTimeline(ins, lec)}
-              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer text-white"
-              style={{ background: HOME_TAB_COLORS.designer }}
-            >
-              디자인
-            </button>
+            <button onClick={() => goToBoard(ins, lec)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer text-white" style={{ background: cardColor }}>PM 보드</button>
+            <button onClick={() => goToDesignerTimeline(ins, lec)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer text-white" style={{ background: HOME_TAB_COLORS.designer }}>디자인</button>
             {deleteConfirmKey === detailKey ? (
               <>
-                <button
-                  onClick={() => { dispatch({ type: "DELETE_LECTURE", ins, lec }); setDetailKey(null); setDeleteConfirmKey(null); }}
-                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-red-500 text-white hover:bg-red-600 transition-colors"
-                >
-                  삭제 확인
-                </button>
-                <button
-                  onClick={() => setDeleteConfirmKey(null)}
-                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground hover:bg-accent transition-colors"
-                >
-                  취소
-                </button>
+                <button onClick={() => { dispatch({ type: "DELETE_LECTURE", ins, lec }); setDetailKey(null); setDeleteConfirmKey(null); setDraft(null); setContentDraft(null); }}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-red-500 text-white hover:bg-red-600 transition-colors">삭제 확인</button>
+                <button onClick={() => setDeleteConfirmKey(null)}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground hover:bg-accent transition-colors">취소</button>
               </>
             ) : (
-              <button
-                onClick={() => setDeleteConfirmKey(detailKey)}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-red-50 text-red-400 hover:bg-red-100 transition-colors"
-              >
-                삭제
-              </button>
+              <button onClick={() => setDeleteConfirmKey(detailKey)}
+                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-red-50 text-red-400 hover:bg-red-100 transition-colors">삭제</button>
             )}
           </div>
         </div>
 
-        {/* 본문 */}
-        <div className="max-w-[900px] mx-auto px-8 py-6 grid grid-cols-2 gap-6">
-          {/* 왼쪽: 기본 정보 */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-              <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-3">기본 정보</div>
-              <div className="grid grid-cols-2 gap-3">
-                {([
-                  { l: "라이브 날짜", f: "liveDate", type: "date" },
-                  { l: "라이브 시간", f: "liveTime", type: "text" },
-                  { l: "전자책", f: "ebook", type: "text" },
-                  { l: "강사스토리", f: "story", type: "text" },
-                ] as const).map(({ l, f, type }) => (
-                  <div key={f}>
-                    <div className="text-[10px] text-muted-foreground mb-0.5 font-semibold">{l}</div>
-                    <input
-                      type={type}
-                      value={(ld[f] as string) || ""}
-                      onChange={(e) => upd(f, e.target.value)}
-                      className="w-full bg-secondary border border-border rounded-lg text-foreground px-2.5 py-1.5 text-[12px] outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3">
-                <TagPicker label="톤앤매너" options={TONE_PRESETS} value={ld.tone} onChange={(v) => upd("tone", v)} />
-                <TagPicker label="타겟" options={TARGET_PRESETS} value={ld.target} onChange={(v) => upd("target", v)} />
-                <TagPicker label="강의 유형" options={TYPE_PRESETS} value={ld.type} onChange={(v) => upd("type", v)} />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-              <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-3">링크 관리</div>
-              <div className="grid grid-cols-1 gap-2">
-                {([
-                  { l: "무료 톡방", f: "freeUrl" },
-                  { l: "유튜브 라이브", f: "youtubeUrl" },
-                  { l: "결제 페이지", f: "payUrl" },
-                  { l: "전자책 다운", f: "ebookUrl" },
-                ] as const).map(({ l, f }) => (
-                  <div key={f}>
-                    <div className="text-[10px] text-muted-foreground mb-0.5 font-semibold">{l}</div>
-                    <input
-                      value={(ld[f] as string) || ""}
-                      onChange={(e) => upd(f, e.target.value)}
-                      placeholder="https://"
-                      className="w-full bg-secondary border border-border rounded-lg text-foreground px-2.5 py-1.5 text-[12px] outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
+        {/* ── 스텝 레이아웃 ── */}
+        {detailLayout === "step" && (
+          <div className="bg-white min-h-[calc(100vh-120px)]">
+            {/* 스텝 탭 */}
+            <div className="sticky top-[108px] z-[5] bg-white border-b border-border px-8 py-2">
+              <div className="max-w-[600px] mx-auto flex gap-1 bg-secondary rounded-lg p-[3px]">
+                {([{ id: 1 as const, label: "강의 정보" }, { id: 2 as const, label: "콘텐츠 정보" }]).map((s) => (
+                  <button key={s.id} onClick={() => setDetailStep(s.id)}
+                    className={`flex-1 py-2 rounded-md text-[13px] font-semibold transition-all cursor-pointer border-none ${detailStep === s.id ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"}`}>
+                    {s.label}
+                    {s.id === 1 && isDirty && <span className="ml-1 text-amber-500">●</span>}
+                    {s.id === 2 && isContentDirty && <span className="ml-1 text-amber-500">●</span>}
+                  </button>
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* 오른쪽: 진행 상황 + USP + 성과 */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-              <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-3">진행 상황</div>
-              <div className="flex flex-col gap-3">
-                <div>
-                  <div className="flex justify-between text-[12px] font-semibold mb-1.5">
-                    <span style={{ color: HOME_TAB_COLORS.pm }}>PM 진행률</span>
-                    <span className="text-muted-foreground">{pmChecked}/{pmTotal} ({pmTotal ? Math.round(pmChecked/pmTotal*100) : 0}%)</span>
-                  </div>
-                  <ProgressBar checked={pmChecked} total={pmTotal} color={HOME_TAB_COLORS.pm} />
-                </div>
-                <div>
-                  <div className="flex justify-between text-[12px] font-semibold mb-1.5">
-                    <span style={{ color: HOME_TAB_COLORS.designer }}>디자이너 진행률</span>
-                    <span className="text-muted-foreground">{desChecked}/{DES_TOTAL} ({DES_TOTAL ? Math.round(desChecked/DES_TOTAL*100) : 0}%)</span>
-                  </div>
-                  <ProgressBar checked={desChecked} total={DES_TOTAL} color={HOME_TAB_COLORS.designer} />
-                </div>
-              </div>
-            </div>
+            <div className="max-w-[600px] mx-auto px-8 py-6 flex flex-col gap-5">
+              {detailStep === 1 && (
+                <>
+                  <MetaFields />
+                  <SaveButton dirty={isDirty} onSave={handleSave} />
+                  <ProgressSection />
+                </>
+              )}
 
-            <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide">핵심 USP</div>
-                <button
-                  onClick={() => upd("usps", [...(ld.usps || []), ""])}
-                  className="text-[11px] text-primary font-semibold px-2 py-0.5 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20"
-                >+ 추가</button>
-              </div>
-              {(ld.usps || []).length === 0 && <div className="text-[12px] text-[#aeaeb2]">USP를 추가하세요</div>}
-              {(ld.usps || []).map((u, i) => (
-                <div key={i} className="flex gap-1 mb-1">
-                  <input
-                    value={u}
-                    onChange={(e) => updArr("usps", i, e.target.value)}
-                    placeholder={`USP ${i + 1}`}
-                    className="flex-1 bg-secondary border border-border rounded-lg text-foreground px-2.5 py-1.5 text-[12px] outline-none focus:ring-1 focus:ring-primary"
-                  />
-                  <button
-                    onClick={() => upd("usps", (ld.usps || []).filter((_, j) => j !== i))}
-                    className="w-7 rounded-lg bg-red-50 text-red-400 border-none cursor-pointer text-base font-bold hover:bg-red-100"
-                  >×</button>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide">성과증거</div>
-                <button
-                  onClick={() => upd("proof", [...(ld.proof || []), ""])}
-                  className="text-[11px] text-primary font-semibold px-2 py-0.5 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20"
-                >+ 추가</button>
-              </div>
-              {(ld.proof || []).length === 0 && <div className="text-[12px] text-[#aeaeb2]">성과증거를 추가하세요</div>}
-              {(ld.proof || []).map((p, i) => (
-                <div key={i} className="flex gap-1 mb-1">
-                  <input
-                    value={p}
-                    onChange={(e) => updArr("proof", i, e.target.value)}
-                    placeholder={`성과 ${i + 1}`}
-                    className="flex-1 bg-secondary border border-border rounded-lg text-foreground px-2.5 py-1.5 text-[12px] outline-none focus:ring-1 focus:ring-primary"
-                  />
-                  <button
-                    onClick={() => upd("proof", (ld.proof || []).filter((_, j) => j !== i))}
-                    className="w-7 rounded-lg bg-red-50 text-red-400 border-none cursor-pointer text-base font-bold hover:bg-red-100"
-                  >×</button>
-                </div>
-              ))}
+              {detailStep === 2 && (
+                <>
+                  <ContentFields />
+                  <SaveButton dirty={isContentDirty} onSave={handleContentSave} />
+                </>
+              )}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* ── 2단 레이아웃 ── */}
+        {detailLayout === "split" && (
+          <div className="bg-white min-h-[calc(100vh-120px)]">
+            <div className="max-w-[1000px] mx-auto px-8 py-6 grid grid-cols-2 gap-10">
+              {/* 왼쪽: 강의 정보 */}
+              <div className="flex flex-col gap-5">
+                <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide">강의 정보</div>
+                <MetaFields />
+                <SaveButton dirty={isDirty} onSave={handleSave} />
+                <ProgressSection />
+              </div>
+              {/* 오른쪽: 콘텐츠 정보 */}
+              <div className="flex flex-col gap-5 border-l border-border pl-10">
+                <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide">콘텐츠 정보</div>
+                <ContentFields />
+                <SaveButton dirty={isContentDirty} onSave={handleContentSave} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   // ── 리스트 / 달력 뷰 ──
-  const getLecStats = (ins: string, lec: string) => {
-    const curKey = `${ins}|${lec}`;
-    const pmSeq = state.seqDataMap[curKey];
-    const pmTotal = pmSeq ? pmSeq.reduce((s, p) => s + p.items.length, 0) : PM_DEFAULT_TOTAL;
-    const pmChecked = Object.values(state.allChecks[curKey] || {}).filter(Boolean).length;
-    const desChecked = Object.values(state.designChecks[curKey] || {}).filter(Boolean).length;
-    return { pmTotal, pmChecked, desChecked };
-  };
-
-  const LectureCard = ({ l }: { l: typeof allLectures[0] }) => {
-    const { pmTotal, pmChecked, desChecked } = getLecStats(l.ins, l.lec);
-    const cardColor = state.platformColors[l.platform] ?? l.color;
+  const LectureCard = ({ l }: { l: LectureSummary }) => {
+    const { pmTotal, pmChecked, desTotal, desChecked, color: cardColor } = l;
     const curKey = `${l.ins}|${l.lec}`;
     const isDeleting = deleteConfirmKey === curKey;
     return (
       <div
-        className="bg-white rounded-xl border border-border p-4 cursor-pointer hover:shadow-md transition-shadow"
+        className="bg-secondary/30 rounded-xl border border-border p-4 cursor-pointer hover:shadow-md transition-shadow"
         style={{ borderLeft: `3px solid ${cardColor}` }}
         onClick={() => setDetailKey(curKey)}
       >
@@ -361,7 +425,7 @@ export default function LectureManagement() {
           <div className="flex-shrink-0 flex items-start gap-2">
             <div className="text-right">
               <div className="text-[10px] text-muted-foreground mb-0.5">PM {pmChecked}/{pmTotal}</div>
-              <div className="text-[10px] text-muted-foreground">디자인 {desChecked}/{DES_TOTAL}</div>
+              <div className="text-[10px] text-muted-foreground">디자인 {desChecked}/{desTotal}</div>
             </div>
             {isDeleting ? (
               <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
@@ -391,14 +455,14 @@ export default function LectureManagement() {
         </div>
         <div className="mt-2.5 flex flex-col gap-1">
           <ProgressBar checked={pmChecked} total={pmTotal} color={HOME_TAB_COLORS.pm} />
-          <ProgressBar checked={desChecked} total={DES_TOTAL} color={HOME_TAB_COLORS.designer} />
+          <ProgressBar checked={desChecked} total={desTotal} color={HOME_TAB_COLORS.designer} />
         </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-[calc(100vh-60px)] bg-background">
+    <div className="min-h-[calc(100vh-60px)] bg-white">
       {/* 헤더 */}
       <div className="bg-white border-b border-border px-8 py-4 flex items-center justify-between sticky top-[60px] z-10">
         <div className="flex items-center gap-3">
@@ -407,20 +471,31 @@ export default function LectureManagement() {
             진행중 {activeLectures.length}개 · 완료 {completedLectures.length}개
           </span>
         </div>
-        <div className="flex gap-1 bg-secondary rounded-lg p-[3px]">
-          {([{ id: "list", label: "☰ 리스트" }, { id: "calendar", label: "📅 달력" }] as const).map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setView(v.id)}
-              className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all cursor-pointer border-none ${
-                view === v.id ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {v.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddDialog(true)}
+            className="px-3.5 py-1.5 rounded-lg text-[12px] font-bold border-none cursor-pointer text-white transition-opacity hover:opacity-90"
+            style={{ background: BRAND_GRADIENT }}
+          >
+            + 새 강의
+          </button>
+          <div className="flex gap-1 bg-secondary rounded-lg p-[3px]">
+            {([{ id: "list", label: "☰ 리스트" }, { id: "calendar", label: "📅 달력" }] as const).map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all cursor-pointer border-none ${
+                  view === v.id ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
+      {showAddDialog && <AddLectureDialog onClose={() => setShowAddDialog(false)} />}
 
       {/* 리스트 뷰 */}
       {view === "list" && (
@@ -548,8 +623,9 @@ export default function LectureManagement() {
 
       {/* 달력 뷰 */}
       {view === "calendar" && (
+        <TooltipProvider delayDuration={200}>
         <div className="max-w-[900px] mx-auto px-8 py-6">
-          <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div className="bg-secondary/30 rounded-2xl border border-border p-6">
             {/* 월 네비게이션 */}
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-[15px] font-extrabold">
@@ -601,15 +677,22 @@ export default function LectureManagement() {
                     }`}>{day.getDate()}</div>
                     <div className="flex flex-col gap-0.5">
                       {dayEvts.map((ev, ei) => (
-                        <div
-                          key={ei}
-                          onClick={() => setDetailKey(`${ev.ins}|${ev.lec}`)}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight"
-                          style={{ background: ev.color+"22", color: ev.color, border: `1px solid ${ev.color}40`, opacity: ev.status==="completed"?0.6:1 }}
-                        >
-                          <span className="font-bold">{ev.ins}</span>
-                          {ev.status==="active" && <span className="ml-0.5 text-[9px]">🔴LIVE</span>}
-                        </div>
+                        <Tooltip key={ei}>
+                          <TooltipTrigger asChild>
+                            <div
+                              onClick={() => setDetailKey(`${ev.ins}|${ev.lec}`)}
+                              className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight"
+                              style={{ background: ev.color+"22", color: ev.color, border: `1px solid ${ev.color}40`, opacity: ev.status==="completed"?0.6:1 }}
+                            >
+                              <span className="font-bold">{ev.ins}</span>
+                              {ev.status==="active" && <span className="ml-0.5 text-[9px]">🔴LIVE</span>}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="font-bold">{ev.ins} / {ev.lec}</div>
+                            {ev.platform && <div className="text-muted-foreground text-[12px]">{ev.platform}</div>}
+                          </TooltipContent>
+                        </Tooltip>
                       ))}
                     </div>
                   </div>
@@ -618,6 +701,7 @@ export default function LectureManagement() {
             </div>
           </div>
         </div>
+        </TooltipProvider>
       )}
     </div>
   );

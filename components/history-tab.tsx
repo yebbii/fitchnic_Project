@@ -2,7 +2,7 @@
 
 import { useCrm, useGoToBoard } from "@/hooks/use-crm-store";
 import { fmtDateKr } from "@/lib/utils";
-import { HOME_TAB_COLORS } from "@/lib/constants";
+import { HOME_TAB_COLORS, BRAND_GRADIENT_H } from "@/lib/constants";
 import { useCompletedLectures } from "@/hooks/use-derived-data";
 
 export default function HistoryTab() {
@@ -39,7 +39,7 @@ export default function HistoryTab() {
               return (
                 <div
                   key={l.lec}
-                  className="bg-white border border-border rounded-xl p-[18px] mb-2 ml-5"
+                  className="bg-secondary/30 border border-border rounded-xl p-[18px] mb-2 ml-5"
                   style={{ borderLeft: `4px solid ${color}40` }}
                 >
                   <div className="flex justify-between items-center">
@@ -74,7 +74,7 @@ export default function HistoryTab() {
                       <div className="flex-1 h-2 bg-[#f0f0f5] rounded-sm overflow-hidden">
                         <div
                           className="h-full rounded-sm transition-all duration-300"
-                          style={{ width: `${pctCopy}%`, background: `linear-gradient(to right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
+                          style={{ width: `${pctCopy}%`, background: BRAND_GRADIENT_H }}
                         />
                       </div>
                       <div className="flex-1 h-2 bg-[#f0f0f5] rounded-sm overflow-hidden">

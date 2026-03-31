@@ -27,6 +27,8 @@ import type {
   MilestoneId,
   Assignee,
   MilestoneMetaMap,
+  LectureSubTabId,
+  InstructorProfile,
 } from "@/lib/types";
 import { INIT_DATA, DEFAULT_SEQ, DEFAULT_PLATFORM_COLORS, DESIGNER_MILESTONES } from "@/lib/constants";
 import { storage } from "@/lib/storage";
@@ -50,6 +52,8 @@ interface CrmState {
   pmProjectAssignees: Record<string, string>;
   milestoneMeta: MilestoneMetaMap;
   assignees: Assignee[];
+  instructorProfiles: InstructorProfile[];
+  lectureSubTab: LectureSubTabId;
   ins: string;           // PM 선택
   lec: string;
   designerIns: string;   // 디자이너 선택
@@ -75,6 +79,8 @@ const initialState: CrmState = {
   pmProjectAssignees: {},
   milestoneMeta: {},
   assignees: [],
+  instructorProfiles: [],
+  lectureSubTab: "lec-dashboard",
   ins: "",
   lec: "",
   designerIns: "",
@@ -84,7 +90,7 @@ const initialState: CrmState = {
 
 /* ─── Actions ─── */
 type Action =
-  | { type: "HYDRATE"; data: CrmData; checks: ChecksMap; copies: CopiesMap; seqDataMap: SeqDataMap; feedbacks: Feedback[]; designChecks: DesignChecksMap; workLogs: WorkLog[]; platformColors: Record<string, string>; designerMilestones: DesignerMilestonesMap; designerProjectAssignees: Record<string, string>; pmProjectAssignees: Record<string, string>; milestoneMeta: MilestoneMetaMap; assignees: Assignee[] }
+  | { type: "HYDRATE"; data: CrmData; checks: ChecksMap; copies: CopiesMap; seqDataMap: SeqDataMap; feedbacks: Feedback[]; designChecks: DesignChecksMap; workLogs: WorkLog[]; platformColors: Record<string, string>; designerMilestones: DesignerMilestonesMap; designerProjectAssignees: Record<string, string>; pmProjectAssignees: Record<string, string>; milestoneMeta: MilestoneMetaMap; assignees: Assignee[]; instructorProfiles: InstructorProfile[] }
   | { type: "SET_DESIGNER_PROJECT_ASSIGNEE"; curKey: string; assignee: string }
   | { type: "SET_PM_PROJECT_ASSIGNEE"; curKey: string; assignee: string }
   | { type: "ADD_ASSIGNEE"; assignee: Assignee }
@@ -118,7 +124,11 @@ type Action =
   | { type: "DELETE_WORK_LOG"; id: string }
   | { type: "RENAME_INSTRUCTOR"; oldIns: string; newIns: string }
   | { type: "SET_PLATFORM_COLOR"; platform: string; color: string }
-  | { type: "DELETE_LECTURE"; ins: string; lec: string };
+  | { type: "DELETE_LECTURE"; ins: string; lec: string }
+  | { type: "SET_LECTURE_SUB_TAB"; tab: LectureSubTabId }
+  | { type: "ADD_INSTRUCTOR_PROFILE"; profile: InstructorProfile }
+  | { type: "UPDATE_INSTRUCTOR_PROFILE"; id: string; updates: Partial<Omit<InstructorProfile, "id" | "createdAt">> }
+  | { type: "DELETE_INSTRUCTOR_PROFILE"; id: string };
 
 function reducer(state: CrmState, action: Action): CrmState {
   switch (action.type) {
@@ -138,6 +148,7 @@ function reducer(state: CrmState, action: Action): CrmState {
         pmProjectAssignees: action.pmProjectAssignees,
         milestoneMeta: action.milestoneMeta,
         assignees: action.assignees,
+        instructorProfiles: action.instructorProfiles,
         hydrated: true,
       };
     case "SET_TOP_TAB":
@@ -179,7 +190,7 @@ function reducer(state: CrmState, action: Action): CrmState {
         d[action.ins] = { ...d[action.ins], lectures: { ...d[action.ins].lectures } };
       }
       d[action.ins].lectures[action.lec] = action.lecture;
-      return { ...state, data: d, ins: action.ins, lec: action.lec, topTab: "pm", tab: "board" };
+      return { ...state, data: d, ins: action.ins, lec: action.lec };
     }
     case "SET_CHECK": {
       const prev = state.allChecks[action.curKey] || {};
@@ -381,6 +392,14 @@ function reducer(state: CrmState, action: Action): CrmState {
       delete seqDataMap[curKey];
       return { ...state, data: nextData, allChecks, designChecks, seqDataMap };
     }
+    case "SET_LECTURE_SUB_TAB":
+      return { ...state, lectureSubTab: action.tab };
+    case "ADD_INSTRUCTOR_PROFILE":
+      return { ...state, instructorProfiles: [...state.instructorProfiles, action.profile] };
+    case "UPDATE_INSTRUCTOR_PROFILE":
+      return { ...state, instructorProfiles: state.instructorProfiles.map((p) => p.id === action.id ? { ...p, ...action.updates } : p) };
+    case "DELETE_INSTRUCTOR_PROFILE":
+      return { ...state, instructorProfiles: state.instructorProfiles.filter((p) => p.id !== action.id) };
     default:
       return state;
   }
@@ -412,7 +431,8 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     const pma = storage.loadPmProjectAssignees() || {};
     const mm = storage.loadMilestoneMeta() || {};
     const as = storage.loadAssignees() || [];
-    dispatch({ type: "HYDRATE", data: d, checks: c, copies: cp, seqDataMap: sm, feedbacks: fb, designChecks: dc, workLogs: wl, platformColors: pc, designerMilestones: dm, designerProjectAssignees: pa, pmProjectAssignees: pma, milestoneMeta: mm, assignees: as });
+    const ip = storage.loadInstructorProfiles() || [];
+    dispatch({ type: "HYDRATE", data: d, checks: c, copies: cp, seqDataMap: sm, feedbacks: fb, designChecks: dc, workLogs: wl, platformColors: pc, designerMilestones: dm, designerProjectAssignees: pa, pmProjectAssignees: pma, milestoneMeta: mm, assignees: as, instructorProfiles: ip });
   }, []);
 
   // Auto-complete lectures past D+2
@@ -512,6 +532,12 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     const t = setTimeout(() => storage.saveMilestoneMeta(state.milestoneMeta), 500);
     return () => clearTimeout(t);
   }, [state.milestoneMeta, state.hydrated]);
+
+  useEffect(() => {
+    if (!state.hydrated) return;
+    const t = setTimeout(() => storage.saveInstructorProfiles(state.instructorProfiles), 500);
+    return () => clearTimeout(t);
+  }, [state.instructorProfiles, state.hydrated]);
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
 

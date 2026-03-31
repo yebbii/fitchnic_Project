@@ -114,7 +114,7 @@ export default function DesignerTimelineTab() {
                     dispatch({ type: "SELECT_DESIGNER_INSTRUCTOR", ins: p.ins });
                     setTimeout(() => dispatch({ type: "SELECT_DESIGNER_LECTURE", lec: p.lec }), 0);
                   }}
-                  className="bg-white rounded-xl border border-border p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  className="bg-secondary/30 rounded-xl border border-border p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
                   style={{ borderTop: `3px solid ${p.color}` }}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -521,7 +521,7 @@ export default function DesignerTimelineTab() {
 
           {/* 우측: 라이브 세팅 체크리스트 (강의별 독립) */}
           <div>
-            <div className="bg-white rounded-2xl border border-border p-5 sticky top-[80px] max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="bg-secondary/30 rounded-2xl border border-border p-5 sticky top-[80px] max-h-[calc(100vh-120px)] overflow-y-auto">
               <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={toggleLsMaster}>
                   <div

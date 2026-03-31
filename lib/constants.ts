@@ -17,6 +17,8 @@ export const DEFAULT_PLATFORM_COLORS: Record<string, string> = {
  * 이 상수를 수정하면 홈탭 전체 색상이 일괄 변경됩니다.
  */
 export const HOME_TAB_COLORS = {
+  /** 브랜드 primary — 파란색 */
+  primary: "#006BFE",
   /** PM 업무 블록 색상 — 주황색 */
   pm: "#fc8b57",
   /** 디자이너 업무 블록 색상 — 보라색 */
@@ -24,6 +26,11 @@ export const HOME_TAB_COLORS = {
   /** 강의 D-10 알림 블록 색상 — 빨간색 */
   d10: "#ef4444",
 } as const;
+
+/** 공용 그라데이션 (버튼, 로고 등) */
+export const BRAND_GRADIENT = HOME_TAB_COLORS.primary;
+/** 수평 그라데이션 (프로그레스바 등) */
+export const BRAND_GRADIENT_H = HOME_TAB_COLORS.primary;
 
 export const TONE_PRESETS = [
   "열정+전문가형", "친근+실전형", "도전+자신감형", "시니어친화+진정성",

@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrm, useCurKey, useCurrentLecture, useCurrentSeq } from "@/hooks/use-crm-store";
-import { CH_OPTIONS, HOME_TAB_COLORS } from "@/lib/constants";
+import { CH_OPTIONS, HOME_TAB_COLORS, BRAND_GRADIENT } from "@/lib/constants";
 import { uid, fmtDateKr, fetchAICopy, genCopyLocal, resolveColor, seqTotalItems } from "@/lib/utils";
 import { useActiveLectures } from "@/hooks/use-derived-data";
 import LectureInfoEditor from "./lecture-info-editor";
 import CopyModal from "./copy-modal";
-import AddLectureDialog from "./add-lecture-dialog";
+
 import type { SeqPhase, SeqItem } from "@/lib/types";
 import AssigneeManagerModal from "./assignee-manager-modal";
 
@@ -21,7 +21,7 @@ export default function BoardTab() {
   const [sel, setSel] = useState<{ seq: SeqPhase; item: SeqItem } | null>(null);
   const [isGen, setIsGen] = useState(false);
   const [editInfo, setEditInfo] = useState(false);
-  const [showAdd, setShowAdd] = useState(false);
+
   const [addItemSeq, setAddItemSeq] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState("");
   const [newItemCh, setNewItemCh] = useState("문자");
@@ -130,14 +130,6 @@ export default function BoardTab() {
           </select>
         )}
         {state.ins && <span className="text-[#aeaeb2] text-lg">›</span>}
-        {state.ins && (
-          <button
-            onClick={() => setShowAdd(true)}
-            className="bg-primary/10 border border-primary/30 rounded-lg text-primary px-4 py-2 text-sm font-semibold cursor-pointer hover:bg-primary/15"
-          >
-            + 강의 추가
-          </button>
-        )}
       </div>
 
       {/* 강의 정보 헤더 */}
@@ -253,7 +245,7 @@ export default function BoardTab() {
                         dispatch({ type: "SELECT_INSTRUCTOR", ins: p.ins });
                         setTimeout(() => dispatch({ type: "SELECT_LECTURE", lec: p.lec }), 0);
                       }}
-                      className="bg-white rounded-xl border border-border p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+                      className="bg-secondary/30 rounded-xl border border-border p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
                       style={{ borderTop: `3px solid ${p.color}` }}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -297,7 +289,7 @@ export default function BoardTab() {
               onClick={doGenAll}
               disabled={isGen}
               className="rounded-[10px] text-white px-7 py-3 text-[15px] font-semibold border-none cursor-pointer disabled:opacity-50"
-              style={{ background: `linear-gradient(to bottom right, var(--color-primary), ${HOME_TAB_COLORS.designer})` }}
+              style={{ background: BRAND_GRADIENT }}
             >
               {isGen ? "⏳ 생성 중..." : "✨ 전체 카피 생성 (Claude AI)"}
             </button>
@@ -362,7 +354,7 @@ export default function BoardTab() {
                     <div
                       key={item.id}
                       onClick={() => setSel({ seq, item })}
-                      className="bg-white rounded-xl px-4 py-3.5 cursor-pointer relative transition-all hover:-translate-y-0.5 hover:shadow-md"
+                      className="bg-secondary/30 rounded-xl px-4 py-3.5 cursor-pointer relative transition-all hover:-translate-y-0.5 hover:shadow-md"
                       style={{ border: `2px solid ${ck ? "#d1d5db" : cp ? cardColor + "40" : "#e5e5ea"}` }}
                     >
                       <div className="flex justify-between items-center">
@@ -472,7 +464,7 @@ export default function BoardTab() {
 
       {/* Modals */}
       {sel && <CopyModal sel={sel} onClose={() => setSel(null)} />}
-      {showAdd && <AddLectureDialog defaultInstructor={state.ins} onClose={() => setShowAdd(false)} />}
+
       {showAssigneeMgr && <AssigneeManagerModal onClose={() => setShowAssigneeMgr(false)} />}
     </div>
   );

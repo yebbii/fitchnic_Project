@@ -104,7 +104,7 @@ export default function WorklogTab() {
       <div className="flex-1 overflow-y-auto">
         <div className="px-7 py-5 pb-[120px] max-w-[760px] mx-auto">
           {/* 입력 영역 */}
-          <div className="bg-white rounded-2xl border border-border p-5 mb-6">
+          <div className="bg-secondary/30 rounded-2xl border border-border p-5 mb-6">
             <h3 className="text-[15px] font-extrabold mb-4">📝 작업일지 작성</h3>
             <div className="flex gap-3 mb-3 flex-wrap">
               <div>
@@ -167,7 +167,7 @@ export default function WorklogTab() {
                 </div>
                 <div className="flex flex-col gap-2.5">
                   {grouped[d].map((log) => (
-                    <div key={log.id} className="bg-white rounded-xl border border-border p-4">
+                    <div key={log.id} className="bg-secondary/30 rounded-xl border border-border p-4">
                       <div className="flex justify-between items-start gap-3">
                         <div className="flex-1">
                           {log.lectureKey && (
