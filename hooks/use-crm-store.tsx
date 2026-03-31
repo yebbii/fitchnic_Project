@@ -309,6 +309,7 @@ function reducer(state: CrmState, action: Action): CrmState {
         seqDataMap: newSeqMap,
         designChecks: newDesignChecks,
         ins: state.ins === oldIns ? newIns : state.ins,
+        instructorProfiles: state.instructorProfiles.map((p) => p.name === oldIns ? { ...p, name: newIns } : p),
       };
     }
     case "SET_DESIGN_CHECK": {
