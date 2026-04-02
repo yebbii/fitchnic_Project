@@ -16,8 +16,8 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border-none cursor-pointer transition-colors ${
-        copied ? "bg-green-100 text-green-600" : "bg-secondary text-muted-foreground hover:bg-accent"
+      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border-none cursor-pointer transition-colors ${
+        copied ? "bg-green-100 text-green-600" : "bg-[#F0F1F4] text-muted-foreground hover:bg-accent"
       }`}
     >
       {copied ? "✓ 복사됨" : label || "📋 복사"}
@@ -97,8 +97,8 @@ export default function DesignerTimelineTab() {
   if (!ld) {
     const futureActive = activeLectures.filter((l) => l.daysLeft >= 0);
     return (
-      <div className="animate-fi px-7 py-6 max-w-[1100px] mx-auto">
-        <h3 className="text-[17px] font-extrabold mb-4">🎨 진행중 강의 선택</h3>
+      <div className="animate-fi px-8 py-8 max-w-[1100px] mx-auto">
+        <h3 className="text-lg font-bold mb-4">진행중 강의 선택</h3>
         {futureActive.length === 0 ? (
           <div className="text-center text-muted-foreground py-16 text-[14px]">진행중인 강의가 없습니다</div>
         ) : (
@@ -114,11 +114,11 @@ export default function DesignerTimelineTab() {
                     dispatch({ type: "SELECT_DESIGNER_INSTRUCTOR", ins: p.ins });
                     setTimeout(() => dispatch({ type: "SELECT_DESIGNER_LECTURE", lec: p.lec }), 0);
                   }}
-                  className="bg-secondary/30 rounded-xl border border-border p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  className="bg-white rounded-2xl shadow-sm p-5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
                   style={{ borderTop: `3px solid ${p.color}` }}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[13px] font-extrabold truncate" style={{ color: p.color }}>{p.ins}</span>
+                    <span className="text-[13px] font-bold truncate" style={{ color: p.color }}>{p.ins}</span>
                     {p.daysLeft <= 7 && p.daysLeft >= 0 && (
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${p.daysLeft <= 1 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"}`}>
                         {p.daysLeft === 0 ? "D-Day" : `D-${p.daysLeft}`}
@@ -137,7 +137,7 @@ export default function DesignerTimelineTab() {
                       <span>디자인 진행률</span>
                       <span>{p.desChecked}/{p.desTotal}</span>
                     </div>
-                    <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-[#F0F1F4] rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${desPct}%`, background: HOME_TAB_COLORS.designer }} />
                     </div>
                   </div>
@@ -310,7 +310,7 @@ export default function DesignerTimelineTab() {
   return (
     <div className="animate-fi min-h-[calc(100vh-100px)]">
       {/* 백버튼 바 */}
-      <div className="bg-white border-b border-border px-7 py-2">
+      <div className="bg-white border-b border-border/50 px-8 py-2">
         <button
           onClick={goBack}
           className="text-[13px] text-muted-foreground hover:text-foreground font-semibold border-none bg-transparent cursor-pointer px-0"
@@ -320,7 +320,7 @@ export default function DesignerTimelineTab() {
       </div>
 
       {/* 본문 */}
-      <div className="px-7 py-5 pb-[120px] max-w-[1000px] mx-auto">
+      <div className="px-8 py-8 pb-[120px] max-w-[1100px] mx-auto">
         <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 350px" }}>
           {/* 좌측: 강의 정보 + 마일스톤 */}
           <div>
@@ -328,7 +328,7 @@ export default function DesignerTimelineTab() {
             <div className="mb-5">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ background: cardColor }} />
-                <span className="text-[18px] font-extrabold" style={{ color: cardColor }}>{state.designerIns}</span>
+                <span className="text-[18px] font-bold" style={{ color: cardColor }}>{state.designerIns}</span>
                 <span className="text-[16px] text-muted-foreground">/</span>
                 <span className="text-[18px] font-bold">{state.designerLec}</span>
               </div>
@@ -336,7 +336,7 @@ export default function DesignerTimelineTab() {
                 <span className="text-[13px] text-muted-foreground">📅 {fmtDateKr(ld.liveDate)} {ld.liveTime}</span>
                 {desA ? (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold" style={{ background: HOME_TAB_COLORS.designer + "15", color: HOME_TAB_COLORS.designer, border: `1px solid ${HOME_TAB_COLORS.designer}30` }}>
-                    <span className="w-4 h-4 rounded-full text-white text-[9px] font-extrabold flex items-center justify-center flex-shrink-0" style={{ background: HOME_TAB_COLORS.designer }}>{desA.slice(0, 1)}</span>
+                    <span className="w-4 h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0" style={{ background: HOME_TAB_COLORS.designer }}>{desA.slice(0, 1)}</span>
                     담당 {desA}
                   </span>
                 ) : (
@@ -367,12 +367,12 @@ export default function DesignerTimelineTab() {
                 return (
                   <div
                     key={ms.id}
-                    className={`rounded-2xl border-2 p-5 transition-colors ${
+                    className={`rounded-2xl shadow-sm p-4 transition-colors ${
                       item.checked
-                        ? "bg-gray-50 border-gray-200"
+                        ? "bg-gray-50"
                         : isPast
-                        ? "bg-red-50 border-red-100"
-                        : "bg-white border-border"
+                        ? "bg-red-50"
+                        : "bg-white"
                     }`}
                     style={{ animation: `fi .3s ease ${i * 0.05}s both` }}
                   >
@@ -380,7 +380,7 @@ export default function DesignerTimelineTab() {
                       {/* 체크박스 */}
                       <button
                         onClick={() => toggleMilestoneParent(ms)}
-                        className="w-8 h-8 mt-0.5 flex-shrink-0 rounded-full flex items-center justify-center text-[15px] font-extrabold text-white cursor-pointer border-none transition-colors"
+                        className="w-8 h-8 mt-0.5 flex-shrink-0 rounded-full flex items-center justify-center text-[15px] font-bold text-white cursor-pointer border-none transition-colors"
                         style={{
                           background: item.checked ? "#9ca3af" : "transparent",
                           border: `2px solid ${item.checked ? "#9ca3af" : ms.color}`,
@@ -394,7 +394,7 @@ export default function DesignerTimelineTab() {
                         {/* 레이블 + 날짜 */}
                         <div className="flex items-center gap-2 mb-1">
                           <span
-                            className="text-[12px] font-extrabold px-2.5 py-1 rounded-full"
+                            className="text-[12px] font-bold px-2.5 py-1 rounded-full"
                             style={{ background: item.checked ? "#f3f4f6" : ms.color + "20", color: item.checked ? "#9ca3af" : ms.color }}
                           >
                             {ms.label}
@@ -407,7 +407,7 @@ export default function DesignerTimelineTab() {
 
                         {/* 제목 */}
                         <div
-                          className={`text-[15px] font-extrabold mb-2 ${
+                          className={`text-[15px] font-bold mb-2 leading-snug ${
                             item.checked ? "line-through text-muted-foreground" : "text-foreground"
                           }`}
                         >
@@ -446,7 +446,7 @@ export default function DesignerTimelineTab() {
                                           value={driveLink}
                                           onChange={(e) => curKey && dispatch({ type: "SET_MILESTONE_META", curKey, field: "driveLink", value: e.target.value })}
                                           placeholder="구글 드라이브 링크 입력"
-                                          className="flex-1 text-[11px] bg-secondary border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
+                                          className="flex-1 text-[11px] bg-[#F0F1F4] border-none rounded-xl px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
                                         />
                                       </div>
                                       <div className="flex items-center gap-2">
@@ -455,11 +455,11 @@ export default function DesignerTimelineTab() {
                                           value={figmaLink}
                                           onChange={(e) => curKey && dispatch({ type: "SET_MILESTONE_META", curKey, field: "figmaLink", value: e.target.value })}
                                           placeholder="피그마 링크 입력"
-                                          className="flex-1 text-[11px] bg-secondary border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
+                                          className="flex-1 text-[11px] bg-[#F0F1F4] border-none rounded-xl px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
                                         />
                                       </div>
                                     </div>
-                                    <div className="text-[10px] text-muted-foreground bg-secondary rounded-lg px-2.5 py-2 whitespace-pre-wrap leading-relaxed max-h-[120px] overflow-y-auto">
+                                    <div className="text-[10px] text-muted-foreground bg-[#F7F8FA] rounded-xl px-2.5 py-2 whitespace-pre-wrap leading-relaxed max-h-[120px] overflow-y-auto">
                                       {reqMsg}
                                     </div>
                                   </div>
@@ -482,11 +482,11 @@ export default function DesignerTimelineTab() {
                                       {benefitText && <CopyButton text={benefitText} />}
                                     </div>
                                     {benefitText ? (
-                                      <div className="bg-secondary rounded-lg px-3 py-2 text-[12px] text-foreground whitespace-pre-wrap">
+                                      <div className="bg-[#F7F8FA] rounded-xl px-3 py-2 text-[12px] text-foreground whitespace-pre-wrap">
                                         {benefitText}
                                       </div>
                                     ) : (
-                                      <div className="bg-amber-50 rounded-lg px-3 py-2 text-[12px] text-amber-600 font-medium">
+                                      <div className="bg-amber-50 rounded-xl px-3 py-2 text-[12px] text-amber-600 font-medium">
                                         ⏳ PM이 혜택 내용을 아직 입력하지 않았습니다
                                       </div>
                                     )}
@@ -521,7 +521,7 @@ export default function DesignerTimelineTab() {
 
           {/* 우측: 라이브 세팅 체크리스트 (강의별 독립) */}
           <div>
-            <div className="bg-secondary/30 rounded-2xl border border-border p-5 sticky top-[80px] max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-sm p-5 sticky top-[80px] max-h-[calc(100vh-120px)] overflow-y-auto">
               <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={toggleLsMaster}>
                   <div
@@ -530,7 +530,7 @@ export default function DesignerTimelineTab() {
                   >
                     {lsAllDone && "✓"}
                   </div>
-                  <h3 className="text-[15px] font-extrabold">🎥 라이브 세팅 체크</h3>
+                  <h3 className="text-[15px] font-bold">라이브 세팅 체크</h3>
                 </div>
                 <span className={`text-[13px] font-semibold ${lsAllDone ? "text-gray-400" : "text-muted-foreground"}`}>
                   {lsCheckedCount}/{lsTotalCount}
@@ -538,7 +538,7 @@ export default function DesignerTimelineTab() {
               </div>
 
               {lsAllDone && (
-                <div className="mb-3 text-center text-gray-500 font-bold text-[13px] bg-gray-100 rounded-lg py-2">
+                <div className="mb-3 text-center text-gray-500 font-bold text-[13px] bg-[#F7F8FA] rounded-xl py-2">
                   라이브 세팅 완료
                 </div>
               )}
@@ -582,7 +582,7 @@ export default function DesignerTimelineTab() {
                       onChange={(e) => setLsMeta("ls_ebookLink", e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                       placeholder="전자책 링크"
-                      className="w-full text-[11px] bg-secondary border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full text-[11px] bg-[#F0F1F4] border-none rounded-xl px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
                     />
                   </div>
                   <div className="flex flex-col gap-0.5">
@@ -592,7 +592,7 @@ export default function DesignerTimelineTab() {
                       onChange={(e) => setLsMeta("ls_ebookPw", e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                       placeholder="비밀번호 입력"
-                      className="w-full text-[11px] bg-secondary border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full text-[11px] bg-[#F0F1F4] border-none rounded-xl px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
                     />
                   </div>
                   {ebookReady ? (
@@ -600,12 +600,12 @@ export default function DesignerTimelineTab() {
                   ) : (
                     <button
                       disabled
-                      className="px-2.5 py-1 rounded-md text-[11px] font-semibold border-none bg-secondary text-muted-foreground opacity-50 cursor-not-allowed"
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border-none bg-[#F0F1F4] text-muted-foreground opacity-50 cursor-not-allowed"
                     >
                       📋 문구 복사 {!ebookLink && !ebookPw ? "(링크·비밀번호 입력 필요)" : !ebookLink ? "(링크 입력 필요)" : "(비밀번호 입력 필요)"}
                     </button>
                   )}
-                  <div className="text-[10px] text-muted-foreground bg-amber-50 rounded-lg px-2.5 py-1.5">
+                  <div className="text-[10px] text-muted-foreground bg-amber-50 rounded-xl px-2.5 py-1.5">
                     💡 <a href="https://qr.naver.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline hover:text-blue-700">네이버 큐알링크</a>로 변환 후 사용하세요
                   </div>
                 </div>
@@ -626,7 +626,7 @@ export default function DesignerTimelineTab() {
               {/* 전체 초기화 */}
               <button
                 onClick={resetLiveSetup}
-                className="mt-4 w-full text-[12px] text-muted-foreground font-semibold py-1.5 rounded-lg bg-secondary border-none cursor-pointer hover:bg-accent transition-colors"
+                className="mt-4 w-full text-[12px] text-muted-foreground font-semibold py-1.5 rounded-xl bg-[#F0F1F4] border-none cursor-pointer hover:bg-accent transition-colors"
               >
                 전체 초기화
               </button>

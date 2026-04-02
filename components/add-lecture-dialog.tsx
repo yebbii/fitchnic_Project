@@ -407,7 +407,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
   const tabBtn = (t: Mode, label: string) => (
     <button
       onClick={() => setMode(t)}
-      className={`flex-1 py-2 text-sm font-semibold rounded-lg border-none cursor-pointer transition-colors ${
+      className={`flex-1 py-2 text-sm font-semibold rounded-xl border-none cursor-pointer transition-colors ${
         mode === t ? "bg-primary text-white" : "bg-secondary text-muted-foreground hover:bg-muted"
       }`}
     >
@@ -418,18 +418,18 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[300] flex justify-center items-center p-5"
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm z-[300] flex justify-center items-center p-5"
     >
       <div
-        className="bg-white rounded-[18px] w-full max-w-[540px] max-h-[90vh] overflow-auto p-7 shadow-[0_20px_60px_rgba(0,0,0,.15)]"
+        className="bg-white rounded-2xl w-full max-w-[540px] max-h-[90vh] overflow-auto p-8 shadow-2xl"
         style={{ animation: "pop .2s ease" }}
       >
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-5">
-          <h3 className="text-xl font-extrabold">+ 새 강의 추가</h3>
+          <h3 className="text-xl font-bold">+ 새 강의 추가</h3>
           <button
             onClick={onClose}
-            className="bg-secondary text-muted-foreground text-lg w-[34px] h-[34px] rounded-lg border-none cursor-pointer font-semibold"
+            className="bg-[#F0F1F4] text-muted-foreground text-lg w-9 h-9 rounded-xl border-none cursor-pointer font-semibold"
           >
             ×
           </button>
@@ -452,7 +452,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                 <select
                   value={form.instructor}
                   onChange={(e) => update({ instructor: e.target.value })}
-                  className="flex-1 bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2.5 text-[15px] outline-none"
+                  className="flex-1 bg-[#F0F1F4] border-none rounded-xl text-foreground px-3.5 py-2.5 text-[15px] outline-none"
                 >
                   <option value="">강사 선택 또는 신규 입력 ▼</option>
                   {instructors.map((n) => (
@@ -465,7 +465,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                 value={form.instructor}
                 onChange={(e) => update({ instructor: e.target.value })}
                 placeholder="또는 새 강사명 직접 입력"
-                className="w-full mt-1.5 bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2 text-[14px] outline-none"
+                className="w-full mt-1.5 bg-[#F0F1F4] border-none rounded-xl text-foreground px-3.5 py-2 text-[14px] outline-none"
               />
             </div>
 
@@ -477,7 +477,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                 value={form.lectureName}
                 onChange={(e) => update({ lectureName: e.target.value })}
                 placeholder="예: 브랜드파이프"
-                className="w-full bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2.5 text-[15px] outline-none"
+                className="w-full bg-[#F0F1F4] border-none rounded-xl text-foreground px-3.5 py-2.5 text-[15px] outline-none"
               />
               {/* 강사별 강의명 프리셋 칩 */}
               {getPresetNames(form.instructor).length > 0 && (
@@ -487,7 +487,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                       key={name}
                       type="button"
                       onClick={() => update({ lectureName: name })}
-                      className={`text-[12px] px-2.5 py-0.5 rounded-full border-none cursor-pointer transition-colors ${
+                      className={`text-[12px] px-2.5 py-0.5 rounded-xl border-none cursor-pointer transition-colors ${
                         form.lectureName === name
                           ? "bg-primary text-white"
                           : "bg-secondary text-muted-foreground hover:text-foreground"
@@ -506,7 +506,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                 value={manualCohort}
                 onChange={(e) => setManualCohort(e.target.value)}
                 placeholder="예: 5기"
-                className="w-full bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2.5 text-[15px] outline-none"
+                className="w-full bg-[#F0F1F4] border-none rounded-xl text-foreground px-3.5 py-2.5 text-[15px] outline-none"
               />
             </div>
 
@@ -518,18 +518,18 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                 type="date"
                 value={form.liveDate}
                 onChange={(e) => update({ liveDate: e.target.value })}
-                className="w-full bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2.5 text-[15px] outline-none"
+                className="w-full bg-[#F0F1F4] border-none rounded-xl text-foreground px-3.5 py-2.5 text-[15px] outline-none"
               />
             </div>
 
-            <div className="text-[12px] text-[#aeaeb2] bg-[#f8f8fa] rounded-lg px-3.5 py-2.5 leading-relaxed">
+            <div className="text-[12px] text-[#aeaeb2] bg-[#F0F1F4] rounded-xl px-3.5 py-2.5 leading-relaxed">
               톤, 타겟, USP 등은 타임라인 탭 &quot;정보 수정&quot;에서 입력하세요.
             </div>
 
             <button
               onClick={addManual}
               disabled={!canSubmitManual}
-              className="w-full rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              className="w-full rounded-2xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
               style={{ background: BRAND_GRADIENT }}
             >
               강의 추가
@@ -550,7 +550,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
                 "강의실 시간표 형식도 자동 인식합니다"
               }
               rows={5}
-              className="w-full bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2.5 text-[14px] outline-none resize-y font-mono leading-relaxed"
+              className="w-full bg-[#F0F1F4] border-none rounded-xl text-foreground px-3.5 py-2.5 text-[14px] outline-none resize-y font-mono leading-relaxed"
             />
 
             {/* 형식 감지 표시 */}
@@ -565,7 +565,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
 
             {/* 편집 가능 미리보기 테이블 */}
             {displayRows.length > 0 && (
-              <div className="border border-border rounded-lg overflow-hidden max-h-[320px] overflow-y-auto">
+              <div className="rounded-xl shadow-sm overflow-hidden max-h-[320px] overflow-y-auto">
                 <table className="w-full text-[12px] border-collapse">
                   <thead className="sticky top-0">
                     <tr className="bg-secondary text-muted-foreground">
@@ -622,7 +622,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
               체크된 {validRows.length - addableRows.length}개 행에 강사명·강의명·기수 중 빈 항목이 있습니다. 채워주세요.
             </div>
 
-            <div className="text-[12px] text-[#aeaeb2] bg-[#f8f8fa] rounded-lg px-3.5 py-2.5 leading-relaxed">
+            <div className="text-[12px] text-[#aeaeb2] bg-[#F0F1F4] rounded-xl px-3.5 py-2.5 leading-relaxed">
               {isCalendar
                 ? "[핏크닉], [머니업] 태그된 강의만 추출합니다."
                 : "[플랫폼명] 태그를 강의명에 포함하면 자동 추출됩니다. (예: [핏크닉] 4기)"}
@@ -631,7 +631,7 @@ export default function AddLectureDialog({ defaultInstructor, onClose }: AddLect
             <button
               onClick={addPasted}
               disabled={validRows.length === 0 || addableRows.length < validRows.length}
-              className="w-full rounded-xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              className="w-full rounded-2xl text-white py-3.5 text-base font-semibold border-none cursor-pointer hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
               style={{ background: BRAND_GRADIENT }}
             >
               {validRows.length === 0 ? "붙여넣기 대기 중" : addableRows.length < validRows.length ? "빈 항목을 채워주세요" : `${addableRows.length}개 강의 추가`}

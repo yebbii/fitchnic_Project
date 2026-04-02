@@ -50,25 +50,25 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-sm" />
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-[380px] max-h-[80vh] flex flex-col border border-border animate-fi"
+        className="relative bg-white rounded-2xl shadow-2xl w-[400px] max-h-[80vh] flex flex-col animate-fi"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-          <h3 className="text-[15px] font-extrabold">👤 담당자 관리</h3>
+        <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+          <h3 className="text-lg font-bold">담당자 관리</h3>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-[13px] text-muted-foreground border-none cursor-pointer hover:bg-accent"
+            className="w-9 h-9 rounded-xl bg-[#F0F1F4] flex items-center justify-center text-[13px] text-muted-foreground border-none cursor-pointer hover:bg-accent"
           >
             ✕
           </button>
         </div>
 
         {/* 역할 탭 */}
-        <div className="px-5 pb-3">
-          <div className="flex gap-1 bg-secondary rounded-lg p-[3px]">
+        <div className="px-6 pb-3">
+          <div className="flex gap-1 bg-[#F0F1F4] rounded-xl p-1">
             {ROLE_TABS.map((t) => (
               <button
                 key={t.id}
@@ -86,7 +86,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
         </div>
 
         {/* 목록 */}
-        <div className="flex-1 overflow-y-auto px-5 min-h-[120px]">
+        <div className="flex-1 overflow-y-auto px-6 min-h-[120px]">
           {filtered.length === 0 && (
             <div className="text-center text-muted-foreground py-8 text-[12px]">
               {roleTab === "pm" ? "PM" : "디자이너"} 담당자가 없습니다
@@ -96,13 +96,13 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
             {filtered.map((a) => (
               <div key={a.id}>
                 {editingId === a.id ? (
-                  <div className="flex flex-col gap-2 bg-secondary/50 rounded-xl p-3">
+                  <div className="flex flex-col gap-2 bg-[#F7F8FA] rounded-xl p-4">
                     <input
                       autoFocus
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && saveEdit()}
-                      className="w-full text-[12px] bg-white border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full text-[12px] bg-white border-none rounded-xl px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary"
                       placeholder="이름"
                     />
                     <div className="flex flex-wrap gap-1">
@@ -110,7 +110,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
                         <button
                           key={c}
                           onClick={() => setEditColor(c)}
-                          className="w-5 h-5 rounded-full border-none cursor-pointer flex-shrink-0 transition-transform"
+                          className="w-5 h-5 rounded-lg border-none cursor-pointer flex-shrink-0 transition-transform"
                           style={{ background: c, outline: editColor === c ? `2px solid ${c}` : "none", outlineOffset: "2px", transform: editColor === c ? "scale(1.2)" : "scale(1)" }}
                         />
                       ))}
@@ -144,7 +144,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
         </div>
 
         {/* 추가 */}
-        <div className="border-t border-border px-5 py-4 bg-[#fafafa] rounded-b-2xl">
+        <div className="border-t border-border px-6 py-5 bg-[#F7F8FA] rounded-b-2xl">
           <div className="text-[11px] font-extrabold text-muted-foreground mb-2">
             {roleTab === "pm" ? "PM" : "디자이너"} 담당자 추가
           </div>
@@ -153,14 +153,14 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addAssignee()}
             placeholder="이름 입력"
-            className="w-full text-[12px] bg-white border border-border rounded-lg px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary mb-2"
+            className="w-full text-[12px] bg-white border-none rounded-xl px-2.5 py-1.5 outline-none focus:ring-1 focus:ring-primary mb-2"
           />
           <div className="flex flex-wrap gap-1 mb-2">
             {PRESET_COLORS.map((c) => (
               <button
                 key={c}
                 onClick={() => setNewColor(c)}
-                className="w-5 h-5 rounded-full border-none cursor-pointer flex-shrink-0 transition-transform"
+                className="w-5 h-5 rounded-lg border-none cursor-pointer flex-shrink-0 transition-transform"
                 style={{ background: c, outline: newColor === c ? `2px solid ${c}` : "none", outlineOffset: "2px", transform: newColor === c ? "scale(1.2)" : "scale(1)" }}
               />
             ))}

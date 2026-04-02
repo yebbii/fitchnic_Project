@@ -56,20 +56,20 @@ export default function InstructorManagement() {
     setEditId(null);
   };
 
-  const inputCls = "w-full bg-secondary border-[1.5px] border-border rounded-lg text-foreground px-3 py-[6px] text-sm outline-none focus:ring-1 focus:ring-primary";
+  const inputCls = "w-full bg-[#F0F1F4] border-none rounded-xl text-foreground px-3 py-[6px] text-sm outline-none focus:ring-1 focus:ring-primary";
 
   return (
-    <div className="min-h-[calc(100vh-100px)] bg-white">
-      <div className="max-w-[1000px] mx-auto px-8 py-6">
+    <div className="min-h-[calc(100vh-100px)] bg-[#F7F8FA]">
+      <div className="max-w-[1000px] mx-auto px-8 py-8">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h2 className="text-[16px] font-extrabold">강사 관리</h2>
+            <h2 className="text-xl font-bold">강사 관리</h2>
             <span className="text-[12px] text-muted-foreground">{instructors.length}명</span>
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="px-3.5 py-1.5 rounded-lg text-[12px] font-bold border-none cursor-pointer text-white transition-opacity hover:opacity-90"
+            className="px-3.5 py-1.5 rounded-xl text-[12px] font-bold border-none cursor-pointer text-white transition-opacity hover:opacity-90"
             style={{ background: HOME_TAB_COLORS.primary }}
           >
             + 새 강사
@@ -78,7 +78,7 @@ export default function InstructorManagement() {
 
         {/* 새 강사 추가 */}
         {showAdd && (
-          <div className="bg-secondary/30 rounded-2xl border border-border p-5 mb-6">
+          <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <div className="text-[13px] font-extrabold mb-3">새 강사 추가</div>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
@@ -99,14 +99,14 @@ export default function InstructorManagement() {
               </div>
             </div>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowAdd(false)} className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground hover:bg-accent">취소</button>
-              <button onClick={addInstructor} disabled={!form.name.trim()} className="px-3 py-1.5 rounded-lg text-[12px] font-bold border-none cursor-pointer text-white disabled:opacity-40" style={{ background: HOME_TAB_COLORS.primary }}>추가</button>
+              <button onClick={() => setShowAdd(false)} className="px-3 py-1.5 rounded-xl text-[12px] font-semibold border-none cursor-pointer bg-[#F0F1F4] text-muted-foreground hover:bg-accent">취소</button>
+              <button onClick={addInstructor} disabled={!form.name.trim()} className="px-3 py-1.5 rounded-xl text-[12px] font-bold border-none cursor-pointer text-white disabled:opacity-40" style={{ background: HOME_TAB_COLORS.primary }}>추가</button>
             </div>
           </div>
         )}
 
         {/* 카드 그리드 */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-5">
           {instructors.map(({ profile, stats: s }) => {
             const isEditing = editId === profile?.id;
             const isExpanded = expandedName === s.name;
@@ -116,10 +116,10 @@ export default function InstructorManagement() {
             const lectures = isExpanded ? getLectures(s.name) : [];
 
             return (
-              <div key={profile?.id ?? s.name} className="rounded-2xl border border-border overflow-hidden bg-secondary/20 flex flex-col">
+              <div key={profile?.id ?? s.name} className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
                 {/* 카드 본체 */}
                 <div
-                  className="px-4 pt-5 pb-4 cursor-pointer hover:bg-secondary/40 transition-colors flex flex-col items-center text-center relative"
+                  className="px-4 pt-5 pb-4 cursor-pointer hover:bg-[#F7F8FA] transition-colors flex flex-col items-center text-center relative"
                   onClick={() => setExpandedName(isExpanded ? null : s.name)}
                 >
                   {/* 편집 버튼 */}
@@ -165,7 +165,7 @@ export default function InstructorManagement() {
 
                 {/* 편집 모드 */}
                 {isEditing && profile && (
-                  <div className="border-t border-border px-3 py-2.5 bg-secondary/30">
+                  <div className="border-t border-border/50 px-3 py-2.5 bg-[#F7F8FA] rounded-b-xl">
                     <div className="flex flex-col gap-1.5 mb-2">
                       <input value={editForm.name ?? ""} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="이름" className={inputCls} />
                       <input value={editForm.contact ?? ""} onChange={(e) => setEditForm({ ...editForm, contact: e.target.value })} placeholder="연락처" className={inputCls} />
@@ -175,15 +175,15 @@ export default function InstructorManagement() {
                     <div className="flex gap-1 justify-between">
                       {isDeleting ? (
                         <div className="flex gap-1">
-                          <button onClick={() => { dispatch({ type: "DELETE_INSTRUCTOR_PROFILE", id: profile.id }); setDeleteConfirmId(null); setEditId(null); }} className="px-2 py-1 rounded text-[10px] font-semibold border-none cursor-pointer bg-red-500 text-white">삭제 확인</button>
-                          <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 rounded text-[10px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground">취소</button>
+                          <button onClick={() => { dispatch({ type: "DELETE_INSTRUCTOR_PROFILE", id: profile.id }); setDeleteConfirmId(null); setEditId(null); }} className="px-2 py-1 rounded-xl text-[10px] font-semibold border-none cursor-pointer bg-red-500 text-white">삭제 확인</button>
+                          <button onClick={() => setDeleteConfirmId(null)} className="px-2 py-1 rounded-xl text-[10px] font-semibold border-none cursor-pointer bg-[#F0F1F4] text-muted-foreground">취소</button>
                         </div>
                       ) : (
-                        <button onClick={() => setDeleteConfirmId(profile.id)} className="px-2 py-1 rounded text-[10px] font-semibold border-none cursor-pointer text-red-400 hover:bg-red-50">삭제</button>
+                        <button onClick={() => setDeleteConfirmId(profile.id)} className="px-2 py-1 rounded-xl text-[10px] font-semibold border-none cursor-pointer text-red-400 hover:bg-red-50">삭제</button>
                       )}
                       <div className="flex gap-1">
-                        <button onClick={() => setEditId(null)} className="px-2 py-1 rounded text-[10px] font-semibold border-none cursor-pointer bg-secondary text-muted-foreground hover:bg-accent">취소</button>
-                        <button onClick={saveEdit} className="px-2 py-1 rounded text-[10px] font-bold border-none cursor-pointer text-white" style={{ background: HOME_TAB_COLORS.primary }}>저장</button>
+                        <button onClick={() => setEditId(null)} className="px-2 py-1 rounded-xl text-[10px] font-semibold border-none cursor-pointer bg-[#F0F1F4] text-muted-foreground hover:bg-accent">취소</button>
+                        <button onClick={saveEdit} className="px-2 py-1 rounded-xl text-[10px] font-bold border-none cursor-pointer text-white" style={{ background: HOME_TAB_COLORS.primary }}>저장</button>
                       </div>
                     </div>
                   </div>
@@ -191,7 +191,7 @@ export default function InstructorManagement() {
 
                 {/* 강의 목록 (펼침) */}
                 {isExpanded && !isEditing && (
-                  <div className="border-t border-border">
+                  <div className="border-t border-border/50">
                     {lectures.length === 0 ? (
                       <div className="px-3 py-2.5 text-[11px] text-muted-foreground text-center">강의 없음</div>
                     ) : (

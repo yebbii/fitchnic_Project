@@ -7,9 +7,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-let _c = 1000;
+let _c = 0;
 export function uid(): string {
-  return `c_${_c++}`;
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `c_${Date.now()}_${_c++}`;
 }
 
 export function addDays(dateStr: string, days: number): Date {

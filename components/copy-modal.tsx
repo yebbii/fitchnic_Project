@@ -82,18 +82,18 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] flex justify-center items-center p-5"
+      className="fixed inset-0 bg-black/25 backdrop-blur-sm z-[200] flex justify-center items-center p-5"
       style={{ animation: "pop .2s ease" }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-[640px] max-h-[85vh] overflow-auto shadow-[0_20px_60px_rgba(0,0,0,.15)]">
+      <div className="bg-white rounded-2xl w-full max-w-[640px] max-h-[85vh] overflow-auto shadow-2xl">
         {/* Header */}
-        <div className="px-6 py-[18px] border-b border-border flex justify-between items-center sticky top-0 bg-white z-[1]">
+        <div className="px-7 py-5 border-b border-border/50 flex justify-between items-center sticky top-0 bg-white z-[1]">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[22px]">{sel.item.icon}</span>
-              <span className="text-[17px] font-extrabold">{sel.item.name}</span>
+              <span className="text-lg font-bold">{sel.item.name}</span>
               <span
-                className="text-[13px] px-2.5 py-0.5 rounded-md font-bold"
+                className="text-[13px] px-2.5 py-0.5 rounded-lg font-bold"
                 style={{ background: sel.item.color + "15", color: sel.item.color }}
               >
                 {sel.item.ch}
@@ -105,7 +105,7 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="bg-secondary text-muted-foreground text-lg w-[34px] h-[34px] rounded-lg border-none cursor-pointer font-semibold hover:bg-accent"
+            className="bg-[#F0F1F4] text-muted-foreground text-lg w-9 h-9 rounded-xl border-none cursor-pointer font-semibold hover:bg-accent"
           >
             ×
           </button>
@@ -113,7 +113,7 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
 
         {/* Channel rules */}
         {rule && (
-          <div className="mx-6 mt-3 p-2.5 px-3.5 bg-secondary rounded-lg flex gap-4 text-[13px] text-muted-foreground flex-wrap">
+          <div className="mx-7 mt-3 p-3 px-3.5 bg-[#F0F1F4] rounded-xl flex gap-4 text-[13px] text-muted-foreground flex-wrap">
             <span>이모티콘 {rule.emoji}</span>
             <span>버튼 {rule.btn}</span>
             <span>글자수 {rule.len}</span>
@@ -121,13 +121,13 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
         )}
 
         {/* Content */}
-        <div className="px-6 pt-4 pb-6">
+        <div className="px-7 pt-5 pb-7">
           {!cp ? (
             <div className="text-center py-9">
               <button
                 onClick={doGen}
                 disabled={isGen}
-                className="rounded-xl text-white px-8 py-3.5 text-base font-semibold border-none cursor-pointer disabled:opacity-50"
+                className="rounded-2xl text-white px-8 py-3.5 text-base font-semibold border-none cursor-pointer disabled:opacity-50"
                 style={{ background: BRAND_GRADIENT }}
               >
                 {isGen ? "⏳ 생성중..." : "✨ AI 카피 생성"}
@@ -149,28 +149,28 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
                     },
                   });
                 }}
-                className="w-full min-h-[240px] p-4 bg-secondary border border-border rounded-xl text-foreground text-[15px] leading-[1.8] resize-y outline-none focus:ring-1 focus:ring-primary"
+                className="w-full min-h-[240px] p-5 bg-[#F7F8FA] border-none rounded-2xl text-foreground text-[15px] leading-[1.8] resize-y outline-none focus:ring-1 focus:ring-primary"
               />
               <div className="flex justify-between mt-3 flex-wrap gap-2">
                 <div className="flex gap-2">
                   <button
                     onClick={doGen}
-                    className="bg-primary/10 border border-primary/30 rounded-lg text-primary px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-primary/15"
+                    className="bg-primary/10 rounded-xl text-primary px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-primary/15 border-none"
                   >
                     🔄 재생성
                   </button>
                   <button
                     onClick={handleCopy}
-                    className="bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-600 px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-emerald-100"
+                    className="bg-emerald-50 rounded-xl text-emerald-600 px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-emerald-100 border-none"
                   >
                     📋 복사 (링크치환)
                   </button>
                   <button
                     onClick={() => setFbOn(!fbOn)}
-                    className={`rounded-lg px-4 py-2 text-[13px] font-semibold cursor-pointer border ${
+                    className={`rounded-xl px-4 py-2 text-[13px] font-semibold cursor-pointer border-none ${
                       fbOn
-                        ? "bg-red-50 border-red-300 text-red-500"
-                        : "bg-amber-50 border-amber-200 text-amber-600"
+                        ? "bg-red-50 text-red-500"
+                        : "bg-amber-50 text-amber-600"
                     }`}
                   >
                     {fbOn ? "✕ 취소" : "💬 피드백"}
@@ -183,13 +183,13 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
 
               {/* Feedback */}
               {fbOn && (
-                <div className="mt-3.5 p-4 bg-amber-50 border border-amber-200 rounded-xl animate-fi">
+                <div className="mt-3.5 p-5 bg-amber-50/50 border-none rounded-2xl animate-fi">
                   <div className="flex gap-2 mb-2 flex-wrap">
                     {FEEDBACK_TAGS.map((t) => (
                       <button
                         key={t}
                         onClick={() => setFbText((p) => (p ? `${p} [${t}]` : `[${t}] `))}
-                        className="bg-white border border-border rounded-md text-muted-foreground px-2.5 py-1 text-xs cursor-pointer hover:bg-secondary font-medium"
+                        className="bg-white border-none rounded-lg text-muted-foreground px-2.5 py-1 text-xs cursor-pointer hover:bg-secondary font-medium"
                       >
                         {t}
                       </button>
@@ -199,7 +199,7 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
                     value={fbText}
                     onChange={(e) => setFbText(e.target.value)}
                     placeholder="수정 사유 (AI 학습 반영)"
-                    className="w-full min-h-[60px] p-2.5 bg-white border border-border rounded-lg text-foreground text-sm outline-none resize-none focus:ring-1 focus:ring-amber-400"
+                    className="w-full min-h-[60px] p-2.5 bg-white border-none rounded-xl text-foreground text-sm outline-none resize-none focus:ring-1 focus:ring-amber-400"
                   />
                   <button
                     onClick={handleFeedback}

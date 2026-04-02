@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrm, useCurKey, useCurrentLecture, useCurrentSeq } from "@/hooks/use-crm-store";
-import { CH_OPTIONS, HOME_TAB_COLORS, BRAND_GRADIENT } from "@/lib/constants";
+import { CH_OPTIONS } from "@/lib/constants";
 import { uid, fmtDateKr, fetchAICopy, genCopyLocal, resolveColor, seqTotalItems } from "@/lib/utils";
 import { useActiveLectures } from "@/hooks/use-derived-data";
 import LectureInfoEditor from "./lecture-info-editor";
@@ -103,23 +103,23 @@ export default function BoardTab() {
   return (
     <div className="animate-fi">
       {/* 강사/강의 셀렉터 */}
-      <div className="px-7 py-3.5 border-b border-border bg-white flex items-center gap-3 flex-wrap">
+      <div className="px-10 py-3 border-b border-border/40 bg-surface-card flex items-center gap-3 flex-wrap">
         <select
           value={state.ins}
           onChange={(e) => dispatch({ type: "SELECT_INSTRUCTOR", ins: e.target.value })}
-          className="bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2 text-sm outline-none"
+          className="bg-surface-hover border-none rounded-xl text-foreground px-4 py-2.5 text-sm outline-none"
         >
           <option value="">강사 선택</option>
           {Object.keys(state.data).map((n) => (
             <option key={n}>{n}</option>
           ))}
         </select>
-        {state.ins && <span className="text-[#aeaeb2] text-lg">›</span>}
+        {state.ins && <span className="text-muted-foreground text-sm">›</span>}
         {state.ins && (
           <select
             value={state.lec}
             onChange={(e) => dispatch({ type: "SELECT_LECTURE", lec: e.target.value })}
-            className="bg-secondary border border-border rounded-lg text-foreground px-3.5 py-2 text-sm outline-none"
+            className="bg-surface-hover border-none rounded-xl text-foreground px-4 py-2.5 text-sm outline-none"
           >
             <option value="">강의 선택</option>
             {Object.entries(state.data[state.ins]?.lectures || {})
@@ -129,12 +129,12 @@ export default function BoardTab() {
               ))}
           </select>
         )}
-        {state.ins && <span className="text-[#aeaeb2] text-lg">›</span>}
+        {state.ins && <span className="text-muted-foreground text-sm">›</span>}
       </div>
 
       {/* 강의 정보 헤더 */}
       {ld && (
-        <div className="px-7 py-3.5 bg-white border-b border-border">
+        <div className="px-8 py-4 bg-surface-card border-b border-border/50">
           <div className="flex justify-between items-center mb-0">
             <div className="flex gap-4 text-sm text-muted-foreground flex-wrap items-center">
               <span className="font-bold text-base" style={{ color: cardColor }}>
@@ -145,16 +145,16 @@ export default function BoardTab() {
                 <div className="relative">
                   <button
                     onClick={() => setShowPmAssignee((v) => !v)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold border border-border bg-transparent cursor-pointer hover:bg-secondary transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold border-none bg-surface-hover cursor-pointer hover:bg-neutral-200 transition-colors"
                   >
                     <span className="text-muted-foreground">PM</span>
-                    <span className={pmAssigneeName ? "text-foreground" : "text-[#aeaeb2]"}>{pmAssigneeName || "미지정"}</span>
+                    <span className={pmAssigneeName ? "text-foreground" : "text-neutral-400"}>{pmAssigneeName || "미지정"}</span>
                     <span className="text-[9px] text-muted-foreground">▾</span>
                   </button>
                   {showPmAssignee && (() => {
                     const pmAssignees = state.assignees.filter((a) => a.role === "pm");
                     return (
-                      <div className="absolute left-0 top-full mt-0.5 z-30 bg-white border border-border rounded-lg shadow-lg py-1 min-w-[150px]">
+                      <div className="absolute left-0 top-full mt-0.5 z-30 bg-surface-card border-none rounded-xl shadow-dropdown py-1 min-w-[150px]">
                         <button
                           onClick={() => { dispatch({ type: "SET_PM_PROJECT_ASSIGNEE", curKey, assignee: "" }); setShowPmAssignee(false); }}
                           className="w-full text-left px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-secondary border-none bg-transparent cursor-pointer"
@@ -162,7 +162,7 @@ export default function BoardTab() {
                           없음
                         </button>
                         {pmAssignees.length === 0 && (
-                          <div className="px-3 py-1.5 text-[11px] text-[#aeaeb2]">PM 담당자를 추가하세요</div>
+                          <div className="px-3 py-1.5 text-[11px] text-neutral-400">PM 담당자를 추가하세요</div>
                         )}
                         {pmAssignees.map((a) => (
                           <button
@@ -174,7 +174,7 @@ export default function BoardTab() {
                             <span className="text-[11px] font-semibold">{a.name}</span>
                           </button>
                         ))}
-                        <div className="border-t border-border mt-1 pt-1">
+                        <div className="border-t border-border/50 mt-1 pt-1">
                           <button
                             onClick={() => { setShowPmAssignee(false); setShowAssigneeMgr(true); }}
                             className="w-full text-left px-3 py-1.5 text-[11px] text-primary font-semibold hover:bg-secondary border-none bg-transparent cursor-pointer"
@@ -189,12 +189,12 @@ export default function BoardTab() {
               )}
               {!editInfo && (
                 desAssigneeName ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: HOME_TAB_COLORS.designer + "15", color: HOME_TAB_COLORS.designer, border: `1px solid ${HOME_TAB_COLORS.designer}30` }}>
-                    <span className="w-3.5 h-3.5 rounded-full text-white text-[8px] font-extrabold flex items-center justify-center flex-shrink-0" style={{ background: HOME_TAB_COLORS.designer }}>{desAssigneeName.slice(0, 1)}</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-designer/10 text-designer border border-designer/30">
+                    <span className="w-3.5 h-3.5 rounded-full text-white text-[8px] font-extrabold flex items-center justify-center flex-shrink-0 bg-designer">{desAssigneeName.slice(0, 1)}</span>
                     담당 {desAssigneeName}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-[#aeaeb2] bg-secondary border border-border">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-neutral-400 bg-surface-hover border-none">
                     <span className="text-[10px]">👤</span> 담당 미지정
                   </span>
                 )
@@ -206,13 +206,13 @@ export default function BoardTab() {
                   dispatch({ type: "COMPLETE_LECTURE", ins: state.ins, lec: state.lec });
                   dispatch({ type: "SET_TAB", tab: "dashboard" });
                 }}
-                className="px-4 py-2 rounded-lg text-[13px] font-semibold cursor-pointer border-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                className="px-4 py-2 rounded-xl text-[13px] font-semibold cursor-pointer border-none bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
               >
                 ✅ 완료 처리
               </button>
               <button
                 onClick={() => setEditInfo(!editInfo)}
-                className={`px-4 py-2 rounded-lg text-[13px] font-semibold cursor-pointer border-none ${
+                className={`px-4 py-2 rounded-xl text-[13px] font-semibold cursor-pointer border-none ${
                   editInfo ? "bg-red-50 text-red-500" : "bg-primary/10 text-primary"
                 }`}
               >
@@ -228,12 +228,12 @@ export default function BoardTab() {
       {!ld ? (() => {
         const futureActive = activeLectures.filter((l) => l.daysLeft >= 0);
         return (
-          <div className="px-7 py-6 max-w-[1100px] mx-auto">
-            <h3 className="text-[17px] font-extrabold mb-4">📋 진행중 강의 선택</h3>
+          <div className="px-8 py-6 max-w-[1100px] mx-auto">
+            <h3 className="text-lg font-bold mb-4">📋 진행중 강의 선택</h3>
             {futureActive.length === 0 ? (
               <div className="text-center text-muted-foreground py-16 text-[14px]">진행중인 강의가 없습니다</div>
             ) : (
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 gap-6">
                 {futureActive.map((p) => {
                   const pmA = state.pmProjectAssignees[p.curKey] ?? "";
                   const desA = state.designerProjectAssignees[p.curKey] ?? "";
@@ -245,7 +245,7 @@ export default function BoardTab() {
                         dispatch({ type: "SELECT_INSTRUCTOR", ins: p.ins });
                         setTimeout(() => dispatch({ type: "SELECT_LECTURE", lec: p.lec }), 0);
                       }}
-                      className="bg-secondary/30 rounded-xl border border-border p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+                      className="bg-surface-card rounded-card shadow-card p-5 cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
                       style={{ borderTop: `3px solid ${p.color}` }}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -259,7 +259,7 @@ export default function BoardTab() {
                       <div className="text-[12px] font-semibold text-foreground truncate">{p.lec}</div>
                       <div className="text-[11px] text-muted-foreground mt-1">{fmtDateKr(p.liveDate)} {p.liveTime}</div>
                       {(pmA || desA) && (
-                        <div className="text-[10px] text-[#aeaeb2] mt-1 truncate">
+                        <div className="text-[10px] text-neutral-400 mt-1 truncate">
                           {pmA ? `PM ${pmA}` : ""}{pmA && desA ? " / " : ""}{desA ? `담당 ${desA}` : ""}
                         </div>
                       )}
@@ -268,7 +268,7 @@ export default function BoardTab() {
                           <span>진행률</span>
                           <span>{p.pmChecked}/{p.pmTotal}</span>
                         </div>
-                        <div className="h-1.5 bg-[#f0f0f5] rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-neutral-track rounded-full overflow-hidden">
                           <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: p.color }} />
                         </div>
                       </div>
@@ -280,7 +280,7 @@ export default function BoardTab() {
           </div>
         );
       })() : (
-        <div className="px-7 py-5 pb-[120px] max-w-[1000px] mx-auto">
+        <div className="px-8 py-6 pb-[120px] max-w-[1000px] mx-auto">
           <div className="flex justify-between items-center mb-5">
             <div className="text-[15px] text-muted-foreground font-semibold">
               {gc}/{totalItems} 생성 · {cc}/{totalItems} 체크
@@ -288,8 +288,7 @@ export default function BoardTab() {
             <button
               onClick={doGenAll}
               disabled={isGen}
-              className="rounded-[10px] text-white px-7 py-3 text-[15px] font-semibold border-none cursor-pointer disabled:opacity-50"
-              style={{ background: BRAND_GRADIENT }}
+              className="rounded-card shadow-card text-white px-7 py-3 text-[15px] font-semibold border-none cursor-pointer disabled:opacity-50 bg-brand"
             >
               {isGen ? "⏳ 생성 중..." : "✨ 전체 카피 생성 (Claude AI)"}
             </button>
@@ -301,7 +300,7 @@ export default function BoardTab() {
             const benefitText = meta.benefit || "";
             const benefitDone = meta.benefitDone === "true";
             return (
-              <div className={`rounded-2xl border-2 p-5 mb-5 ${benefitDone ? "bg-gray-50 border-gray-200" : "bg-white border-red-200"}`}>
+              <div className={`rounded-card shadow-card p-5 mb-5 ${benefitDone ? "bg-gray-50/80 border border-gray-100" : "bg-surface-card border border-red-100"}`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] font-extrabold px-2.5 py-1 rounded-full bg-red-100 text-red-500">D-10</span>
@@ -310,8 +309,8 @@ export default function BoardTab() {
                   </div>
                   <button
                     onClick={() => dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefitDone", value: benefitDone ? "false" : "true" })}
-                    className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold border-none cursor-pointer transition-colors ${
-                      benefitDone ? "bg-gray-100 text-gray-500 hover:bg-gray-200" : "bg-secondary text-muted-foreground hover:bg-accent"
+                    className={`px-3 py-1.5 rounded-xl text-[12px] font-semibold border-none cursor-pointer transition-colors ${
+                      benefitDone ? "bg-gray-100 text-gray-500 hover:bg-gray-200" : "bg-surface-hover text-muted-foreground hover:bg-neutral-200"
                     }`}
                   >
                     {benefitDone ? "✅ 전달 완료" : "전달 완료 체크"}
@@ -322,7 +321,7 @@ export default function BoardTab() {
                   onChange={(e) => dispatch({ type: "SET_MILESTONE_META", curKey, field: "benefit", value: e.target.value })}
                   rows={3}
                   placeholder="혜택 내용을 입력하세요 (디자이너 탭 D-10에 자동 반영됩니다)"
-                  className="w-full text-[13px] bg-secondary border border-border rounded-lg px-3.5 py-2.5 outline-none focus:ring-1 focus:ring-primary resize-y"
+                  className="w-full text-[13px] bg-surface-hover border-none rounded-xl px-3.5 py-2.5 outline-none focus:ring-1 focus:ring-primary resize-y"
                 />
               </div>
             );
@@ -341,9 +340,9 @@ export default function BoardTab() {
                   className="w-2.5 h-2.5 rounded-full"
                   style={{ background: cardColor }}
                 />
-                <span className="text-[17px] font-extrabold">{seq.label}</span>
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-[13px] text-[#aeaeb2]">{seq.items.length}개</span>
+                <span className="text-lg font-bold">{seq.label}</span>
+                <div className="flex-1 h-px bg-border/50" />
+                <span className="text-[13px] text-neutral-400">{seq.items.length}개</span>
               </div>
 
               <div className="grid gap-2.5 pl-[22px] mb-1" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))" }}>
@@ -354,8 +353,7 @@ export default function BoardTab() {
                     <div
                       key={item.id}
                       onClick={() => setSel({ seq, item })}
-                      className="bg-secondary/30 rounded-xl px-4 py-3.5 cursor-pointer relative transition-all hover:-translate-y-0.5 hover:shadow-md"
-                      style={{ border: `2px solid ${ck ? "#d1d5db" : cp ? cardColor + "40" : "#e5e5ea"}` }}
+                      className="bg-surface-card rounded-card p-5 shadow-card cursor-pointer relative transition-all hover:-translate-y-0.5 hover:shadow-card-hover"
                     >
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
@@ -377,11 +375,7 @@ export default function BoardTab() {
                               e.stopPropagation();
                               dispatch({ type: "SET_CHECK", curKey, itemId: item.id, checked: !ck });
                             }}
-                            className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer text-[13px] text-white font-bold"
-                            style={{
-                              border: ck ? "none" : "2px solid #d2d2d7",
-                              background: ck ? "#9ca3af" : "#fff",
-                            }}
+                            className={`w-6 h-6 rounded-lg flex items-center justify-center cursor-pointer text-[13px] text-white font-bold ${ck ? "bg-neutral-checked border-none" : "bg-surface-card border-2 border-neutral-300"}`}
                           >
                             {ck && "✓"}
                           </div>
@@ -392,10 +386,10 @@ export default function BoardTab() {
                           {cp.edited?.substring(0, 120)}...
                         </div>
                       ) : (
-                        <div className="text-[13px] text-[#aeaeb2] mt-2 italic">클릭하여 카피 생성</div>
+                        <div className="text-[13px] text-neutral-400 mt-2 italic">클릭하여 카피 생성</div>
                       )}
                       {cp?.status === "edited" && (
-                        <div className="absolute top-2.5 right-14 w-[7px] h-[7px] rounded-full bg-[#e67e22]" />
+                        <div className="absolute top-2.5 right-14 w-[7px] h-[7px] rounded-full bg-amber-600" />
                       )}
                     </div>
                   );
@@ -403,7 +397,7 @@ export default function BoardTab() {
 
                 {/* 알림 추가 */}
                 {addItemSeq === seq.id ? (
-                  <div className="bg-white border-2 border-dashed border-primary rounded-xl p-4 animate-fi">
+                  <div className="bg-surface-card rounded-card shadow-card p-5 animate-fi">
                     <div className="text-sm font-bold text-primary mb-2.5">새 알림 추가</div>
                     <div className="mb-2">
                       <div className="text-xs text-muted-foreground mb-1">채널</div>
@@ -412,7 +406,7 @@ export default function BoardTab() {
                           <button
                             key={o.ch}
                             onClick={() => setNewItemCh(o.ch)}
-                            className="rounded-lg px-3 py-1.5 text-[13px] cursor-pointer border-2 font-medium"
+                            className="rounded-xl px-3 py-1.5 text-[13px] cursor-pointer border-2 font-medium"
                             style={{
                               background: newItemCh === o.ch ? o.color + "15" : "#fff",
                               borderColor: newItemCh === o.ch ? o.color : "#d2d2d7",
@@ -430,19 +424,19 @@ export default function BoardTab() {
                         value={newItemName}
                         onChange={(e) => setNewItemName(e.target.value)}
                         placeholder="예: 추가 리마인드"
-                        className="w-full bg-secondary border border-border rounded-lg text-foreground px-3 py-2 text-sm outline-none"
+                        className="w-full bg-surface-hover border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none"
                       />
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => addSeqItem(seq.id)}
-                        className="bg-primary rounded-lg text-white px-[18px] py-2 text-[13px] font-semibold border-none cursor-pointer"
+                        className="bg-primary rounded-xl text-white px-[18px] py-2 text-[13px] font-semibold border-none cursor-pointer"
                       >
                         추가
                       </button>
                       <button
                         onClick={() => { setAddItemSeq(null); setNewItemName(""); }}
-                        className="bg-secondary rounded-lg text-muted-foreground px-[18px] py-2 text-[13px] font-semibold border-none cursor-pointer"
+                        className="bg-surface-hover rounded-xl text-muted-foreground px-[18px] py-2 text-[13px] font-semibold border-none cursor-pointer"
                       >
                         취소
                       </button>
@@ -451,7 +445,7 @@ export default function BoardTab() {
                 ) : (
                   <div
                     onClick={() => setAddItemSeq(seq.id)}
-                    className="bg-transparent border-2 border-dashed border-[#e5e5ea] rounded-xl px-4 py-3.5 cursor-pointer flex items-center justify-center text-[#aeaeb2] text-sm font-semibold min-h-[60px] transition-all hover:border-primary hover:text-primary"
+                    className="bg-transparent border-dashed border-2 border-neutral-200 rounded-card px-4 py-3.5 cursor-pointer flex items-center justify-center text-neutral-400 text-sm font-semibold min-h-[60px] transition-all hover:border-primary hover:text-primary"
                   >
                     + 알림 추가
                   </div>

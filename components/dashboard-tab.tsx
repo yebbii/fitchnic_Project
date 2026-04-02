@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useCrm } from "@/hooks/use-crm-store";
-import { DEFAULT_SEQ, HOME_TAB_COLORS, BRAND_GRADIENT, BRAND_GRADIENT_H } from "@/lib/constants";
+import { DEFAULT_SEQ } from "@/lib/constants";
 import { addDays, fmtDate, fmtDateKr, isSameDay, daysUntil, seqTotalItems, seqCheckedItems, resolveColor } from "@/lib/utils";
 import { useCalendar } from "@/hooks/use-calendar";
 import { useActiveLectures, useCompletedLectures, useLiveEvents } from "@/hooks/use-derived-data";
@@ -86,14 +86,13 @@ export default function DashboardTab() {
   const activeCount = activeLectures.length;
 
   return (
-    <div className="p-7 max-w-[1300px] mx-auto animate-fi">
-      <div className="grid gap-6 items-start" style={{ gridTemplateColumns: "340px 1fr" }}>
-        {/* 좌측: 진행중 + 최근 완료 */}
-        <div>
+    <div className="flex h-[calc(100vh-100px)] overflow-hidden animate-fi">
+      {/* 좌측: 진행중 + 최근 완료 */}
+      <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto p-5">
           <div className="flex items-center justify-between mb-3.5">
-            <h3 className="text-lg font-extrabold">진행중 ({activeCount})</h3>
+            <h3 className="text-base font-semibold">진행중 ({activeCount})</h3>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {activeLectures.map((al) => {
                   const pctCheck = al.pmTotal ? Math.round((al.pmChecked / al.pmTotal) * 100) : 0;
                   const pctCopy = al.pmTotal ? Math.round((al.pmCopied / al.pmTotal) * 100) : 0;
@@ -102,88 +101,86 @@ export default function DashboardTab() {
                     <div
                       key={al.curKey}
                       onClick={() => goToBoard(al.ins, al.lec)}
-                      className="bg-secondary/30 border border-border rounded-xl px-4 py-3.5 cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
-                      style={{ borderLeft: `4px solid ${al.color}` }}
+                      className="rounded-[12px] border border-border/40 overflow-hidden cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-card-hover"
                     >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <span className="text-[15px] font-extrabold" style={{ color: al.color }}>{al.ins}</span>
-                          <span className="text-sm text-muted-foreground ml-2">{al.lec}</span>
-                        </div>
-                        {al.liveDate && (
-                          <span
-                            className={`text-[13px] px-2.5 py-0.5 rounded-[10px] font-bold ${
-                              al.daysLeft <= 1
-                                ? "bg-red-100 text-red-600"
-                                : al.daysLeft <= 3
-                                ? "bg-amber-100 text-amber-600"
-                                : "bg-emerald-50 text-emerald-600"
-                            }`}
-                          >
-                            {al.daysLeft <= 0 ? "D-Day" : `D-${al.daysLeft}`}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[13px] text-[#aeaeb2] mt-1">📅 {fmtDateKr(al.liveDate)} {al.liveTime}</div>
-
-                      <div className="mt-2">
-                        <div className="flex justify-between text-[11px] text-muted-foreground mb-0.5">
-                          <span>✏️ 카피 {al.pmCopied}/{al.pmTotal}</span>
-                          <span>✅ 체크 {al.pmChecked}/{al.pmTotal}</span>
-                        </div>
-                        <div className="flex gap-1">
-                          <div className="flex-1 h-1.5 bg-[#f0f0f5] rounded-sm overflow-hidden">
-                            <div
-                              className="h-full rounded-sm transition-all duration-300"
-                              style={{ width: `${pctCopy}%`, background: BRAND_GRADIENT_H }}
-                            />
-                          </div>
-                          <div className="flex-1 h-1.5 bg-[#f0f0f5] rounded-sm overflow-hidden">
-                            <div
-                              className="h-full rounded-sm transition-all duration-300"
-                              style={{
-                                width: `${pctCheck}%`,
-                                background: pctCheck === 100 ? "#9ca3af" : "linear-gradient(90deg,#f39c12,#e67e22)",
-                              }}
-                            />
-                          </div>
-                        </div>
-                        {pctCheck === 100 && pctCopy === 100 && (
-                          <div className="text-[11px] text-gray-500 font-bold mt-0.5">CRM 준비 완료</div>
-                        )}
-                      </div>
-
-                      {/* 완료 처리 버튼 */}
-                      <button
-                        onClick={(e) => completeLecture(e, al.ins, al.lec)}
-                        className="mt-2.5 w-full bg-[#f8f8fa] border border-border rounded-lg text-[13px] text-muted-foreground font-semibold py-1.5 cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors"
+                      {/* 헤더: 플랫폼 컬러 8% 배경 */}
+                      <div
+                        className="px-3 py-2 flex items-center justify-between"
+                        style={{ background: `${al.color}14` }}
                       >
-                        완료 처리
-                      </button>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: al.color }} />
+                          <span className="text-xs font-semibold truncate" style={{ color: al.color }}>{al.ins}</span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-pill flex-shrink-0 ${
+                            !al.liveDate ? "hidden" :
+                            al.daysLeft <= 0
+                              ? "bg-red-50 text-red-500"
+                              : al.daysLeft <= 10
+                              ? "bg-amber-50 text-amber-600"
+                              : "bg-neutral-100 text-neutral-500"
+                          }`}
+                        >
+                          {al.daysLeft <= 0 ? "D-Day" : `D-${al.daysLeft}`}
+                        </span>
+                      </div>
+
+                      {/* 바디: 강의명 + 날짜 + 진행바 */}
+                      <div className="px-3 py-2.5">
+                        <div className="text-[13px] font-semibold text-foreground leading-tight truncate">{al.lec}</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">📅 {fmtDateKr(al.liveDate)} {al.liveTime}</div>
+
+                        <div className="mt-2">
+                          <div className="flex justify-between text-[10px] text-muted-foreground mb-0.5">
+                            <span>카피 {al.pmCopied}/{al.pmTotal}</span>
+                            <span>체크 {al.pmChecked}/{al.pmTotal}</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <div className="flex-1 h-[3px] bg-neutral-track rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-300 bg-brand"
+                                style={{ width: `${pctCopy}%` }}
+                              />
+                            </div>
+                            <div className="flex-1 h-[3px] bg-neutral-track rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${pctCheck === 100 ? "bg-neutral-checked" : "bg-amber-500"}`}
+                                style={{ width: `${pctCheck}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div className={`text-[11px] text-emerald-600 font-bold mt-1 ${pctCheck === 100 && pctCopy === 100 ? "block" : "hidden"}`}>CRM 준비 완료</div>
+                        </div>
+
+                        <button
+                          onClick={(e) => completeLecture(e, al.ins, al.lec)}
+                          className="mt-2.5 w-full bg-surface-hover border-none rounded-card text-[12px] text-muted-foreground font-semibold py-1.5 cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
+                        >
+                          완료 처리
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
-            {activeCount === 0 && (
-              <div className="text-center text-[#aeaeb2] text-sm py-8">
-                진행중인 강의가 없습니다
-              </div>
-            )}
+            <div className={`text-center text-neutral-400 text-sm py-12 ${activeCount === 0 ? "block" : "hidden"}`}>
+              진행중인 강의가 없습니다
+            </div>
           </div>
 
           {/* 최근 완료 섹션 */}
-          {recentCompleted.length > 0 && (
-            <div className="mt-6">
+          <div className={`mt-6 ${recentCompleted.length > 0 ? "block" : "hidden"}`}>
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex-1 h-px bg-border" />
               </div>
-              <h4 className="text-[15px] font-extrabold text-muted-foreground mb-2.5">최근 완료</h4>
-              <div className="flex flex-col gap-1.5">
+              <h4 className="text-[15px] font-semibold text-muted-foreground mb-2.5">최근 완료</h4>
+              <div className="flex flex-col gap-2">
                 {recentCompleted.map((r) => (
                   <div
                     key={`${r.ins}|${r.lec}`}
                     onClick={() => goToBoard(r.ins, r.lec)}
-                    className="bg-[#f8f8fa] border border-border rounded-xl px-4 py-3 cursor-pointer transition-all hover:shadow-sm"
-                    style={{ borderLeft: `4px solid ${r.color}40` }}
+                    className="bg-surface-card rounded-card px-5 py-3.5 cursor-pointer transition-all shadow-card opacity-80 hover:shadow-card-hover hover:opacity-100"
+                    style={{ borderTop: `2px solid ${r.color}40` }}
                   >
                     <div className="flex justify-between items-center">
                       <div>
@@ -196,7 +193,7 @@ export default function DashboardTab() {
                             e.stopPropagation();
                             dispatch({ type: "REACTIVATE_LECTURE", ins: r.ins, lec: r.lec });
                           }}
-                          className="text-[11px] text-primary font-semibold px-2 py-0.5 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20 transition-colors"
+                          className="text-[11px] text-primary font-semibold px-2.5 py-1 rounded-card bg-primary/10 border-none cursor-pointer hover:bg-primary/20 transition-colors"
                         >
                           다시 진행
                         </button>
@@ -205,28 +202,28 @@ export default function DashboardTab() {
                         </span>
                       </div>
                     </div>
-                    <div className="text-[12px] text-[#aeaeb2] mt-0.5">📅 {fmtDateKr(r.liveDate)}</div>
+                    <div className="text-[12px] text-neutral-400 mt-0.5">📅 {fmtDateKr(r.liveDate)}</div>
                   </div>
                 ))}
               </div>
               <button
                 onClick={() => dispatch({ type: "SET_TAB", tab: "history" })}
-                className="mt-2.5 w-full text-[13px] text-primary font-semibold py-2 rounded-lg bg-primary/5 border border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors"
+                className="mt-3 w-full text-[13px] text-primary font-semibold py-2.5 rounded-card bg-primary/5 border-none cursor-pointer hover:bg-primary/10 transition-colors"
               >
                 전체 히스토리 보기 →
               </button>
-            </div>
-          )}
-        </div>
+          </div>
+      </aside>
 
-        {/* 우측: 캘린더 */}
-        <div className="bg-secondary/30 rounded-2xl border border-border p-6">
+      {/* 우측: 캘린더 */}
+      <main className="flex-1 overflow-y-auto p-8">
+        <div className="bg-surface-card rounded-card shadow-card p-6">
           <div className="flex justify-between items-center mb-[18px]">
-            <h3 className="text-xl font-extrabold">📅 CRM 발송 캘린더</h3>
+            <h3 className="text-xl font-bold">📅 CRM 발송 캘린더</h3>
             <div className="flex gap-2 items-center">
               <button
                 onClick={prevMonth}
-                className="bg-secondary rounded-lg px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
+                className="bg-surface-hover rounded-card px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >
                 ◀
               </button>
@@ -235,7 +232,7 @@ export default function DashboardTab() {
               </span>
               <button
                 onClick={nextMonth}
-                className="bg-secondary rounded-lg px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
+                className="bg-surface-hover rounded-card px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >
                 ▶
               </button>
@@ -269,8 +266,8 @@ export default function DashboardTab() {
               return (
                 <div
                   key={ds}
-                  className={`min-h-[110px] rounded-[10px] p-1.5 overflow-hidden relative ${
-                    isT ? "bg-primary/5 border-[1.5px] border-primary" : isPast ? "bg-[#fafafa] border-[1.5px] border-[#f0f0f0]" : "bg-white border-[1.5px] border-[#f0f0f0]"
+                  className={`min-h-[110px] rounded-card p-1.5 overflow-hidden relative ${
+                    isT ? "bg-primary/5 border border-primary" : isPast ? "bg-surface-inset border border-border/30" : "bg-surface-card border border-border/30"
                   } ${evts.length > 2 ? "cursor-pointer" : ""}`}
                   onClick={() => {
                     if (evts.length > 2) setExpandedDay(expandedDay === ds ? null : ds);
@@ -278,7 +275,7 @@ export default function DashboardTab() {
                 >
                   <div
                     className={`text-[15px] px-1 mb-1 ${
-                      isT ? "font-extrabold text-primary" : isPast ? "font-semibold text-[#ccc]" : day.getDay() === 0 ? "font-semibold text-red-500" : "font-semibold text-foreground"
+                      isT ? "font-extrabold text-primary" : isPast ? "font-semibold text-neutral-300" : day.getDay() === 0 ? "font-semibold text-red-500" : "font-semibold text-foreground"
                     }`}
                   >
                     {day.getDate()}
@@ -303,21 +300,13 @@ export default function DashboardTab() {
                           e.stopPropagation();
                           goToBoard(ev.ins, ev.lec, ev.seqId);
                         }}
-                        className="rounded-md px-1.5 py-1 text-xs font-semibold text-left cursor-pointer leading-tight"
-                        style={{
-                          background:
-                            ev.allDone
-                              ? "#f5f5f5"
-                              : ev.color + "10",
-                          color:
-                            ev.allDone
-                              ? "#9ca3af"
-                              : ev.color,
-                          border: `1px solid ${
-                            ev.allDone
-                              ? "#d1d5db"
-                              : ev.color + "25"
-                          }`,
+                        className={`rounded-md px-1.5 py-1 text-xs font-semibold text-left cursor-pointer leading-tight ${
+                          ev.allDone ? "bg-surface-inset text-neutral-checked border border-neutral-300" : ""
+                        }`}
+                        style={ev.allDone ? undefined : {
+                          background: ev.color + "10",
+                          color: ev.color,
+                          border: `1px solid ${ev.color}25`,
                         }}
                       >
                         <div className="flex items-center gap-0.5">
@@ -329,29 +318,26 @@ export default function DashboardTab() {
                           <span className="font-bold">{ev.ins}</span>
                         </div>
                         <div
-                          className="text-[11px] font-medium"
-                          style={{ color: ev.allDone ? "#9ca3af" : "#6e6e73" }}
+                          className={`text-[11px] font-medium ${ev.allDone ? "text-neutral-checked" : "text-neutral-600"}`}
                         >
                           {ev.seqLabel}
                         </div>
-                        {(ev.copiedCount > 0 || ev.checkedCount > 0) && !ev.allDone && !ev.allCopied && (
-                          <div className="flex gap-0.5 mt-0.5">
-                            <div className="flex-1 h-[3px] bg-[#e5e5ea] rounded-sm overflow-hidden">
+                        <div className={`flex gap-0.5 mt-0.5 ${(ev.copiedCount > 0 || ev.checkedCount > 0) && !ev.allDone && !ev.allCopied ? "flex" : "hidden"}`}>
+                            <div className="flex-1 h-[3px] bg-neutral-track rounded-sm overflow-hidden">
                               <div
                                 className="h-full bg-primary rounded-sm"
                                 style={{ width: `${ev.items.length ? (ev.copiedCount / ev.items.length) * 100 : 0}%` }}
                               />
                             </div>
-                            <div className="flex-1 h-[3px] bg-[#e5e5ea] rounded-sm overflow-hidden">
+                            <div className="flex-1 h-[3px] bg-neutral-track rounded-sm overflow-hidden">
                               <div
-                                className="h-full bg-[#f39c12] rounded-sm"
+                                className="h-full bg-amber-500 rounded-sm"
                                 style={{ width: `${ev.items.length ? (ev.checkedCount / ev.items.length) * 100 : 0}%` }}
                               />
                             </div>
-                          </div>
-                        )}
+                        </div>
                         {expandedDay === ds && (
-                          <div className="mt-0.5 border-t border-border/40 pt-0.5">
+                          <div className="mt-0.5 border-t border-border/30 pt-0.5">
                             {ev.items.map((it) => {
                               const ckMap = state.allChecks[`${ev.ins}|${ev.lec}`] || {};
                               const cpMap = state.allCopies[`${ev.ins}|${ev.lec}`] || {};
@@ -360,8 +346,7 @@ export default function DashboardTab() {
                               return (
                                 <div
                                   key={it.id}
-                                  className="text-[10px] flex items-center gap-0.5 leading-relaxed"
-                                  style={{ color: done ? "#9ca3af" : hasCopy ? "#667eea" : "#aeaeb2", fontWeight: done ? 600 : 400 }}
+                                  className={`text-[10px] flex items-center gap-0.5 leading-relaxed ${done ? "text-neutral-checked font-semibold" : hasCopy ? "text-brand font-normal" : "text-neutral-400 font-normal"}`}
                                 >
                                   <span>{done ? "✓" : hasCopy ? "✏️" : "⬜"}</span>
                                   <span>{it.icon} {it.name}</span>
@@ -378,7 +363,7 @@ export default function DashboardTab() {
                       </div>
                     )}
                     {evts.length > 2 && expandedDay === ds && (
-                      <div className="text-[11px] text-[#aeaeb2] text-center py-0.5">접기 ▲</div>
+                      <div className="text-[11px] text-neutral-400 text-center py-0.5">접기 ▲</div>
                     )}
                   </div>
                 </div>
@@ -386,7 +371,7 @@ export default function DashboardTab() {
             })}
           </div>
         </div>
-      </div>
+      </main>
 
     </div>
   );
