@@ -152,7 +152,15 @@ function reducer(state: CrmState, action: Action): CrmState {
         hydrated: true,
       };
     case "SET_TOP_TAB":
-      return { ...state, topTab: action.tab };
+      return {
+        ...state,
+        topTab: action.tab,
+        tab: "dashboard",
+        designerTab: "calendar",
+        lectureSubTab: "lec-dashboard",
+        ins: "", lec: "",
+        designerIns: "", designerLec: "",
+      };
     case "SET_TAB":
       return { ...state, tab: action.tab };
     case "SET_DESIGNER_TAB":

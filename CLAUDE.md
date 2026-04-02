@@ -122,21 +122,63 @@
 
 ## 컴포넌트 스타일 규칙
 
-### 카드
+### 사이드바 공통 규칙
+#### 섹션 타이틀
+- 클래스: `text-[15px] font-medium text-foreground`
+- 타이틀 영역: `px-4 py-3 border-b border-border/40`
+- 모든 사이드바 섹션(진행중, 최근완료, 월별 진행강의 등) 동일 적용
+
+#### 카드 리스트
+- 카드 간격: `gap-2` (8px)
+- 리스트 래퍼: `px-4 py-3`
+
+### 사이드바 프로젝트 카드 (홈 · PM캘린더 · 디자이너캘린더 공용)
+**적용 대상**: 3개 탭의 사이드바 강의 카드 — 반드시 동일 구조 유지
+```
+┌─────────────────────────────┐  rounded-[12px]
+│  헤더  (플랫폼 컬러 8% 배경)  │  border border-border/40
+│  ● 강사명          D-뱃지   │  overflow-hidden
+├─────────────────────────────┤
+│  바디                       │  px-4 py-3 (상하12px 좌우16px)
+│  강의명 (13px, medium)      │
+│  날짜 (11px, normal, muted) │
+│  ▬▬▬▬▬▬▬▬ 진행바 (3px)      │
+└─────────────────────────────┘
+```
+- **외곽**: `rounded-[12px] border border-border/40 overflow-hidden`
+- **헤더**: `px-4 py-3` + `style={{ background: \`${color}14\` }}` (플랫폼 컬러 8% 투명도)
+  - 좌측: 컬러 도트 (`w-2 h-2 rounded-full`) + 강사명 + 플랫폼명
+  - 우측: D-day 뱃지
+- **바디**: `px-4 py-3` (상하 12px, 좌우 16px)
+  - 강의명 + 날짜
+
+#### 카드 폰트 규칙 (3개 사이드바 공통)
+| 요소 | weight | 클래스 | 색상 |
+|------|--------|--------|------|
+| 강사명 | 500 | `text-xs font-medium` | 동적 (플랫폼 컬러) |
+| 플랫폼명 | 400 | `text-[10px] font-normal` | `text-muted-foreground` |
+| 강의명 | 500 | `text-[13px] font-medium` | `text-foreground` |
+| 날짜 | 400 | `text-[11px] font-normal` | `text-muted-foreground` |
+  - 진행바: 높이 3px (`h-[3px]`), 트랙 `bg-neutral-track rounded-full`
+
+#### D-day 뱃지 색상 규칙
+| 조건 | 클래스 |
+|------|--------|
+| D-Day (daysLeft ≤ 0) | `bg-red-50 text-red-500` |
+| D-10 이내 (daysLeft ≤ 10) | `bg-amber-50 text-amber-600` |
+| 그 외 전부 | `bg-neutral-100 text-neutral-500` |
+- 공통: `text-[10px] font-bold px-2 py-0.5 rounded-pill flex-shrink-0`
+
+### 메인 콘텐츠 카드
 | 용도 | 클래스 |
 |------|--------|
 | 기본 카드 | `bg-surface-card rounded-card shadow-card` |
-| 카드 내 패딩 | `p-6` (메인) / `p-3.5` (사이드바 소형 카드) |
+| 카드 내 패딩 | `p-6` (메인 영역) |
 | 카드 호버 | `hover:shadow-card-hover hover:-translate-y-0.5 transition-all` |
-| 컬러 헤더 바 | `h-1 w-full rounded-t-card` + 동적 `style={{ background: color }}` |
 
 ### 뱃지 · 태그
 | 용도 | 클래스 |
 |------|--------|
-| D-Day 뱃지 | `text-[10px] font-bold px-2 py-0.5 rounded-pill` |
-| 긴급 (D≤1) | `bg-red-500 text-white` |
-| 주의 (D≤3) | `bg-amber-400 text-white` |
-| 여유 (D>3) | `bg-emerald-500/15 text-emerald-600` |
 | 마일스톤 라벨 | `text-[10px] font-bold px-1.5 py-0.5 rounded-pill` + 동적 색상 |
 | 상태 "지남" | `text-[9px] font-bold text-red-500 bg-red-100 px-1 py-0.5 rounded-pill` |
 
@@ -151,7 +193,7 @@
 
 ### 프로그레스 바
 ```
-트랙: h-1.5 bg-neutral-track rounded-full overflow-hidden
+트랙: h-[3px] bg-neutral-track rounded-full overflow-hidden
 바:   h-full rounded-full transition-all bg-{역할색상}
 100%: bg-green-500 (완료 시)
 ```

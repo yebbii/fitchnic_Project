@@ -11,7 +11,7 @@ import type { CalendarEvent } from "@/lib/types";
 
 export default function DashboardTab() {
   const { state, dispatch } = useCrm();
-  const { today, calDays, prevMonth, nextMonth, monthLabel } = useCalendar();
+  const { today, calMonth, calDays, prevMonth, nextMonth, monthLabel } = useCalendar();
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
 
@@ -88,11 +88,11 @@ export default function DashboardTab() {
   return (
     <div className="flex h-[calc(100vh-100px)] overflow-hidden animate-fi">
       {/* 좌측: 진행중 + 최근 완료 */}
-      <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto p-5">
-          <div className="flex items-center justify-between mb-3.5">
-            <h3 className="text-base font-semibold">진행중 ({activeCount})</h3>
+      <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto">
+          <div className="px-4 py-3 border-b border-border/40">
+            <h3 className="text-[15px] font-medium text-foreground">{calMonth.getMonth() + 1}월 진행강의 {activeLectures.filter((al) => { const d = al.liveDate ? new Date(al.liveDate) : null; return d && d.getFullYear() === calMonth.getFullYear() && d.getMonth() === calMonth.getMonth(); }).length}개</h3>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 px-4 py-3">
             {activeLectures.map((al) => {
                   const pctCheck = al.pmTotal ? Math.round((al.pmChecked / al.pmTotal) * 100) : 0;
                   const pctCopy = al.pmTotal ? Math.round((al.pmCopied / al.pmTotal) * 100) : 0;
@@ -105,12 +105,12 @@ export default function DashboardTab() {
                     >
                       {/* 헤더: 플랫폼 컬러 8% 배경 */}
                       <div
-                        className="px-3 py-2 flex items-center justify-between"
+                        className="px-4 py-3 flex items-center justify-between"
                         style={{ background: `${al.color}14` }}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: al.color }} />
-                          <span className="text-xs font-semibold truncate" style={{ color: al.color }}>{al.ins}</span>
+                          <span className="text-xs font-medium truncate" style={{ color: al.color }}>{al.ins}</span>
                         </div>
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-pill flex-shrink-0 ${
@@ -127,9 +127,9 @@ export default function DashboardTab() {
                       </div>
 
                       {/* 바디: 강의명 + 날짜 + 진행바 */}
-                      <div className="px-3 py-2.5">
-                        <div className="text-[13px] font-semibold text-foreground leading-tight truncate">{al.lec}</div>
-                        <div className="text-[11px] text-muted-foreground mt-0.5">📅 {fmtDateKr(al.liveDate)} {al.liveTime}</div>
+                      <div className="px-4 py-3">
+                        <div className="text-[13px] font-medium text-foreground leading-tight truncate">{al.lec}</div>
+                        <div className="text-[11px] font-normal text-muted-foreground mt-0.5">📅 {fmtDateKr(al.liveDate)} {al.liveTime}</div>
 
                         <div className="mt-2">
                           <div className="flex justify-between text-[10px] text-muted-foreground mb-0.5">
@@ -169,11 +169,10 @@ export default function DashboardTab() {
           </div>
 
           {/* 최근 완료 섹션 */}
-          <div className={`mt-6 ${recentCompleted.length > 0 ? "block" : "hidden"}`}>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex-1 h-px bg-border" />
+          <div className={`${recentCompleted.length > 0 ? "block" : "hidden"}`}>
+              <div className="px-4 py-3 border-b border-border/40">
+                <h4 className="text-[15px] font-medium text-muted-foreground">최근 완료</h4>
               </div>
-              <h4 className="text-[15px] font-semibold text-muted-foreground mb-2.5">최근 완료</h4>
               <div className="flex flex-col gap-2">
                 {recentCompleted.map((r) => (
                   <div

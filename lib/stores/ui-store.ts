@@ -54,7 +54,14 @@ export type UiAction =
 export function uiReducer(state: UiState, action: UiAction): UiState {
   switch (action.type) {
     case "SET_TOP_TAB":
-      return { ...state, topTab: action.tab };
+      return {
+        ...state,
+        topTab: action.tab,
+        tab: "dashboard",
+        designerTab: "calendar",
+        ins: "", lec: "",
+        designerIns: "", designerLec: "",
+      };
 
     case "SET_TAB":
       return { ...state, tab: action.tab };

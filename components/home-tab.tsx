@@ -215,15 +215,17 @@ export default function HomeTab() {
     <div className="flex h-[calc(100vh-56px)] overflow-hidden animate-fi">
       {/* ── 좌측 사이드바: 강의별 요약 카드 ── */}
       <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto overflow-x-hidden" style={{ scrollbarGutter: "stable" }}>
-        <div className="px-4 py-5 flex-1">
-          <h3 className="text-base font-semibold text-foreground mb-4 px-1">강의 요약</h3>
+        <div className="px-4 py-3 border-b border-border/40">
+          <h3 className="text-[15px] font-medium text-foreground">강의 요약</h3>
+        </div>
+        <div className="px-4 py-3 flex-1">
           {activeLecSummaries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="text-2xl mb-2">📭</div>
-              <div className="text-[13px] font-semibold text-foreground">진행중인 강의 없음</div>
+              <div className="text-[13px] font-medium text-foreground">진행중인 강의 없음</div>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {activeLecSummaries.map((lc) => {
                   const isUrgent = lc.daysLeft <= 1;
                   const isNear = lc.daysLeft <= 3;
@@ -239,14 +241,14 @@ export default function HomeTab() {
                     >
                       {/* 헤더: 플랫폼 컬러 8% 배경 */}
                       <div
-                        className="px-3 py-2 flex items-center justify-between"
+                        className="px-4 py-3 flex items-center justify-between"
                         style={{ background: `${lc.color}14` }}
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: lc.color }} />
-                          <span className="text-xs font-semibold truncate" style={{ color: lc.color }}>{lc.ins}</span>
+                          <span className="text-xs font-medium truncate" style={{ color: lc.color }}>{lc.ins}</span>
                           {lc.platform && (
-                            <span className="text-[10px] px-1 py-0.5 rounded bg-white/70 text-muted-foreground font-medium flex-shrink-0">{lc.platform}</span>
+                            <span className="text-[10px] px-1 py-0.5 rounded bg-white/70 text-muted-foreground font-normal flex-shrink-0">{lc.platform}</span>
                           )}
                         </div>
                         <span
@@ -263,9 +265,9 @@ export default function HomeTab() {
                       </div>
 
                       {/* 바디: 강의명 + 날짜 + 진행바 */}
-                      <div className="px-3 py-2.5">
-                        <div className="text-[13px] font-semibold text-foreground leading-tight truncate">{lc.lec}</div>
-                        <div className="text-[11px] text-muted-foreground mt-0.5">{fmtDateKr(lc.liveDate)} {lc.liveTime}</div>
+                      <div className="px-4 py-3">
+                        <div className="text-[13px] font-medium text-foreground leading-tight truncate">{lc.lec}</div>
+                        <div className="text-[11px] font-normal text-muted-foreground mt-0.5">{fmtDateKr(lc.liveDate)} {lc.liveTime}</div>
 
                         <div className="mt-2.5 flex flex-col gap-1.5">
                           {/* 발송 */}

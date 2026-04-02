@@ -191,8 +191,8 @@ export default function DesignerCalendarTab() {
     <div className="flex h-[calc(100vh-100px)] overflow-hidden animate-fi" onClick={() => setDropdown(null)}>
       {/* ── 사이드 패널 ── */}
       <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="px-5 py-4 border-b border-border/50 bg-surface-sidebar">
-          <div className="text-[14px] font-bold">{calMonth.getMonth() + 1}월 진행강의 {projects.filter(({ liveDate }) => { const d = new Date(liveDate); return d.getFullYear() === calMonth.getFullYear() && d.getMonth() === calMonth.getMonth(); }).length}개</div>
+        <div className="px-4 py-3 border-b border-border/40 bg-surface-sidebar">
+          <h3 className="text-[15px] font-medium text-foreground">{calMonth.getMonth() + 1}월 진행강의 {projects.filter(({ liveDate }) => { const d = new Date(liveDate); return d.getFullYear() === calMonth.getFullYear() && d.getMonth() === calMonth.getMonth(); }).length}개</h3>
         </div>
 
         {projects.length === 0 && (
@@ -203,7 +203,7 @@ export default function DesignerCalendarTab() {
           const displayed = showMoreProjects ? projects : projects.slice(0, 5);
 
           return (
-        <div className="flex flex-col gap-3 p-4">
+        <div className="flex flex-col gap-2 px-4 py-3">
           {displayed.map(({ ins, lec, liveDate, color }) => {
             const curKey = `${ins}|${lec}`;
             const milestones = state.designerMilestones[curKey] || {};
@@ -220,23 +220,23 @@ export default function DesignerCalendarTab() {
               <div key={curKey} className="rounded-[12px] border border-border/40 overflow-hidden">
                 {/* 헤더: 플랫폼 컬러 8% 배경 */}
                 <div
-                  className="px-3 py-2 flex items-center justify-between"
+                  className="px-4 py-3 flex items-center justify-between"
                   style={{ background: `${color}14` }}
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-                    <span className="text-xs font-semibold truncate" style={{ color: color }}>{ins}</span>
+                    <span className="text-xs font-medium truncate" style={{ color: color }}>{ins}</span>
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-semibold whitespace-nowrap flex-shrink-0">
+                  <div className="text-[10px] text-muted-foreground font-normal whitespace-nowrap flex-shrink-0">
                     🔴 {fmtDateKr(liveDate)}
                   </div>
                 </div>
 
                 {/* 바디 */}
-                <div className="px-3 py-2.5">
+                <div className="px-4 py-3">
                   {/* 강의명 + 담당자들 */}
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="text-[11px] text-muted-foreground truncate">{lec}</div>
+                    <div className="text-[13px] font-medium text-foreground truncate">{lec}</div>
                     <div className="flex items-center gap-2.5 flex-shrink-0">
                       {/* 디자이너 담당자 */}
                       <div className="relative">
