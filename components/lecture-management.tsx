@@ -158,7 +158,7 @@ export default function LectureManagement() {
 
     // ── 공통 UI 조각 ──
     const labelCls = "text-sm text-muted-foreground mb-2 font-medium";
-    const inputCls = "w-full bg-[#F0F1F4] border-none rounded-xl text-foreground px-4 py-[9px] text-sm outline-none focus:ring-2 focus:ring-primary/20";
+    const inputCls = "w-full bg-surface-hover border-none rounded-xl text-foreground px-4 py-[9px] text-sm outline-none focus:ring-2 focus:ring-primary/20";
 
     const MetaFields = () => (
       <div className="flex flex-col gap-4">
@@ -221,7 +221,7 @@ export default function LectureManagement() {
             <div className={labelCls}>핵심 USP</div>
             <button onClick={() => setCd({ usps: [...cd.usps, ""] })} className="text-sm text-primary font-semibold px-3 py-1 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20">+ 추가</button>
           </div>
-          {cd.usps.length === 0 && <div className="text-sm text-[#aeaeb2]">USP를 추가하세요</div>}
+          {cd.usps.length === 0 && <div className="text-sm text-neutral-400">USP를 추가하세요</div>}
           {cd.usps.map((u, i) => (
             <div key={i} className="flex gap-1.5 mb-1.5">
               <input value={u} onChange={(e) => { const arr = [...cd.usps]; arr[i] = e.target.value; setCd({ usps: arr }); }} placeholder={`USP ${i + 1}`} className={`flex-1 ${inputCls}`} />
@@ -235,7 +235,7 @@ export default function LectureManagement() {
             <div className={labelCls}>성과증거</div>
             <button onClick={() => setCd({ proof: [...cd.proof, ""] })} className="text-sm text-primary font-semibold px-3 py-1 rounded-md bg-primary/10 border-none cursor-pointer hover:bg-primary/20">+ 추가</button>
           </div>
-          {cd.proof.length === 0 && <div className="text-sm text-[#aeaeb2]">성과증거를 추가하세요</div>}
+          {cd.proof.length === 0 && <div className="text-sm text-neutral-400">성과증거를 추가하세요</div>}
           {cd.proof.map((p, i) => (
             <div key={i} className="flex gap-1.5 mb-1.5">
               <input value={p} onChange={(e) => { const arr = [...cd.proof]; arr[i] = e.target.value; setCd({ proof: arr }); }} placeholder={`성과 ${i + 1}`} className={`flex-1 ${inputCls}`} />
@@ -259,8 +259,8 @@ export default function LectureManagement() {
     );
 
     const ProgressSection = () => (
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-3">진행 상황</div>
+      <div className="bg-surface-card rounded-card shadow-card p-6">
+        <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide mb-3">진행 상황</div>
         <div className="flex flex-col gap-3">
           <div>
             <div className="flex justify-between text-[12px] font-semibold mb-1.5">
@@ -289,7 +289,7 @@ export default function LectureManagement() {
     );
 
     return (
-      <div className="min-h-[calc(100vh-64px)] bg-[#F7F8FA]">
+      <div className="min-h-[calc(100vh-64px)] bg-surface">
         {/* 헤더 */}
         <div className="bg-white/80 backdrop-blur-sm border-b border-border/50 px-8 py-4 flex items-center justify-between sticky top-[64px] z-10">
           <div className="flex items-center gap-3">
@@ -297,7 +297,7 @@ export default function LectureManagement() {
             <span className="text-muted-foreground/40">|</span>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: cardColor }} />
-              <span className="font-extrabold text-[15px]">{ins}</span>
+              <span className="font-bold text-[15px]">{ins}</span>
               <span className="text-muted-foreground text-[14px]">/</span>
               <span className="font-bold text-[15px]">{lec}</span>
             </div>
@@ -305,7 +305,7 @@ export default function LectureManagement() {
           </div>
           <div className="flex items-center gap-2">
             {/* 레이아웃 토글 */}
-            <div className="flex gap-1 bg-[#F0F1F4] rounded-xl p-1">
+            <div className="flex gap-1 bg-surface-hover rounded-xl p-1">
               {([{ id: "step" as const, label: "스텝" }, { id: "split" as const, label: "2단" }]).map((v) => (
                 <button key={v.id} onClick={() => setDetailLayout(v.id)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer border-none ${detailLayout === v.id ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"}`}>
@@ -337,8 +337,8 @@ export default function LectureManagement() {
         {detailLayout === "step" && (
           <div className="min-h-[calc(100vh-120px)]">
             {/* 스텝 탭 */}
-            <div className="sticky top-[112px] z-[5] bg-[#F7F8FA] px-8 py-2">
-              <div className="max-w-[600px] mx-auto flex gap-1 bg-[#F0F1F4] rounded-xl p-1">
+            <div className="sticky top-[112px] z-[5] bg-surface px-8 py-2">
+              <div className="max-w-[600px] mx-auto flex gap-1 bg-surface-hover rounded-xl p-1">
                 {([{ id: 1 as const, label: "강의 정보" }, { id: 2 as const, label: "콘텐츠 정보" }]).map((s) => (
                   <button key={s.id} onClick={() => setDetailStep(s.id)}
                     className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all cursor-pointer border-none ${detailStep === s.id ? "bg-white text-foreground shadow-sm" : "bg-transparent text-muted-foreground hover:text-foreground"}`}>
@@ -375,14 +375,14 @@ export default function LectureManagement() {
             <div className="max-w-[1000px] mx-auto px-8 py-8 grid grid-cols-2 gap-12">
               {/* 왼쪽: 강의 정보 */}
               <div className="flex flex-col gap-5">
-                <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide">강의 정보</div>
+                <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">강의 정보</div>
                 <MetaFields />
                 <SaveButton dirty={isDirty} onSave={handleSave} />
                 <ProgressSection />
               </div>
               {/* 오른쪽: 콘텐츠 정보 */}
               <div className="flex flex-col gap-5 border-l border-border/50 pl-12">
-                <div className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide">콘텐츠 정보</div>
+                <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">콘텐츠 정보</div>
                 <ContentFields />
                 <SaveButton dirty={isContentDirty} onSave={handleContentSave} />
               </div>
@@ -400,14 +400,14 @@ export default function LectureManagement() {
     const isDeleting = deleteConfirmKey === curKey;
     return (
       <div
-        className="bg-white rounded-2xl shadow-sm p-5 cursor-pointer hover:shadow-md transition-shadow"
+        className="bg-surface-card rounded-card shadow-card p-5 cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => setDetailKey(curKey)}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cardColor }} />
-              <span className="font-extrabold text-[13px]" style={{ color: cardColor }}>{l.ins}</span>
+              <span className="font-bold text-[13px]" style={{ color: cardColor }}>{l.ins}</span>
               {l.platform && (
                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: cardColor + "20", color: cardColor }}>{l.platform}</span>
               )}
@@ -462,7 +462,7 @@ export default function LectureManagement() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#F7F8FA]">
+    <div className="min-h-[calc(100vh-64px)] bg-surface">
       {/* 헤더 */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-border/50 px-8 py-4 flex items-center justify-between sticky top-[64px] z-10">
         <div className="flex items-center gap-3">
@@ -479,7 +479,7 @@ export default function LectureManagement() {
           >
             + 새 강의
           </button>
-          <div className="flex gap-1 bg-[#F0F1F4] rounded-xl p-1">
+          <div className="flex gap-1 bg-surface-hover rounded-xl p-1">
             {([{ id: "list", label: "리스트" }, { id: "calendar", label: "달력" }] as const).map((v) => (
               <button
                 key={v.id}
@@ -503,7 +503,7 @@ export default function LectureManagement() {
           {/* 컨트롤 행: 탭 | 월 네비(진행중) 또는 페이지크기(완료) */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             {/* 진행중/완료 탭 */}
-            <div className="flex gap-1 bg-[#F0F1F4] rounded-xl p-1">
+            <div className="flex gap-1 bg-surface-hover rounded-xl p-1">
               {([{ id: "active", label: "진행중" }, { id: "completed", label: "완료" }] as const).map((t) => (
                 <button
                   key={t.id}
@@ -530,7 +530,7 @@ export default function LectureManagement() {
                         : "bg-secondary text-muted-foreground hover:bg-accent"
                     }`}
                   >
-                    총 <span className="font-extrabold">{activeMonthFiltered.length}개</span>
+                    총 <span className="font-bold">{activeMonthFiltered.length}개</span>
                   </button>
                   {Object.entries(platformCounts).map(([plat, cnt]) => {
                     const plColor = state.platformColors[plat];
@@ -546,7 +546,7 @@ export default function LectureManagement() {
                           ...(isActive ? {} : { backgroundColor: plColor ? plColor + "18" : "var(--secondary)" }),
                         }}
                       >
-                        {plat} <span className="font-extrabold">{cnt}개</span>
+                        {plat} <span className="font-bold">{cnt}개</span>
                       </button>
                     );
                   })}
@@ -554,14 +554,14 @@ export default function LectureManagement() {
                 <div className="flex items-center gap-1.5 ml-auto">
                   <button
                     onClick={() => { setListMonth(new Date(listMonth.getFullYear(), listMonth.getMonth() - 1, 1)); setPage(1); }}
-                    className="bg-[#F0F1F4] rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]"
+                    className="bg-surface-hover rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]"
                   >◀</button>
-                  <span className="text-[13px] font-extrabold min-w-[80px] text-center">
+                  <span className="text-[13px] font-bold min-w-[80px] text-center">
                     {listMonth.getFullYear()}년 {listMonth.getMonth() + 1}월
                   </span>
                   <button
                     onClick={() => { setListMonth(new Date(listMonth.getFullYear(), listMonth.getMonth() + 1, 1)); setPage(1); }}
-                    className="bg-[#F0F1F4] rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]"
+                    className="bg-surface-hover rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]"
                   >▶</button>
                 </div>
               </>
@@ -572,7 +572,7 @@ export default function LectureManagement() {
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="ml-auto bg-[#F0F1F4] border-none rounded-xl px-2.5 py-1.5 text-[12px] font-semibold text-foreground outline-none cursor-pointer"
+                className="ml-auto bg-surface-hover border-none rounded-xl px-2.5 py-1.5 text-[12px] font-semibold text-foreground outline-none cursor-pointer"
               >
                 <option value={10}>10개</option>
                 <option value={20}>20개</option>
@@ -625,24 +625,24 @@ export default function LectureManagement() {
       {view === "calendar" && (
         <TooltipProvider delayDuration={200}>
         <div className="max-w-[900px] mx-auto px-8 py-8">
-          <div className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="bg-surface-card rounded-card shadow-card p-6">
             {/* 월 네비게이션 */}
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-[15px] font-extrabold">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">
                 {calMonth.getFullYear()}년 {calMonth.getMonth() + 1}월
               </h3>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <button
                   onClick={() => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1))}
-                  className="bg-[#F0F1F4] rounded-xl px-3 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[13px]"
+                  className="bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
                 >◀</button>
                 <button
                   onClick={() => setCalMonth(new Date(today.getFullYear(), today.getMonth(), 1))}
-                  className="bg-[#F0F1F4] rounded-xl px-3 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]"
+                  className="bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]"
                 >오늘</button>
                 <button
                   onClick={() => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1))}
-                  className="bg-[#F0F1F4] rounded-xl px-3 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[13px]"
+                  className="bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
                 >▶</button>
               </div>
             </div>
@@ -655,7 +655,7 @@ export default function LectureManagement() {
             {/* 날짜 그리드 */}
             <div className="grid grid-cols-7 gap-0.5">
               {calDays.map((day, i) => {
-                if (!day) return <div key={`e${i}`} className="min-h-[90px]" />;
+                if (!day) return <div key={`e${i}`} className="min-h-[110px]" />;
                 const ds = fmtDate(day);
                 const isT = isSameDay(day, today);
                 const isPast = day < today && !isT;
@@ -663,29 +663,28 @@ export default function LectureManagement() {
                 return (
                   <div
                     key={ds}
-                    className={`min-h-[90px] rounded-xl p-1.5 ${
+                    className={`min-h-[110px] rounded-card p-1.5 overflow-hidden ${
                       isT ? "bg-primary/5 border border-primary"
-                      : isPast ? "bg-[#fafafa] border border-border/30"
-                      : "bg-white border border-border/30"
+                      : isPast ? "bg-surface-inset border border-border/30"
+                      : "bg-surface-card border border-border/30"
                     }`}
                   >
-                    <div className={`text-[13px] px-1 mb-1 ${
-                      isT ? "font-extrabold text-primary"
-                      : isPast ? "font-semibold text-[#ccc]"
+                    <div className={`text-[14px] px-1 mb-1 ${
+                      isT ? "font-bold text-primary"
+                      : isPast ? "font-semibold text-neutral-300"
                       : day.getDay()===0 ? "font-semibold text-red-500"
                       : "font-semibold text-foreground"
                     }`}>{day.getDate()}</div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-[3px]">
                       {dayEvts.map((ev, ei) => (
                         <Tooltip key={ei}>
                           <TooltipTrigger asChild>
                             <div
                               onClick={() => setDetailKey(`${ev.ins}|${ev.lec}`)}
-                              className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight"
-                              style={{ background: ev.color+"22", color: ev.color, border: `1px solid ${ev.color}40`, opacity: ev.status==="completed"?0.6:1 }}
+                              className="rounded-lg px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate"
+                              style={{ background: ev.color+"18", color: ev.color, border: `1.5px solid ${ev.color}35`, opacity: ev.status==="completed"?0.6:1 }}
                             >
-                              <span className="font-bold">{ev.ins}</span>
-                              {ev.status==="active" && <span className="ml-0.5 text-[9px]">🔴LIVE</span>}
+                              <span className="inline-block w-[5px] h-[5px] rounded-full bg-red-500 mr-0.5 align-middle flex-shrink-0" />{ev.ins}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>

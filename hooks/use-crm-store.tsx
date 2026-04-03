@@ -29,6 +29,8 @@ import type {
   MilestoneMetaMap,
   LectureSubTabId,
   InstructorProfile,
+  PmChecklistMap,
+  PmCheckId,
 } from "@/lib/types";
 import { INIT_DATA, DEFAULT_SEQ, DEFAULT_PLATFORM_COLORS, DESIGNER_MILESTONES } from "@/lib/constants";
 import { storage } from "@/lib/storage";
@@ -53,6 +55,7 @@ interface CrmState {
   milestoneMeta: MilestoneMetaMap;
   assignees: Assignee[];
   instructorProfiles: InstructorProfile[];
+  pmChecklist: PmChecklistMap;
   lectureSubTab: LectureSubTabId;
   ins: string;           // PM 선택
   lec: string;
@@ -80,6 +83,7 @@ const initialState: CrmState = {
   milestoneMeta: {},
   assignees: [],
   instructorProfiles: [],
+  pmChecklist: {},
   lectureSubTab: "lec-dashboard",
   ins: "",
   lec: "",
@@ -90,7 +94,7 @@ const initialState: CrmState = {
 
 /* ─── Actions ─── */
 type Action =
-  | { type: "HYDRATE"; data: CrmData; checks: ChecksMap; copies: CopiesMap; seqDataMap: SeqDataMap; feedbacks: Feedback[]; designChecks: DesignChecksMap; workLogs: WorkLog[]; platformColors: Record<string, string>; designerMilestones: DesignerMilestonesMap; designerProjectAssignees: Record<string, string>; pmProjectAssignees: Record<string, string>; milestoneMeta: MilestoneMetaMap; assignees: Assignee[]; instructorProfiles: InstructorProfile[] }
+  | { type: "HYDRATE"; data: CrmData; checks: ChecksMap; copies: CopiesMap; seqDataMap: SeqDataMap; feedbacks: Feedback[]; designChecks: DesignChecksMap; workLogs: WorkLog[]; platformColors: Record<string, string>; designerMilestones: DesignerMilestonesMap; designerProjectAssignees: Record<string, string>; pmProjectAssignees: Record<string, string>; milestoneMeta: MilestoneMetaMap; assignees: Assignee[]; instructorProfiles: InstructorProfile[]; pmChecklist: PmChecklistMap }
   | { type: "SET_DESIGNER_PROJECT_ASSIGNEE"; curKey: string; assignee: string }
   | { type: "SET_PM_PROJECT_ASSIGNEE"; curKey: string; assignee: string }
   | { type: "ADD_ASSIGNEE"; assignee: Assignee }
@@ -128,7 +132,10 @@ type Action =
   | { type: "SET_LECTURE_SUB_TAB"; tab: LectureSubTabId }
   | { type: "ADD_INSTRUCTOR_PROFILE"; profile: InstructorProfile }
   | { type: "UPDATE_INSTRUCTOR_PROFILE"; id: string; updates: Partial<Omit<InstructorProfile, "id" | "createdAt">> }
-  | { type: "DELETE_INSTRUCTOR_PROFILE"; id: string };
+  | { type: "DELETE_INSTRUCTOR_PROFILE"; id: string }
+  | { type: "SET_LECTURE_STANDBY"; ins: string; lec: string }
+  | { type: "SET_INSTRUCTOR_STATUS"; id: string; status: "active" | "out" }
+  | { type: "SET_PM_CHECK"; curKey: string; checkId: PmCheckId; checked: boolean; note?: string };
 
 function reducer(state: CrmState, action: Action): CrmState {
   switch (action.type) {
@@ -149,6 +156,7 @@ function reducer(state: CrmState, action: Action): CrmState {
         milestoneMeta: action.milestoneMeta,
         assignees: action.assignees,
         instructorProfiles: action.instructorProfiles,
+        pmChecklist: action.pmChecklist,
         hydrated: true,
       };
     case "SET_TOP_TAB":
@@ -246,6 +254,16 @@ function reducer(state: CrmState, action: Action): CrmState {
         status: "active",
       };
       return { ...state, data: d, ins: action.ins, lec: action.lec, topTab: "pm", tab: "board" };
+    }
+    case "SET_LECTURE_STANDBY": {
+      const d = { ...state.data };
+      if (!d[action.ins]?.lectures?.[action.lec]) return state;
+      d[action.ins] = { ...d[action.ins], lectures: { ...d[action.ins].lectures } };
+      d[action.ins].lectures[action.lec] = {
+        ...d[action.ins].lectures[action.lec],
+        status: "standby",
+      };
+      return { ...state, data: d };
     }
     case "RENAME_LECTURE": {
       const { ins, oldLec, newLec } = action;
@@ -409,6 +427,22 @@ function reducer(state: CrmState, action: Action): CrmState {
       return { ...state, instructorProfiles: state.instructorProfiles.map((p) => p.id === action.id ? { ...p, ...action.updates } : p) };
     case "DELETE_INSTRUCTOR_PROFILE":
       return { ...state, instructorProfiles: state.instructorProfiles.filter((p) => p.id !== action.id) };
+    case "SET_INSTRUCTOR_STATUS":
+      return { ...state, instructorProfiles: state.instructorProfiles.map((p) => p.id === action.id ? { ...p, status: action.status } : p) };
+    case "SET_PM_CHECK": {
+      const prev = state.pmChecklist[action.curKey] || {};
+      const prevItem = prev[action.checkId] || { checked: false, note: "" };
+      return {
+        ...state,
+        pmChecklist: {
+          ...state.pmChecklist,
+          [action.curKey]: {
+            ...prev,
+            [action.checkId]: { checked: action.checked, note: action.note ?? prevItem.note },
+          },
+        },
+      };
+    }
     default:
       return state;
   }
@@ -441,7 +475,8 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     const mm = storage.loadMilestoneMeta() || {};
     const as = storage.loadAssignees() || [];
     const ip = storage.loadInstructorProfiles() || [];
-    dispatch({ type: "HYDRATE", data: d, checks: c, copies: cp, seqDataMap: sm, feedbacks: fb, designChecks: dc, workLogs: wl, platformColors: pc, designerMilestones: dm, designerProjectAssignees: pa, pmProjectAssignees: pma, milestoneMeta: mm, assignees: as, instructorProfiles: ip });
+    const pmcl = storage.loadPmChecklist() || {};
+    dispatch({ type: "HYDRATE", data: d, checks: c, copies: cp, seqDataMap: sm, feedbacks: fb, designChecks: dc, workLogs: wl, platformColors: pc, designerMilestones: dm, designerProjectAssignees: pa, pmProjectAssignees: pma, milestoneMeta: mm, assignees: as, instructorProfiles: ip, pmChecklist: pmcl });
   }, []);
 
   // Auto-complete lectures past D+2
@@ -547,6 +582,12 @@ export function CrmProvider({ children }: { children: ReactNode }) {
     const t = setTimeout(() => storage.saveInstructorProfiles(state.instructorProfiles), 500);
     return () => clearTimeout(t);
   }, [state.instructorProfiles, state.hydrated]);
+
+  useEffect(() => {
+    if (!state.hydrated) return;
+    const t = setTimeout(() => storage.savePmChecklist(state.pmChecklist), 500);
+    return () => clearTimeout(t);
+  }, [state.pmChecklist, state.hydrated]);
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
 

@@ -30,7 +30,7 @@ export default function LectureInfoEditor() {
   };
 
   return (
-    <div className="animate-fi">
+    <div>
       <TagPicker label="톤앤매너" options={TONE_PRESETS} value={ld.tone} onChange={(v) => updateLd("tone", v)} />
       <TagPicker label="타겟" options={TARGET_PRESETS} value={ld.target} onChange={(v) => updateLd("target", v)} />
       <TagPicker label="강의 유형" options={TYPE_PRESETS} value={ld.type} onChange={(v) => updateLd("type", v)} />
@@ -45,7 +45,7 @@ export default function LectureInfoEditor() {
           <div key={f}>
             <div className="text-xs text-muted-foreground mb-0.5 font-semibold flex items-center gap-1">
               {l}
-              {disabled && <span className="text-[10px] text-[#aeaeb2] font-normal">(강의 관리에서 수정)</span>}
+              {disabled && <span className="text-[10px] text-neutral-400 font-normal">(강의 관리에서 수정)</span>}
             </div>
             <input
               value={(ld[f] as string) || ""}
@@ -53,8 +53,8 @@ export default function LectureInfoEditor() {
               disabled={disabled}
               className={`w-full border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none ${
                 disabled
-                  ? "bg-[#F0F1F4] text-muted-foreground cursor-not-allowed opacity-60"
-                  : "bg-[#F0F1F4] focus:ring-1 focus:ring-primary"
+                  ? "bg-surface-hover text-muted-foreground cursor-not-allowed opacity-60"
+                  : "bg-surface-hover focus:ring-1 focus:ring-primary"
               }`}
             />
           </div>
@@ -62,7 +62,7 @@ export default function LectureInfoEditor() {
       </div>
 
       {/* 링크 관리 */}
-      <div className="mt-2.5 bg-primary/5 rounded-2xl p-4">
+      <div className="mt-2.5 bg-primary/5 rounded-card p-4">
         <div className="text-[13px] text-primary font-bold mb-2">🔗 링크 관리 (복사 시 자동 치환)</div>
         <div className="grid grid-cols-2 gap-2">
           {([
@@ -76,7 +76,7 @@ export default function LectureInfoEditor() {
               <input
                 value={(ld[f] as string) || ""}
                 onChange={(e) => updateLd(f, e.target.value)}
-                className="w-full bg-[#F0F1F4] border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-surface-hover border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           ))}
@@ -95,7 +95,7 @@ export default function LectureInfoEditor() {
           </button>
         </div>
         {(ld.usps || []).length === 0 && (
-          <div className="text-[12px] text-[#aeaeb2] py-1">USP를 추가하세요</div>
+          <div className="text-[12px] text-neutral-400 py-1">USP를 추가하세요</div>
         )}
         {(ld.usps || []).map((u, i) => (
           <div key={i} className="flex gap-1 mb-1">
@@ -103,7 +103,7 @@ export default function LectureInfoEditor() {
               value={u}
               onChange={(e) => updateArrayItem("usps", i, e.target.value)}
               placeholder={`USP ${i + 1}`}
-              className="flex-1 bg-[#F0F1F4] border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 bg-surface-hover border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
             />
             <button
               onClick={() => removeArrayItem("usps", i)}
@@ -127,7 +127,7 @@ export default function LectureInfoEditor() {
           </button>
         </div>
         {(ld.proof || []).length === 0 && (
-          <div className="text-[12px] text-[#aeaeb2] py-1">성과증거를 추가하세요</div>
+          <div className="text-[12px] text-neutral-400 py-1">성과증거를 추가하세요</div>
         )}
         {(ld.proof || []).map((p, i) => (
           <div key={i} className="flex gap-1 mb-1">
@@ -135,7 +135,7 @@ export default function LectureInfoEditor() {
               value={p}
               onChange={(e) => updateArrayItem("proof", i, e.target.value)}
               placeholder={`성과 ${i + 1}`}
-              className="flex-1 bg-[#F0F1F4] border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 bg-surface-hover border-none rounded-xl text-foreground px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
             />
             <button
               onClick={() => removeArrayItem("proof", i)}

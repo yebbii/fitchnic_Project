@@ -148,7 +148,7 @@ export default function DesignerCalendarTab() {
     const filtered = role ? state.assignees.filter((a) => a.role === role) : state.assignees;
     return (
       <div
-        className="absolute left-0 top-full mt-0.5 z-[100] bg-white rounded-xl shadow-lg py-1 min-w-[140px]"
+        className="absolute left-0 top-full mt-0.5 z-[100] bg-surface-card rounded-xl shadow-lg py-1 min-w-[140px]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -158,7 +158,7 @@ export default function DesignerCalendarTab() {
           없음
         </button>
         {filtered.length === 0 && (
-          <div className="px-3 py-1.5 text-[11px] text-[#aeaeb2]">담당자를 먼저 추가하세요</div>
+          <div className="px-3 py-1.5 text-[11px] text-neutral-400">담당자를 먼저 추가하세요</div>
         )}
         {filtered.map((a) => (
           <button
@@ -188,7 +188,7 @@ export default function DesignerCalendarTab() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-100px)] overflow-hidden animate-fi" onClick={() => setDropdown(null)}>
+    <div className="flex h-[calc(100vh-100px)] overflow-hidden" onClick={() => setDropdown(null)}>
       {/* ── 사이드 패널 ── */}
       <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="px-4 py-3 border-b border-border/40 bg-surface-sidebar">
@@ -309,7 +309,7 @@ export default function DesignerCalendarTab() {
                                 ? "bg-gray-50 border-gray-200"
                                 : isPast
                                 ? "bg-red-50 border-red-100"
-                                : "bg-[#fafafa] border-border"
+                                : "bg-surface-inset border-border"
                             }`}
                           >
                             <div className="flex items-start gap-2">
@@ -375,7 +375,7 @@ export default function DesignerCalendarTab() {
           {showMoreProjects && projects.length > 5 && (
             <button
               onClick={() => setShowMoreProjects(false)}
-              className="w-full py-2 text-[11px] text-[#aeaeb2] bg-transparent border-none cursor-pointer hover:text-[#6e6e73]"
+              className="w-full py-2 text-[11px] text-neutral-400 bg-transparent border-none cursor-pointer hover:text-neutral-500"
             >
               ▲ 접기
             </button>
@@ -388,11 +388,11 @@ export default function DesignerCalendarTab() {
       {/* ── 캘린더 ── */}
       <main className="flex-1 overflow-y-auto p-8">
         <div className="bg-surface-card rounded-card shadow-card p-6">
-          <div className="flex justify-between items-center mb-[18px]">
+          <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-3">
               <h3 className="text-xl font-bold">디자이너 캘린더</h3>
               {/* 뷰 토글 */}
-              <div className="flex gap-0.5 bg-[#F0F1F4] rounded-xl p-[3px]">
+              <div className="flex gap-0.5 bg-surface-hover rounded-xl p-[3px]">
                 <button
                   onClick={() => setViewMode("calendar")}
                   className={`px-3 py-1.5 rounded-xl text-[12px] font-semibold transition-all cursor-pointer border-none flex items-center gap-1 ${
@@ -416,14 +416,14 @@ export default function DesignerCalendarTab() {
             <div className="flex gap-2 items-center">
               <button
                 onClick={prevMonth}
-                className="bg-[#F0F1F4] rounded-xl px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
+                className="bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >◀</button>
-              <span className="text-lg font-bold min-w-[150px] text-center">
+              <span className="text-base font-bold min-w-[130px] text-center">
                 {monthLabel}
               </span>
               <button
                 onClick={nextMonth}
-                className="bg-[#F0F1F4] rounded-xl px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
+                className="bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >▶</button>
             </div>
           </div>
@@ -506,8 +506,8 @@ export default function DesignerCalendarTab() {
             }
             function ddayBadge(dateStr: string, checked: boolean) {
               const diff = dday(dateStr);
-              if (checked) return <span className="text-[10px] font-bold text-[#aeaeb2] bg-[#f0f0f0] rounded-full px-2 py-0.5">완료</span>;
-              if (diff < 0) return <span className="text-[10px] font-bold text-[#aeaeb2] bg-[#f5f5f5] rounded-full px-2 py-0.5">D+{Math.abs(diff)}</span>;
+              if (checked) return <span className="text-[10px] font-bold text-neutral-400 bg-neutral-100 rounded-full px-2 py-0.5">완료</span>;
+              if (diff < 0) return <span className="text-[10px] font-bold text-neutral-400 bg-neutral-100 rounded-full px-2 py-0.5">D+{Math.abs(diff)}</span>;
               if (diff === 0) return <span className="text-[10px] font-bold text-white bg-red-400 rounded-full px-2 py-0.5">오늘!</span>;
               if (diff <= 3) return <span className="text-[10px] font-bold text-red-500 bg-red-50 rounded-full px-2 py-0.5">D-{diff}</span>;
               if (diff <= 7) return <span className="text-[10px] font-bold text-amber-600 bg-amber-50 rounded-full px-2 py-0.5">D-{diff}</span>;
@@ -529,7 +529,7 @@ export default function DesignerCalendarTab() {
                   const liveDiff = dday(liveDate);
 
                   return (
-                    <div key={curKey} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div key={curKey} className="bg-surface-card rounded-card shadow-card overflow-hidden">
                       {/* 프로젝트 헤더 */}
                       <div
                         className="flex items-center justify-between px-4 py-3 gap-2"
@@ -565,7 +565,7 @@ export default function DesignerCalendarTab() {
                           <span className="text-[11px] font-bold text-foreground">{fmtDateKr(liveDate)}</span>
                           {liveDiff >= 0
                             ? <span className="text-[10px] font-bold text-white bg-red-400 rounded-full px-1.5 py-0.5">{liveDiff === 0 ? "오늘" : `D-${liveDiff}`}</span>
-                            : <span className="text-[10px] font-bold text-[#aeaeb2] bg-[#f5f5f5] rounded-full px-1.5 py-0.5">D+{Math.abs(liveDiff)}</span>
+                            : <span className="text-[10px] font-bold text-neutral-400 bg-neutral-100 rounded-full px-1.5 py-0.5">D+{Math.abs(liveDiff)}</span>
                           }
                         </div>
                       </div>
@@ -573,7 +573,7 @@ export default function DesignerCalendarTab() {
                       {/* 마일스톤 테이블 */}
                       <table className="w-full text-[12px] border-collapse">
                         <thead>
-                          <tr className="border-b border-border bg-[#fafafa]">
+                          <tr className="border-b border-border bg-surface-inset">
                             <th className="text-left py-2 px-4 font-bold text-muted-foreground text-[10px] uppercase tracking-wide w-[90px]">단계</th>
                             <th className="text-left py-2 px-4 font-bold text-muted-foreground text-[10px] uppercase tracking-wide">작업 내용</th>
                             <th className="text-left py-2 px-4 font-bold text-muted-foreground text-[10px] uppercase tracking-wide w-[110px]">날짜</th>
@@ -597,7 +597,7 @@ export default function DesignerCalendarTab() {
                               <tr
                                 key={ms.id}
                                 className={`border-b border-border/40 transition-colors hover:bg-secondary/20 ${
-                                  item.checked ? "bg-[#f7f7f7]" : isToday ? "bg-amber-50/50" : isPast ? "bg-red-50/30" : ""
+                                  item.checked ? "bg-neutral-50" : isToday ? "bg-amber-50/50" : isPast ? "bg-red-50/30" : ""
                                 }`}
                               >
                                 {/* 단계 */}
@@ -622,7 +622,7 @@ export default function DesignerCalendarTab() {
                                 </td>
                                 {/* 날짜 */}
                                 <td className="py-2.5 px-4">
-                                  <span className={`text-[11px] font-semibold ${isToday ? "text-amber-600" : isPast ? "text-[#ccc]" : "text-muted-foreground"}`}>
+                                  <span className={`text-[11px] font-semibold ${isToday ? "text-amber-600" : isPast ? "text-neutral-300" : "text-muted-foreground"}`}>
                                     {dObj.getMonth()+1}/{dObj.getDate()}({days7[dObj.getDay()]})
                                   </span>
                                 </td>
@@ -685,38 +685,36 @@ export default function DesignerCalendarTab() {
               return (
                 <div
                   key={ds}
-                  className={`min-h-[110px] rounded-xl p-1.5 overflow-hidden ${
+                  className={`min-h-[110px] rounded-card p-1.5 overflow-hidden ${
                     isT
-                      ? "border border-border/30"
+                      ? "bg-primary/5 border border-primary"
                       : isPast
-                      ? "bg-[#fafafa] border border-border/30"
-                      : "bg-white border border-border/30"
+                      ? "bg-surface-inset border border-border/30"
+                      : "bg-surface-card border border-border/30"
                   } ${dayEvts.length > 2 ? "cursor-pointer" : ""}`}
-                  style={isT ? { background: HOME_TAB_COLORS.designer + "0d", borderColor: HOME_TAB_COLORS.designer } : undefined}
                   onClick={() => { if (dayEvts.length > 2) setExpandedDay(showAll ? null : ds); }}
                 >
                   <div
-                    className={`text-[15px] px-1 mb-1 ${
-                      isT ? "font-bold"
-                      : isPast ? "font-semibold text-[#ccc]"
+                    className={`text-[14px] px-1 mb-1 ${
+                      isT ? "font-bold text-primary"
+                      : isPast ? "font-semibold text-neutral-300"
                       : day.getDay() === 0 ? "font-semibold text-red-500"
                       : "font-semibold text-foreground"
                     }`}
-                    style={isT ? { color: HOME_TAB_COLORS.designer } : undefined}
                   >
                     {day.getDate()}
                   </div>
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-[3px]">
                     {(showAll ? dayEvts : dayEvts.slice(0, 2)).map((ev, ei) => {
                       const evMs = !ev.isLive ? DESIGNER_MILESTONES.find((m) => m.id === ev.milestoneId) : null;
                       return (
                         <div
                           key={ei}
                           onClick={(e) => { e.stopPropagation(); goToTimeline(ev.ins, ev.lec); }}
-                          className="rounded-lg px-1.5 py-1 text-xs font-semibold text-left cursor-pointer leading-tight"
+                          className="rounded-lg px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight"
                           style={ev.isLive ? {
-                            background: ev.color + "15",
-                            border: `1px solid ${ev.color}40`,
+                            background: ev.color + "18",
+                            border: `1.5px solid ${ev.color}35`,
                           } : ev.checked ? {
                             background: "#f0f0f0",
                             border: "1px solid #e0e0e0",
@@ -729,11 +727,9 @@ export default function DesignerCalendarTab() {
                           }}
                         >
                           {ev.isLive ? (
-                            <div className="flex items-center gap-0.5">
-                              <span>🔴</span>
-                              <span className="font-bold truncate" style={{ color: ev.color }}>{ev.ins}</span>
-                              <span className="text-[10px] font-semibold ml-0.5" style={{ color: ev.color }}>LIVE</span>
-                            </div>
+                            <span className="truncate">
+                              <span className="inline-block w-[5px] h-[5px] rounded-full bg-red-500 mr-0.5 align-middle flex-shrink-0" />{ev.ins}
+                            </span>
                           ) : (
                             <>
                               <div className="flex items-center gap-0.5">
@@ -751,12 +747,12 @@ export default function DesignerCalendarTab() {
                                 >
                                   {ev.checked ? "✓" : ""}
                                 </button>
-                                <span className="text-[9px] font-bold px-1 rounded-full flex-shrink-0 bg-[#e8e8e8] text-[#aeaeb2]">
+                                <span className="text-[9px] font-bold px-1 rounded-full flex-shrink-0 bg-neutral-200 text-neutral-400">
                                   {ev.milestoneLabel}
                                 </span>
                                 <span className="font-bold truncate" style={{ color: ev.checked ? "#aeaeb2" : ev.color }}>{ev.ins}</span>
                               </div>
-                              <div className={`text-[10px] font-medium truncate ${ev.checked ? "line-through" : ""}`} style={{ color: ev.checked ? "#c0c0c0" : "#6e6e73" }}>
+                              <div className={`text-[9px] font-medium truncate ${ev.checked ? "line-through" : ""}`} style={{ color: ev.checked ? "#c0c0c0" : "#6e6e73" }}>
                                 {ev.milestoneTitle}
                               </div>
                               {ev.assignee && (
@@ -776,12 +772,12 @@ export default function DesignerCalendarTab() {
                       );
                     })}
                     {dayEvts.length > 2 && !showAll && (
-                      <div className="text-xs text-center font-semibold py-0.5 cursor-pointer" style={{ color: HOME_TAB_COLORS.designer }}>
-                        +{dayEvts.length - 2}개 더 보기
+                      <div className="text-[9px] text-muted-foreground text-center font-semibold py-0.5 cursor-pointer">
+                        +{dayEvts.length - 2}개
                       </div>
                     )}
                     {dayEvts.length > 2 && showAll && (
-                      <div className="text-[11px] text-[#aeaeb2] text-center py-0.5">접기 ▲</div>
+                      <div className="text-[9px] text-muted-foreground text-center py-0.5">접기 ▲</div>
                     )}
                   </div>
                 </div>

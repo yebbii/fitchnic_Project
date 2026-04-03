@@ -52,7 +52,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
     <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/25 backdrop-blur-sm" />
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-[400px] max-h-[80vh] flex flex-col animate-fi"
+        className="relative bg-surface-card rounded-card shadow-2xl w-[400px] max-h-[80vh] flex flex-col animate-fi"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -60,7 +60,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
           <h3 className="text-lg font-bold">담당자 관리</h3>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-[#F0F1F4] flex items-center justify-center text-[13px] text-muted-foreground border-none cursor-pointer hover:bg-accent"
+            className="w-9 h-9 rounded-xl bg-surface-hover flex items-center justify-center text-[13px] text-muted-foreground border-none cursor-pointer hover:bg-accent"
           >
             ✕
           </button>
@@ -68,7 +68,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
 
         {/* 역할 탭 */}
         <div className="px-6 pb-3">
-          <div className="flex gap-1 bg-[#F0F1F4] rounded-xl p-1">
+          <div className="flex gap-1 bg-surface-hover rounded-xl p-1">
             {ROLE_TABS.map((t) => (
               <button
                 key={t.id}
@@ -96,7 +96,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
             {filtered.map((a) => (
               <div key={a.id}>
                 {editingId === a.id ? (
-                  <div className="flex flex-col gap-2 bg-[#F7F8FA] rounded-xl p-4">
+                  <div className="flex flex-col gap-2 bg-surface rounded-xl p-4">
                     <input
                       autoFocus
                       value={editName}
@@ -122,7 +122,7 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 px-1">
-                    <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-extrabold" style={{ background: a.color }}>
+                    <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[11px] font-bold" style={{ background: a.color }}>
                       {a.name.slice(0, 1)}
                     </div>
                     <span className="flex-1 text-[13px] font-semibold truncate">{a.name}</span>
@@ -144,8 +144,8 @@ export default function AssigneeManagerModal({ onClose }: { onClose: () => void 
         </div>
 
         {/* 추가 */}
-        <div className="border-t border-border px-6 py-5 bg-[#F7F8FA] rounded-b-2xl">
-          <div className="text-[11px] font-extrabold text-muted-foreground mb-2">
+        <div className="border-t border-border px-6 py-5 bg-surface rounded-b-card">
+          <div className="text-[11px] font-bold text-muted-foreground mb-2">
             {roleTab === "pm" ? "PM" : "디자이너"} 담당자 추가
           </div>
           <input

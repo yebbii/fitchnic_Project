@@ -9,9 +9,10 @@ export function cn(...inputs: ClassValue[]) {
 
 let _c = 0;
 export function uid(): string {
-  return typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `c_${Date.now()}_${_c++}`;
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    try { return crypto.randomUUID(); } catch { /* fallback */ }
+  }
+  return `c_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${_c++}`;
 }
 
 export function addDays(dateStr: string, days: number): Date {

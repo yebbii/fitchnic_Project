@@ -56,7 +56,7 @@ export function createInitData(): CrmData {
           usps: ["마진율 50% 비밀링크 소싱", "AI 자동 소싱+엑셀정리", "상품등록 후 바로 다음날 수익"],
           proof: ["시작 한달만에 5천만원 매출", "수강생 한달 평균수익 3천만원"],
           target: "직장인/왕초보/부업", story: "11년차 직장인→상위1% 셀러",
-          ebook: "마진계산기 등 BIG5 자료", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "마진계산기 등 BIG5 자료", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(7), liveTime: "19:30", status: "active",
         },
         "브랜드파이프 3기": {
@@ -64,7 +64,7 @@ export function createInitData(): CrmData {
           usps: ["마진율 50%", "AI 소싱", "다음날 수익"],
           proof: ["5천만원 매출", "평균 3천만원"],
           target: "직장인/왕초보", story: "11년차→상위1%",
-          ebook: "BIG5 자료", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "BIG5 자료", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(-45), liveTime: "19:30", status: "completed",
         },
         "로켓그로스 8기": {
@@ -72,7 +72,7 @@ export function createInitData(): CrmData {
           usps: ["로켓그로스 AI 수익화", "무재고 쿠팡 판매", "월급 이상 수익"],
           proof: ["직원0명 월급이상", "다수 수익화 성공"],
           target: "직장인/쿠팡", story: "14년차 셀러 노하우",
-          ebook: "로켓그로스 가이드북", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "로켓그로스 가이드북", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(-90), liveTime: "19:30", status: "completed",
         },
       },
@@ -84,7 +84,7 @@ export function createInitData(): CrmData {
           usps: ["무재고 월300 AI 대량등록", "데이터기반 AI 상품분석", "2주만에 수익"],
           proof: ["연매출 50억", "초년생/주부/장애인 성공"],
           target: "주부/초보/무자본", story: "연매출 50억 사업가",
-          ebook: "대량등록 바이블", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "대량등록 바이블", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(5), liveTime: "19:30", status: "active",
         },
       },
@@ -96,7 +96,7 @@ export function createInitData(): CrmData {
           usps: ["무자본 AI 상세페이지", "건당 100만원 AI+템플릿", "비전공자도 시작"],
           proof: ["25억 기업이 찾는 디자이너", "영디자이너 20인"],
           target: "비전공자/초보/부업", story: "실패→월1000 수익화",
-          ebook: "수익화 전자책(30만원)", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "수익화 전자책(30만원)", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(10), liveTime: "19:30", status: "active",
         },
         "상세페이지 6기": {
@@ -104,7 +104,7 @@ export function createInitData(): CrmData {
           usps: ["무자본 AI 상세페이지", "건당 100만원", "비전공자"],
           proof: ["25억 기업", "영디자이너 20인"],
           target: "비전공자/초보", story: "실패→월1000",
-          ebook: "수익화 전자책", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "수익화 전자책", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(-55), liveTime: "19:30", status: "completed",
         },
       },
@@ -116,7 +116,7 @@ export function createInitData(): CrmData {
           usps: ["60대도 월600 AI 유튜브", "인생 연금", "3개월 월600"],
           proof: ["60대 3개월 월600", "전자책 2종"],
           target: "시니어/50~60대", story: "60대 유튜브 전문가",
-          ebook: "AI유튜브 활용서 2종", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "AI유튜브 활용서 2종", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(12), liveTime: "19:30", status: "active",
         },
         "유튜브 롱폼 1기": {
@@ -124,7 +124,7 @@ export function createInitData(): CrmData {
           usps: ["60대도 월600", "인생 연금", "3개월 월600"],
           proof: ["60대 월600", "전자책 2종"],
           target: "시니어/50~60대", story: "60대 유튜브 전문가",
-          ebook: "AI유튜브 활용서", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "AI유튜브 활용서", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(-30), liveTime: "19:30", status: "completed",
         },
       },
@@ -136,7 +136,7 @@ export function createInitData(): CrmData {
           usps: ["AI 숏폼 자동화", "하루 30분 수익", "무편집 숏폼"],
           proof: ["누적매출 66억", "수강생 3000명"],
           target: "초보/부업/시니어", story: "66억 셀러의 AI 숏폼",
-          ebook: "AI 숏폼 가이드북", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "AI 숏폼 가이드북", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(14), liveTime: "19:30", status: "active",
         },
         "쿠팡 농수산물 6기": {
@@ -144,7 +144,7 @@ export function createInitData(): CrmData {
           usps: ["AI 쿠팡 농수산물", "3일 500만원", "리뷰없이 매출"],
           proof: ["누적매출 66억", "3000명 검증"],
           target: "초보/부업", story: "66억 셀러의 쿠팡",
-          ebook: "쿠팡 비법 전자책", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "",
+          ebook: "쿠팡 비법 전자책", freeUrl: "", youtubeUrl: "", payUrl: "", ebookUrl: "", figmaUrl: "",
           liveDate: daysFromNow(-120), liveTime: "19:30", status: "completed",
         },
       },
@@ -388,6 +388,17 @@ export const DEFAULT_REQUEST_MSG = `안녕하세요, 강사님!
 
 감사합니다!`;
 
+/** PM 체크리스트 항목 정의 */
+export const PM_CHECKLIST_ITEMS: { id: import("@/lib/types").PmCheckId; label: string; description: string }[] = [
+  { id: "pre_survey",   label: "사전질문지 확인", description: "디자이너 배포 후 회수된 사전질문지 내용 확인" },
+  { id: "usp",          label: "소구점 정리",     description: "핵심 USP, 타겟, 톤앤매너 정리" },
+  { id: "ppt",          label: "강의 PPT 확인",   description: "강사 강의 PPT 검토 완료" },
+  { id: "crm_setup",    label: "CRM 세팅",        description: "발송 시퀀스, 채널별 카피 세팅" },
+  { id: "funnel_check", label: "퍼널 체크",       description: "디자이너 세팅 후 퍼널 확인 완료" },
+  { id: "rehearsal",    label: "리허설 체크",     description: "라이브 리허설 진행 및 확인" },
+  { id: "d10_benefit",  label: "D-10 혜택 전달",  description: "강의 일정, 혜택 정리 후 디자이너에게 전달" },
+];
+
 /** 새 강의 추가 시 Lecture 기본값 (폼에서 안 쓰이는 필드) */
 export const NEW_LECTURE_DEFAULTS: Omit<Lecture, "liveDate" | "status"> = {
   type: "",
@@ -402,5 +413,6 @@ export const NEW_LECTURE_DEFAULTS: Omit<Lecture, "liveDate" | "status"> = {
   youtubeUrl: "",
   payUrl: "",
   ebookUrl: "",
+  figmaUrl: "",
   liveTime: "19:30",
 };

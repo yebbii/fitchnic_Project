@@ -212,7 +212,7 @@ export default function HomeTab() {
   }, [state.data]);
 
   return (
-    <div className="flex h-[calc(100vh-56px)] overflow-hidden animate-fi">
+    <div className="flex h-[calc(100vh-100px)] overflow-hidden">
       {/* ── 좌측 사이드바: 강의별 요약 카드 ── */}
       <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto overflow-x-hidden" style={{ scrollbarGutter: "stable" }}>
         <div className="px-4 py-3 border-b border-border/40">
@@ -315,11 +315,9 @@ export default function HomeTab() {
                         </div>
 
                         {/* 완료 표시 */}
-                        {allDone && (
-                          <div className="mt-2 text-[11px] font-bold text-emerald-600 bg-emerald-50 rounded-md px-2 py-1 text-center">
-                            CRM 준비 완료
-                          </div>
-                        )}
+                        <div className={`mt-2 text-[11px] font-bold text-emerald-600 bg-emerald-50 rounded-md px-2 py-1 text-center ${allDone ? "block" : "hidden"}`}>
+                          CRM 준비 완료
+                        </div>
                       </div>
                     </div>
                   );
@@ -332,7 +330,6 @@ export default function HomeTab() {
 
       {/* ── 우측: 달력 ── */}
       <main className="flex-1 overflow-y-auto p-8">
-        <div>
           <div className="bg-surface-card rounded-card shadow-card p-6">
             {/* 달력 헤더 */}
             <div className="flex justify-between items-center mb-4">
@@ -357,7 +354,7 @@ export default function HomeTab() {
             </div>
 
             {/* 필터 태그 — 1단계 */}
-            <div className="flex items-center gap-3 mb-2 text-[12px]">
+            <div className="flex items-center gap-3 mb-2 text-[12px] min-h-[36px]">
               {/* 전체 */}
               <button
                 onClick={selectAll}
@@ -502,7 +499,7 @@ export default function HomeTab() {
                           <div
                             key={`live-${ei}`}
                             onClick={(e) => { e.stopPropagation(); setModalKey(`${ev.ins}|${ev.lec}`); setModalDeleteConfirm(false); }}
-                            className="rounded-md px-1.5 py-[3px] text-[10px] font-bold cursor-pointer leading-tight truncate"
+                            className="rounded-lg px-1.5 py-[3px] text-[10px] font-bold cursor-pointer leading-tight truncate"
                             style={{ background: ev.color + "18", color: ev.color, border: `1.5px solid ${ev.color}35` }}
                           >
                             <span className="inline-block w-[5px] h-[5px] rounded-full bg-red-500 mr-0.5 align-middle flex-shrink-0" />{ev.ins}
@@ -515,7 +512,7 @@ export default function HomeTab() {
                           <div
                             key={`d10-${ei}`}
                             onClick={(e) => { e.stopPropagation(); goToBoard(ev.ins, ev.lec); }}
-                            className="rounded-md px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity bg-yellow-50 text-yellow-700 border-[1.5px] border-yellow-200"
+                            className="rounded-lg px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight truncate hover:opacity-80 transition-opacity bg-yellow-50 text-yellow-700 border-[1.5px] border-yellow-200"
                           >
                             <span className="text-[9px] mr-0.5">⚠</span>{ev.ins} D-10
                           </div>
@@ -578,21 +575,18 @@ export default function HomeTab() {
                         )}
                       </div>
                       {/* 더 보기 / 접기 */}
-                      {totalDetailEvts > 3 && !showAll && (
-                        <div className="text-[9px] text-muted-foreground text-center font-semibold py-0.5 cursor-pointer">
-                          +{totalDetailEvts - 3}개
-                        </div>
-                      )}
-                      {totalDetailEvts > 3 && showAll && (
-                        <div className="text-[9px] text-muted-foreground text-center py-0.5">접기 ▲</div>
-                      )}
+                      <div className={`text-[9px] text-muted-foreground text-center font-semibold py-0.5 cursor-pointer ${totalDetailEvts > 3 && !showAll ? "block" : "hidden"}`}>
+                        +{totalDetailEvts - 3}개
+                      </div>
+                      <div className={`text-[9px] text-muted-foreground text-center py-0.5 ${totalDetailEvts > 3 && showAll ? "block" : "hidden"}`}>
+                        접기 ▲
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-        </div>
       </main>
 
       {/* 강의 상세 모달 (달력 LIVE 클릭) */}
@@ -617,7 +611,7 @@ export default function HomeTab() {
               {/* 닫기 */}
               <button
                 onClick={() => setModalKey(null)}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-surface-hover flex items-center justify-center text-[13px] text-muted-foreground border-none cursor-pointer hover:bg-accent"
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-muted-foreground border-none cursor-pointer hover:bg-accent"
               >
                 ✕
               </button>

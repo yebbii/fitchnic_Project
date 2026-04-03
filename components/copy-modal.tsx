@@ -85,9 +85,9 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
       className="fixed inset-0 bg-black/25 backdrop-blur-sm z-[200] flex justify-center items-center p-5"
       style={{ animation: "pop .2s ease" }}
     >
-      <div className="bg-white rounded-2xl w-full max-w-[640px] max-h-[85vh] overflow-auto shadow-2xl">
+      <div className="bg-surface-card rounded-card w-full max-w-[640px] max-h-[85vh] overflow-auto shadow-2xl">
         {/* Header */}
-        <div className="px-7 py-5 border-b border-border/50 flex justify-between items-center sticky top-0 bg-white z-[1]">
+        <div className="px-7 py-5 border-b border-border/50 flex justify-between items-center sticky top-0 bg-surface-card z-[1]">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[22px]">{sel.item.icon}</span>
@@ -105,7 +105,7 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="bg-[#F0F1F4] text-muted-foreground text-lg w-9 h-9 rounded-xl border-none cursor-pointer font-semibold hover:bg-accent"
+            className="bg-surface-hover text-muted-foreground text-lg w-9 h-9 rounded-xl border-none cursor-pointer font-semibold hover:bg-accent"
           >
             ×
           </button>
@@ -113,7 +113,7 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
 
         {/* Channel rules */}
         {rule && (
-          <div className="mx-7 mt-3 p-3 px-3.5 bg-[#F0F1F4] rounded-xl flex gap-4 text-[13px] text-muted-foreground flex-wrap">
+          <div className="mx-7 mt-3 p-3 px-3.5 bg-surface-hover rounded-xl flex gap-4 text-[13px] text-muted-foreground flex-wrap">
             <span>이모티콘 {rule.emoji}</span>
             <span>버튼 {rule.btn}</span>
             <span>글자수 {rule.len}</span>
@@ -149,7 +149,7 @@ export default function CopyModal({ sel, onClose }: CopyModalProps) {
                     },
                   });
                 }}
-                className="w-full min-h-[240px] p-5 bg-[#F7F8FA] border-none rounded-2xl text-foreground text-[15px] leading-[1.8] resize-y outline-none focus:ring-1 focus:ring-primary"
+                className="w-full min-h-[240px] p-5 bg-surface border-none rounded-2xl text-foreground text-[15px] leading-[1.8] resize-y outline-none focus:ring-1 focus:ring-primary"
               />
               <div className="flex justify-between mt-3 flex-wrap gap-2">
                 <div className="flex gap-2">

@@ -53,7 +53,7 @@ export default function LectureDashboard() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-56px)] bg-[#F7F8FA]">
+    <div className="min-h-[calc(100vh-56px)] bg-surface">
       <div className="max-w-[1200px] mx-auto px-10 py-8 flex flex-col gap-8">
 
         {/* 월 목표 도달율 */}
@@ -61,17 +61,17 @@ export default function LectureDashboard() {
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-bold text-muted-foreground uppercase tracking-wider">강의 현황</div>
             <div className="flex items-center gap-1.5">
-              <button onClick={prevMonth} className="bg-[#F0F1F4] rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]">◀</button>
-              <button onClick={goToday} className="bg-[#F0F1F4] rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]">오늘</button>
+              <button onClick={prevMonth} className="bg-surface-hover rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]">◀</button>
+              <button onClick={goToday} className="bg-surface-hover rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]">오늘</button>
               <span className="text-sm font-bold min-w-[90px] text-center">{viewYear}년 {viewMon + 1}월</span>
-              <button onClick={nextMonth} className="bg-[#F0F1F4] rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]">▶</button>
+              <button onClick={nextMonth} className="bg-surface-hover rounded-xl px-2.5 py-1.5 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent text-[12px]">▶</button>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-6">
             {/* 전체 (해당 월) */}
             <div
               onClick={() => setFilter(null)}
-              className={`bg-white rounded-2xl shadow-sm p-6 cursor-pointer transition-all ${filter === null ? "ring-2 ring-[#006BFE]" : "hover:shadow-md"}`}
+              className={`bg-surface-card rounded-card shadow-card p-6 cursor-pointer transition-all ${filter === null ? "ring-2 ring-[#006BFE]" : "hover:shadow-md"}`}
             >
               <div className="text-[12px] text-muted-foreground font-semibold mb-2">전체</div>
               <div className="text-[32px] font-bold leading-none mb-2" style={{ color: HOME_TAB_COLORS.primary }}>{monthAll.length}</div>
@@ -86,7 +86,7 @@ export default function LectureDashboard() {
               const active = filter === plat;
               return (
                 <div key={plat} onClick={() => setFilter(active ? null : plat)}
-                  className={`bg-white rounded-2xl shadow-sm p-6 cursor-pointer transition-all ${active ? "ring-2" : "hover:shadow-md"}`}
+                  className={`bg-surface-card rounded-card shadow-card p-6 cursor-pointer transition-all ${active ? "ring-2" : "hover:shadow-md"}`}
                   style={active ? { "--tw-ring-color": color } as React.CSSProperties : undefined}
                 >
                   <div className="text-[12px] text-muted-foreground font-semibold mb-2">{plat}</div>
@@ -94,7 +94,7 @@ export default function LectureDashboard() {
                     <span className="text-[32px] font-bold leading-none" style={{ color }}>{cnt}</span>
                     <span className="text-[14px] text-muted-foreground font-semibold mb-0.5">/ {MONTHLY_GOAL}</span>
                   </div>
-                  <div className="h-2 bg-[#F0F1F4] rounded-full overflow-hidden mb-2">
+                  <div className="h-2 bg-surface-hover rounded-full overflow-hidden mb-2">
                     <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
                   </div>
                   <div className="text-[11px] font-bold" style={{ color }}>{pct}%</div>
@@ -109,17 +109,17 @@ export default function LectureDashboard() {
           {filteredMonth.length === 0 ? (
             <div className="text-[14px] text-muted-foreground py-10 text-center">이번 달 강의가 없습니다</div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-surface-card rounded-card shadow-card overflow-hidden">
               {filteredMonth.map((s, i) => {
                 const dLabel = s.daysLeft === 0 ? "D-Day" : s.daysLeft > 0 ? `D-${s.daysLeft}` : `D+${Math.abs(s.daysLeft)}`;
                 return (
                   <div
                     key={s.curKey}
                     onClick={() => goToDetail(s)}
-                    className={`flex items-center gap-4 px-5 py-3 cursor-pointer hover:bg-[#F7F8FA] transition-colors ${i > 0 ? "border-t border-border/50" : ""}`}
+                    className={`flex items-center gap-4 px-5 py-3 cursor-pointer hover:bg-surface transition-colors ${i > 0 ? "border-t border-border/50" : ""}`}
                   >
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                    <span className="font-extrabold text-[13px] w-[70px] flex-shrink-0" style={{ color: s.color }}>{s.ins}</span>
+                    <span className="font-bold text-[13px] w-[70px] flex-shrink-0" style={{ color: s.color }}>{s.ins}</span>
                     <span className="text-[13px] font-semibold text-foreground flex-1 truncate">{s.lec}</span>
                     {s.platform && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: s.color + "20", color: s.color }}>{s.platform}</span>

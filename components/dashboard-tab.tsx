@@ -86,7 +86,7 @@ export default function DashboardTab() {
   const activeCount = activeLectures.length;
 
   return (
-    <div className="flex h-[calc(100vh-100px)] overflow-hidden animate-fi">
+    <div className="flex h-[calc(100vh-100px)] overflow-hidden">
       {/* 좌측: 진행중 + 최근 완료 */}
       <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto">
           <div className="px-4 py-3 border-b border-border/40">
@@ -217,21 +217,21 @@ export default function DashboardTab() {
       {/* 우측: 캘린더 */}
       <main className="flex-1 overflow-y-auto p-8">
         <div className="bg-surface-card rounded-card shadow-card p-6">
-          <div className="flex justify-between items-center mb-[18px]">
-            <h3 className="text-xl font-bold">📅 CRM 발송 캘린더</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold">CRM 발송 캘린더</h3>
             <div className="flex gap-2 items-center">
               <button
                 onClick={prevMonth}
-                className="bg-surface-hover rounded-card px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
+                className="bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >
                 ◀
               </button>
-              <span className="text-lg font-bold min-w-[150px] text-center">
+              <span className="text-base font-bold min-w-[130px] text-center">
                 {monthLabel}
               </span>
               <button
                 onClick={nextMonth}
-                className="bg-surface-hover rounded-card px-4 py-2 text-lg text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
+                className="bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent"
               >
                 ▶
               </button>
@@ -265,7 +265,7 @@ export default function DashboardTab() {
               return (
                 <div
                   key={ds}
-                  className={`min-h-[110px] rounded-card p-1.5 overflow-hidden relative ${
+                  className={`min-h-[110px] rounded-card p-1.5 overflow-hidden ${
                     isT ? "bg-primary/5 border border-primary" : isPast ? "bg-surface-inset border border-border/30" : "bg-surface-card border border-border/30"
                   } ${evts.length > 2 ? "cursor-pointer" : ""}`}
                   onClick={() => {
@@ -273,23 +273,22 @@ export default function DashboardTab() {
                   }}
                 >
                   <div
-                    className={`text-[15px] px-1 mb-1 ${
-                      isT ? "font-extrabold text-primary" : isPast ? "font-semibold text-neutral-300" : day.getDay() === 0 ? "font-semibold text-red-500" : "font-semibold text-foreground"
+                    className={`text-[14px] px-1 mb-1 ${
+                      isT ? "font-bold text-primary" : isPast ? "font-semibold text-neutral-300" : day.getDay() === 0 ? "font-semibold text-red-500" : "font-semibold text-foreground"
                     }`}
                   >
                     {day.getDate()}
                   </div>
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-[3px]">
                     {/* LIVE 이벤트 블록 — 홈탭과 동일 */}
                     {dayLives.map((ev, ei) => (
                       <div
                         key={`live-${ei}`}
                         onClick={(e) => { e.stopPropagation(); goToBoard(ev.ins, ev.lec); }}
-                        className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold cursor-pointer leading-tight truncate"
-                        style={{ background: ev.color + "22", color: ev.color, border: `1px solid ${ev.color}40` }}
+                        className="rounded-lg px-1.5 py-[3px] text-[10px] font-bold cursor-pointer leading-tight truncate"
+                        style={{ background: ev.color + "18", color: ev.color, border: `1.5px solid ${ev.color}35` }}
                       >
-                        <span className="font-bold">{ev.ins}</span>
-                        <span className="ml-0.5">🔴LIVE</span>
+                        <span className="inline-block w-[5px] h-[5px] rounded-full bg-red-500 mr-0.5 align-middle flex-shrink-0" />{ev.ins}
                       </div>
                     ))}
                     {(expandedDay === ds ? evts : evts.slice(0, 2)).map((ev, ei) => (
@@ -299,7 +298,7 @@ export default function DashboardTab() {
                           e.stopPropagation();
                           goToBoard(ev.ins, ev.lec, ev.seqId);
                         }}
-                        className={`rounded-md px-1.5 py-1 text-xs font-semibold text-left cursor-pointer leading-tight ${
+                        className={`rounded-lg px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight ${
                           ev.allDone ? "bg-surface-inset text-neutral-checked border border-neutral-300" : ""
                         }`}
                         style={ev.allDone ? undefined : {
@@ -317,20 +316,20 @@ export default function DashboardTab() {
                           <span className="font-bold">{ev.ins}</span>
                         </div>
                         <div
-                          className={`text-[11px] font-medium ${ev.allDone ? "text-neutral-checked" : "text-neutral-600"}`}
+                          className={`text-[9px] font-medium ${ev.allDone ? "text-neutral-checked" : "text-neutral-600"}`}
                         >
                           {ev.seqLabel}
                         </div>
                         <div className={`flex gap-0.5 mt-0.5 ${(ev.copiedCount > 0 || ev.checkedCount > 0) && !ev.allDone && !ev.allCopied ? "flex" : "hidden"}`}>
-                            <div className="flex-1 h-[3px] bg-neutral-track rounded-sm overflow-hidden">
+                            <div className="flex-1 h-[3px] bg-neutral-track rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-primary rounded-sm"
+                                className="h-full bg-primary rounded-full"
                                 style={{ width: `${ev.items.length ? (ev.copiedCount / ev.items.length) * 100 : 0}%` }}
                               />
                             </div>
-                            <div className="flex-1 h-[3px] bg-neutral-track rounded-sm overflow-hidden">
+                            <div className="flex-1 h-[3px] bg-neutral-track rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-amber-500 rounded-sm"
+                                className="h-full bg-amber-500 rounded-full"
                                 style={{ width: `${ev.items.length ? (ev.checkedCount / ev.items.length) * 100 : 0}%` }}
                               />
                             </div>
@@ -357,12 +356,12 @@ export default function DashboardTab() {
                       </div>
                     ))}
                     {evts.length > 2 && expandedDay !== ds && (
-                      <div className="text-xs text-primary text-center font-semibold py-0.5 cursor-pointer">
-                        +{evts.length - 2}개 더 보기
+                      <div className="text-[9px] text-muted-foreground text-center font-semibold py-0.5 cursor-pointer">
+                        +{evts.length - 2}개
                       </div>
                     )}
                     {evts.length > 2 && expandedDay === ds && (
-                      <div className="text-[11px] text-neutral-400 text-center py-0.5">접기 ▲</div>
+                      <div className="text-[9px] text-muted-foreground text-center py-0.5">접기 ▲</div>
                     )}
                   </div>
                 </div>

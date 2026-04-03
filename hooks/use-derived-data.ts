@@ -15,7 +15,7 @@ export interface LectureSummary {
   platform: string;
   liveDate: string;
   liveTime: string;
-  status: "active" | "completed";
+  status: "active" | "standby" | "completed";
   daysLeft: number;
   pmTotal: number;
   pmChecked: number;
@@ -115,6 +115,7 @@ export interface InstructorStats {
   name: string;
   totalLectures: number;
   activeLectures: number;
+  standbyLectures: number;
   completedLectures: number;
   lastLiveDate: string | null;
   platforms: string[];
@@ -130,6 +131,7 @@ export function useInstructorStats(): InstructorStats[] {
         name,
         totalLectures: lectures.length,
         activeLectures: lectures.filter((l) => l.status === "active").length,
+        standbyLectures: lectures.filter((l) => l.status === "standby").length,
         completedLectures: lectures.filter((l) => l.status === "completed").length,
         lastLiveDate: liveDates.length ? liveDates[liveDates.length - 1] : null,
         platforms: [...new Set(lectures.map((l) => l.platform).filter(Boolean))],

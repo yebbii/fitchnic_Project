@@ -101,7 +101,7 @@ export default function BoardTab() {
   };
 
   return (
-    <div className="animate-fi">
+    <div>
       {/* 강사/강의 셀렉터 */}
       <div className="px-10 py-3 border-b border-border/40 bg-surface-card flex items-center gap-3 flex-wrap">
         <select
@@ -170,7 +170,7 @@ export default function BoardTab() {
                             onClick={() => { dispatch({ type: "SET_PM_PROJECT_ASSIGNEE", curKey, assignee: a.name }); setShowPmAssignee(false); }}
                             className={`w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-secondary border-none bg-transparent cursor-pointer ${pmAssigneeName === a.name ? "bg-secondary" : ""}`}
                           >
-                            <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-extrabold flex-shrink-0" style={{ background: a.color }}>{a.name.slice(0, 1)}</div>
+                            <div className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0" style={{ background: a.color }}>{a.name.slice(0, 1)}</div>
                             <span className="text-[11px] font-semibold">{a.name}</span>
                           </button>
                         ))}
@@ -190,7 +190,7 @@ export default function BoardTab() {
               {!editInfo && (
                 desAssigneeName ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-designer/10 text-designer border border-designer/30">
-                    <span className="w-3.5 h-3.5 rounded-full text-white text-[8px] font-extrabold flex items-center justify-center flex-shrink-0 bg-designer">{desAssigneeName.slice(0, 1)}</span>
+                    <span className="w-3.5 h-3.5 rounded-full text-white text-[8px] font-bold flex items-center justify-center flex-shrink-0 bg-designer">{desAssigneeName.slice(0, 1)}</span>
                     담당 {desAssigneeName}
                   </span>
                 ) : (
@@ -249,7 +249,7 @@ export default function BoardTab() {
                       style={{ borderTop: `3px solid ${p.color}` }}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[13px] font-extrabold truncate" style={{ color: p.color }}>{p.ins}</span>
+                        <span className="text-[13px] font-bold truncate" style={{ color: p.color }}>{p.ins}</span>
                         {p.daysLeft <= 7 && p.daysLeft >= 0 && (
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${p.daysLeft <= 1 ? "bg-red-100 text-red-600" : "bg-amber-50 text-amber-600"}`}>
                             {p.daysLeft === 0 ? "D-Day" : `D-${p.daysLeft}`}
@@ -303,8 +303,8 @@ export default function BoardTab() {
               <div className={`rounded-card shadow-card p-5 mb-5 ${benefitDone ? "bg-gray-50/80 border border-gray-100" : "bg-surface-card border border-red-100"}`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-extrabold px-2.5 py-1 rounded-full bg-red-100 text-red-500">D-10</span>
-                    <span className="text-[15px] font-extrabold">혜택 전달</span>
+                    <span className="text-[12px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-500">D-10</span>
+                    <span className="text-[15px] font-bold">혜택 전달</span>
                     <span className="text-[12px] text-muted-foreground">→ 디자이너 탭에 자동 반영</span>
                   </div>
                   <button

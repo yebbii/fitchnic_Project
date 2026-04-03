@@ -26,7 +26,7 @@ const PM_SUB_TABS: { id: TabId; label: string }[] = [
 ];
 
 const DESIGNER_SUB_TABS: { id: DesignerTabId; label: string }[] = [
-  { id: "calendar", label: "캘린더" },
+  { id: "calendar", label: "디자이너 캘린더" },
   { id: "timeline", label: "타임라인" },
   { id: "worklog", label: "작업일지" },
 ];
@@ -78,9 +78,10 @@ function NavHeader() {
         )}
       </div>
 
-      {/* PM 서브탭 */}
-      {state.topTab === "pm" && (
-        <div className="px-10 pb-2.5 flex gap-1">
+      {/* 서브탭 영역 — 모든 탭에서 높이 유지 (Layout Stability) */}
+      <div className="px-10 pb-2.5 flex gap-1 min-h-[36px]">
+        {/* PM 서브탭 */}
+        <div className={state.topTab === "pm" ? "flex gap-1" : "hidden"}>
           {PM_SUB_TABS.map((t) => (
             <button
               key={t.id}
@@ -98,11 +99,9 @@ function NavHeader() {
             </button>
           ))}
         </div>
-      )}
 
-      {/* 디자이너 서브탭 */}
-      {state.topTab === "designer" && (
-        <div className="px-10 pb-2.5 flex gap-1">
+        {/* 디자이너 서브탭 */}
+        <div className={state.topTab === "designer" ? "flex gap-1" : "hidden"}>
           {DESIGNER_SUB_TABS.map((t) => (
             <button
               key={t.id}
@@ -120,11 +119,9 @@ function NavHeader() {
             </button>
           ))}
         </div>
-      )}
 
-      {/* 강의 관리 서브탭 */}
-      {state.topTab === "lecture" && (
-        <div className="px-10 pb-2.5 flex gap-1">
+        {/* 강의 관리 서브탭 */}
+        <div className={state.topTab === "lecture" ? "flex gap-1" : "hidden"}>
           {LECTURE_SUB_TABS.map((t) => (
             <button
               key={t.id}
@@ -139,7 +136,7 @@ function NavHeader() {
             </button>
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

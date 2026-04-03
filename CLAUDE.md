@@ -83,7 +83,7 @@
 #### 클래스 규칙
 ```tsx
 {/* 루트: 고정 높이, 페이지 스크롤 금지 */}
-<div className="flex h-[calc(100vh-100px)] overflow-hidden animate-fi">
+<div className="flex h-[calc(100vh-100px)] overflow-hidden">
 
   {/* 사이드바: 고정 너비, 독립 스크롤 */}
   <aside className="w-72 shrink-0 border-r border-border/50 bg-surface-sidebar overflow-y-auto">
@@ -98,8 +98,7 @@
   </main>
 </div>
 ```
-- 홈 탭은 하위탭 없음 → `h-[calc(100vh-56px)]`
-- PM/디자이너 캘린더는 하위탭 있음 → `h-[calc(100vh-100px)]`
+- 모든 탭 공통 → `h-[calc(100vh-100px)]` (서브탭 영역 항상 유지)
 
 ### B. 메인 단일 레이아웃
 **적용 대상**: PM 타임라인, PM 히스토리, 디자이너 타임라인, 작업일지, 강의관리, 강사관리, 대시보드
@@ -114,7 +113,7 @@
 │  └─────────────────────────────────┘    │
 └──────────────────────────────────────────┘
 ```
-- 루트: `min-h-page bg-surface animate-fi`
+- 루트: `min-h-page bg-surface`
 - 콘텐츠 래퍼: `max-w-content mx-auto px-10 py-8`
 - 카드: `bg-surface-card rounded-card shadow-card p-6`
 
@@ -210,16 +209,76 @@ bg-surface-card rounded-card shadow-dropdown py-1 min-w-[140px]
 항목: px-3 py-1.5 text-[11px] hover:bg-secondary
 ```
 
-### 캘린더
-| 요소 | 클래스 |
+### 캘린더 공통 UI (통합 · PM · 디자이너 3개 캘린더 동일)
+**적용 대상**: `home-tab.tsx`, `dashboard-tab.tsx`, `designer-calendar-tab.tsx`
+기준 컴포넌트: **통합 캘린더 (`home-tab.tsx`)**
+
+#### 캘린더 헤더
+```
+flex justify-between items-center mb-4
+타이틀: text-xl font-bold
+```
+
+#### 월 네비게이션
+```
+버튼: bg-surface-hover rounded-card px-4 py-2 text-muted-foreground border-none cursor-pointer font-semibold hover:bg-accent
+라벨: text-base font-bold min-w-[130px] text-center
+```
+
+#### 요일 헤더
+```
+그리드: grid grid-cols-7 gap-0.5 mb-1.5
+셀:   text-center text-sm font-bold p-2
+일요일: text-red-500
+토요일: text-blue-500
+평일:  text-muted-foreground
+```
+
+#### 날짜 셀
+| 상태 | 클래스 |
 |------|--------|
-| 요일 헤더 그리드 | `grid grid-cols-7 gap-0.5 mb-1.5` |
-| 일요일 텍스트 | `text-red-500` |
-| 토요일 텍스트 | `text-blue-500` |
-| 날짜 셀 | `min-h-[110px] rounded-card p-1.5 border border-border/30` |
-| 오늘 셀 | `bg-{역할색상}/5 border-{역할색상}` |
-| 과거 셀 | `bg-surface-inset` |
-| 이벤트 블록 | `rounded-lg px-1.5 py-1 text-xs font-semibold cursor-pointer leading-tight` |
+| 공통 | `min-h-[110px] rounded-card p-1.5 overflow-hidden` |
+| 일반 | `bg-surface-card border border-border/30` |
+| 오늘 | `bg-primary/5 border border-primary` |
+| 과거 | `bg-surface-inset border border-border/30` |
+| 빈 셀 | `min-h-[110px]` (내용 없음) |
+
+#### 날짜 숫자
+| 상태 | 클래스 |
+|------|--------|
+| 공통 | `text-[14px] px-1 mb-1` |
+| 오늘 | `font-bold text-primary` |
+| 과거 | `font-semibold text-neutral-300` |
+| 일요일 | `font-semibold text-red-500` |
+| 기본 | `font-semibold text-foreground` |
+
+#### 이벤트 목록
+```
+컨테이너: flex flex-col gap-[3px]
+```
+
+#### 이벤트 칩 (공통 껍데기)
+| 용도 | 클래스 |
+|------|--------|
+| LIVE 블록 | `rounded-lg px-1.5 py-[3px] text-[10px] font-bold cursor-pointer leading-tight truncate` |
+| 일반 블록 | `rounded-lg px-1.5 py-[3px] text-[10px] font-semibold cursor-pointer leading-tight` |
+| 색상/border | inline style: `background: ${color}18`, `color: ${color}`, `border: 1.5px solid ${color}35` |
+
+#### LIVE 칩 내용 (모든 캘린더 공통)
+**기준 컴포넌트**: `home-tab.tsx` 통합 캘린더
+```tsx
+<span className="inline-block w-[5px] h-[5px] rounded-full bg-red-500 mr-0.5 align-middle flex-shrink-0" />
+{ev.ins}
+```
+- 이모지(🔴) 사용 금지 → CSS 빨간 도트(`w-[5px] h-[5px] rounded-full bg-red-500`)
+- `LIVE` 텍스트 표시 금지 — 도트 + 강사명만 표시
+- 도트는 `inline-block`, `align-middle`로 텍스트와 수직 정렬
+
+#### 더보기 / 접기
+```
+더보기: text-[9px] text-muted-foreground text-center font-semibold py-0.5 cursor-pointer
+접기:  text-[9px] text-muted-foreground text-center py-0.5
+```
 
 ### 사이드바 프로젝트 카드
 ```
@@ -256,6 +315,44 @@ bg-surface-card rounded-card shadow-card
 | `neutral-track` | #F0F0F5 | 프로그레스 바 트랙 |
 | `neutral-checked` | #9CA3AF | 완료 체크 색상 |
 | `neutral-400` | #AEAEB2 | 비활성 텍스트 |
+
+---
+
+## 하드코딩 금지 매핑표
+
+아래 값은 코드에서 직접 사용하지 않고, 반드시 토큰 클래스를 사용한다.
+
+### 배경색
+| 하드코딩 (금지) | 토큰 (사용) | 용도 |
+|----------------|------------|------|
+| `bg-[#F7F8FA]` | `bg-surface` | 페이지 배경 |
+| `bg-[#F0F1F4]` | `bg-surface-hover` | 버튼, 인풋, 탭 그룹 배경 |
+| `bg-[#fafafa]` | `bg-surface-inset` | 과거 셀, 테이블 헤더 |
+| `bg-white` (카드) | `bg-surface-card` | 카드 컨테이너 |
+| `bg-[#f7f7f7]` | `bg-neutral-50` | 연한 배경 |
+| `bg-[#f0f0f0]`, `bg-[#f5f5f5]` | `bg-neutral-100` | 완료/비활성 배경 |
+| `bg-[#e8e8e8]`, `bg-[#ebebeb]` | `bg-neutral-200` | 뱃지, 태그 배경 |
+
+### 텍스트색
+| 하드코딩 (금지) | 토큰 (사용) | 용도 |
+|----------------|------------|------|
+| `text-[#ccc]` | `text-neutral-300` | 과거 날짜 |
+| `text-[#aeaeb2]` | `text-neutral-400` | 비활성 텍스트 |
+| `text-[#6e6e73]` | `text-neutral-500` | 보조 텍스트 |
+| `text-[#c0c0c0]` | `text-neutral-300` | 완료 항목 텍스트 |
+
+### 라운딩·그림자·폰트
+| 하드코딩 (금지) | 토큰 (사용) | 용도 |
+|----------------|------------|------|
+| `rounded-2xl` (카드) | `rounded-card` | 카드 컨테이너 |
+| `shadow-sm` (카드) | `shadow-card` | 카드 그림자 |
+| `font-extrabold` | `font-bold` | 볼드 텍스트 (extrabold 사용 금지) |
+
+### 예외 (그대로 사용 가능)
+- `bg-white/70` 등 opacity 변형
+- `style={{}}` 안의 동적 런타임 색상
+- 버튼·인풋의 `rounded-xl` (카드가 아닌 소형 요소)
+- 버튼 내부의 `shadow-sm` (카드 그림자 아님)
 
 ---
 

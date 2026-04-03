@@ -17,7 +17,7 @@ export default function HistoryTab() {
   });
 
   return (
-    <div className="min-h-page bg-surface animate-fi">
+    <div className="min-h-page bg-surface">
       <div className="max-w-content mx-auto px-10 py-8">
         <h2 className="text-2xl font-bold mb-6">CRM 히스토리</h2>
         {[...grouped.entries()].map(([iN, lectures]) => {

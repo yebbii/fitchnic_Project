@@ -1,4 +1,4 @@
-import type { CrmData, ChecksMap, CopiesMap, SeqDataMap, Feedback, DesignChecksMap, WorkLog, DesignerMilestonesMap, Assignee, InstructorProfile } from "./types";
+import type { CrmData, ChecksMap, CopiesMap, SeqDataMap, Feedback, DesignChecksMap, WorkLog, DesignerMilestonesMap, Assignee, InstructorProfile, PmChecklistMap } from "./types";
 
 const KEYS = {
   data: "crm_data",
@@ -15,6 +15,7 @@ const KEYS = {
   pmProjectAssignees: "pm_project_assignees",
   milestoneMeta: "crm_milestone_meta",
   instructorProfiles: "crm_instructor_profiles",
+  pmChecklist: "crm_pm_checklist",
 } as const;
 
 function load<T>(key: string): T | null {
@@ -78,4 +79,7 @@ export const storage = {
 
   loadInstructorProfiles: () => load<InstructorProfile[]>(KEYS.instructorProfiles),
   saveInstructorProfiles: (v: InstructorProfile[]) => save(KEYS.instructorProfiles, v),
+
+  loadPmChecklist: () => load<PmChecklistMap>(KEYS.pmChecklist),
+  savePmChecklist: (v: PmChecklistMap) => save(KEYS.pmChecklist, v),
 };

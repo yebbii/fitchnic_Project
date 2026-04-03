@@ -13,9 +13,10 @@ export interface Lecture {
   youtubeUrl: string;
   payUrl: string;
   ebookUrl: string;
+  figmaUrl: string;
   liveDate: string;
   liveTime: string;
-  status: "active" | "completed";
+  status: "active" | "standby" | "completed";
 }
 
 export interface InstructorData {
@@ -95,6 +96,7 @@ export interface InstructorProfile {
   platforms: string[];
   profileImageUrl: string;
   memo: string;
+  status: "active" | "out";
   createdAt: string;
 }
 
@@ -127,6 +129,15 @@ export type DesignerMilestonesMap = Record<string, Partial<Record<MilestoneId, M
 /* ── 마일스톤 메타 (자료요청 멘트, 혜택 내용 등) ── */
 export type MilestoneMetaMap = Record<string, Record<string, string>>;
 // curKey → { requestMsg: "...", benefit: "...", benefitDone: "true" }
+
+/* ── PM 체크리스트 ── */
+export type PmCheckId = "pre_survey" | "usp" | "ppt" | "crm_setup" | "funnel_check" | "rehearsal" | "d10_benefit";
+export interface PmCheckItem {
+  checked: boolean;
+  note: string;
+}
+export type PmChecklistMap = Record<string, Partial<Record<PmCheckId, PmCheckItem>>>;
+// curKey → { "funnel_check": { checked: true, note: "4/1 완료" }, ... }
 
 /* ── 작업일지 ── */
 export interface WorkLog {
